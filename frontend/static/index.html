@@ -641,12 +641,327 @@
     margin: 0.35rem 0;
   }
   .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.25rem; line-height: 1; vertical-align: middle; color: var(--accent); }
+
+  /* Layout Architecture */
+  .layout-container {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+  .chat-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Header Brand & Toggle */
+  .sidebar-toggle-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    line-height: 1;
+    transition: all 0.2s ease;
+    margin-right: 0.35rem;
+  }
+  .sidebar-toggle-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: rgba(255, 107, 0, 0.12);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+
+  /* Sidebar Component */
+  .sidebar {
+    width: 295px;
+    min-width: 295px;
+    background: #0e1422;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 30;
+  }
+  .sidebar.collapsed {
+    margin-left: -295px;
+  }
+
+  /* Spotter Card */
+  .spotter-card {
+    padding: 0.9rem 1.1rem;
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.12) 0%, rgba(18, 24, 38, 0.9) 100%);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+  }
+  .spotter-avatar {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 107, 0, 0.15);
+    border: 1px solid rgba(255, 107, 0, 0.35);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+  .spotter-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .spotter-rank {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #ff9e40;
+    text-transform: uppercase;
+  }
+  .spotter-handle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .spotter-badge {
+    background: rgba(74, 222, 128, 0.15);
+    border: 1px solid rgba(74, 222, 128, 0.35);
+    color: #4ade80;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Navigation Sections */
+  .sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.85rem 0.85rem 1rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.05rem;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .sidebar-nav::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+  }
+
+  .nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .nav-section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--text-muted);
+    padding: 0.1rem 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .nav-item {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    padding: 0.45rem 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s ease;
+    width: 100%;
+  }
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 107, 0, 0.25);
+    color: var(--text-primary);
+    transform: translateX(2px);
+  }
+  .nav-item.action-upload {
+    background: rgba(255, 107, 0, 0.08);
+    border-color: rgba(255, 107, 0, 0.3);
+    color: #ff9e40;
+  }
+  .nav-item.action-upload:hover {
+    background: rgba(255, 107, 0, 0.16);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-glow);
+  }
+  .nav-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    min-width: 22px;
+    text-align: center;
+  }
+  .nav-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .nav-label {
+    font-size: 0.81rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .nav-desc {
+    font-size: 0.67rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Rarity Chips Grid */
+  .rarity-chips-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.35rem;
+    padding: 0.15rem 0;
+  }
+  .rarity-chip {
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    transition: all 0.18s ease;
+  }
+  .rarity-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+    filter: brightness(1.2);
+  }
+  .rarity-chip .chip-pts {
+    font-size: 0.62rem;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+
+  /* Sidebar Footer */
+  .sidebar-footer {
+    padding: 0.75rem 0.85rem;
+    background: #090e18;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    flex-shrink: 0;
+  }
+  .sidebar-btn-secondary {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.45rem 0.7rem;
+    color: var(--text-secondary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    transition: all 0.18s ease;
+  }
+  .sidebar-btn-secondary:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.08);
+  }
+  .sidebar-status-tag {
+    font-size: 0.67rem;
+    color: var(--text-muted);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+  }
+  .pulse-dot-sm {
+    width: 5px;
+    height: 5px;
+    background: #4ade80;
+    border-radius: 50%;
+    box-shadow: 0 0 4px #4ade80;
+  }
+
+  /* Mobile Backdrop */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 58px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 25;
+  }
+  .sidebar-backdrop.active {
+    display: block;
+  }
+
+  /* Responsive Rules */
+  @media (max-width: 960px) {
+    .sidebar {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.6);
+      transform: translateX(-100%);
+      margin-left: 0 !important;
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+  }
 </style>
 </head>
 <body>
 
 <header>
   <div class="header-brand">
+    <button id="sidebar-toggle" class="sidebar-toggle-btn" type="button" title="Toggle Categories Sidebar" aria-label="Toggle Sidebar">
+      <span>☰</span>
+    </button>
     <span class="header-logo">🏎️</span>
     <div class="header-title-group">
       <span class="header-title">CarDex</span>
@@ -659,53 +974,242 @@
   </div>
 </header>
 
-<div id="log">
-  <div class="welcome-banner">
-    <h2>Welcome to CarDex 🏁</h2>
-    <p>Catalogue, identify, and score real-world car sightings. Check production specs, rare trims, collector rarity scores, and spotter rankings.</p>
-  </div>
-</div>
-
-<!-- Tailored Example Prompts Row -->
-<div class="prompts-container">
-  <div class="prompts-label">Quick Actions</div>
-  <div class="prompts-row">
-    <button class="prompt-btn" data-prompt="Identify this supercar I spotted: https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=800">
-      <span>📸</span> Identify Photo: Spotted Audi RS3
-    </button>
-    <button class="prompt-btn" data-prompt="Look up specs and rarity for 2024 Porsche 911 GT3 RS">
-      <span>🏎️</span> 2024 Porsche 911 GT3 RS Specs
-    </button>
-    <button class="prompt-btn" data-prompt="Show the global spotter leaderboard and rarest spots">
-      <span>🏆</span> Global Leaderboard
-    </button>
-    <button class="prompt-btn" data-prompt="Check my garage collection and spotter score">
-      <span>🏅</span> My Garage
-    </button>
-  </div>
-</div>
-
-<div id="preview-wrapper" class="preview-wrapper">
-  <div class="preview-box">
-    <img id="preview-img" class="preview-img" src="" alt="Spot preview">
-    <div class="preview-info">
-      <span id="preview-filename">photo.jpg</span>
+<div class="layout-container">
+  <!-- Sidebar with Project Categories -->
+  <aside id="sidebar" class="sidebar">
+    <!-- Spotter Profile Card -->
+    <div class="spotter-card">
+      <div class="spotter-avatar">🏎️</div>
+      <div class="spotter-info">
+        <div class="spotter-rank">PRO SPOTTER</div>
+        <div class="spotter-handle">@CarDexSpotter</div>
+      </div>
+      <div class="spotter-badge">LIVE</div>
     </div>
-    <button type="button" id="preview-remove" class="preview-remove" title="Remove photo">✕</button>
-  </div>
-</div>
 
-<form id="form">
-  <input type="file" id="file-input" accept="image/*" style="display:none">
-  <button type="button" id="upload-btn" class="upload-btn" title="Upload or capture vehicle photo">
-    📷
-  </button>
-  <input id="input" placeholder="Spot a car, attach/paste a photo, or ask CarDex…" autocomplete="off" autofocus>
-  <button class="send-btn" type="submit">
-    <span>Spot</span>
-    <span>🏎️</span>
-  </button>
-</form>
+    <!-- Navigation / Categories -->
+    <div class="sidebar-nav">
+      
+      <!-- Category 1: AI Spotting & Vision -->
+      <div class="nav-section">
+        <div class="nav-section-title">
+          <span>📸</span> AI Spotting & Vision
+        </div>
+        <button type="button" class="nav-item action-upload" data-action="upload">
+          <span class="nav-icon">📷</span>
+          <div class="nav-text">
+            <span class="nav-label">Upload Car Photo</span>
+            <span class="nav-desc">Identify make, model & trim</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="I just spotted a rare supercar! How do I log it into my garage?">
+          <span class="nav-icon">📝</span>
+          <div class="nav-text">
+            <span class="nav-label">Log Manual Spot</span>
+            <span class="nav-desc">Record a sighting into garage</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="Calculate dynamic rarity multipliers and points for an exotic hypercar spotting.">
+          <span class="nav-icon">⚡</span>
+          <div class="nav-text">
+            <span class="nav-label">Rarity Sandbox</span>
+            <span class="nav-desc">Scarcity & points algorithm</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Category 2: My Garage & Collection -->
+      <div class="nav-section">
+        <div class="nav-section-title">
+          <span>🏎️</span> Garage & Collection
+        </div>
+        <button type="button" class="nav-item" data-prompt="Check my garage collection and spotter score">
+          <span class="nav-icon">🚗</span>
+          <div class="nav-text">
+            <span class="nav-label">View My Garage</span>
+            <span class="nav-desc">All spotted vehicles & counts</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="What is my total spotter score, active streak, and favorite marques in memory?">
+          <span class="nav-icon">📊</span>
+          <div class="nav-text">
+            <span class="nav-label">Spotter Stats & Streaks</span>
+            <span class="nav-desc">Score & memory history</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="Show my garage filtered for Rare, Epic, and Legendary hypercars only.">
+          <span class="nav-icon">💎</span>
+          <div class="nav-text">
+            <span class="nav-label">Exotic Sighting Roster</span>
+            <span class="nav-desc">High-tier collector highlights</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Category 3: Vehicle Specs & Database -->
+      <div class="nav-section">
+        <div class="nav-section-title">
+          <span>🔍</span> Telemetry & Database
+        </div>
+        <button type="button" class="nav-item" data-prompt="Look up specs and rarity for 2024 Porsche 911 GT3 RS">
+          <span class="nav-icon">🏁</span>
+          <div class="nav-text">
+            <span class="nav-label">Porsche 911 GT3 RS Specs</span>
+            <span class="nav-desc">4.0L Boxer-6, 520 HP specs</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="Compare the specifications and acceleration of Koenigsegg Jesko vs Bugatti Chiron Super Sport.">
+          <span class="nav-icon">⚡</span>
+          <div class="nav-text">
+            <span class="nav-label">Hypercar Comparison</span>
+            <span class="nav-desc">Jesko vs Bugatti Chiron</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="How do I decode a 17-digit VIN with NHTSA federal vPIC specifications?">
+          <span class="nav-icon">🔢</span>
+          <div class="nav-text">
+            <span class="nav-label">NHTSA VIN Decoder</span>
+            <span class="nav-desc">Federal registry lookup</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="Fetch CarAPI live trims and OEM factory exterior paint colors for Porsche 911 GT3 RS.">
+          <span class="nav-icon">🎨</span>
+          <div class="nav-text">
+            <span class="nav-label">OEM Colors & Trims</span>
+            <span class="nav-desc">Factory paint codes & pricing</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Category 4: Leaderboards & Community -->
+      <div class="nav-section">
+        <div class="nav-section-title">
+          <span>🏆</span> Leaderboard & Community
+        </div>
+        <button type="button" class="nav-item" data-prompt="Show the global spotter leaderboard and rarest spots">
+          <span class="nav-icon">👑</span>
+          <div class="nav-text">
+            <span class="nav-label">Global Leaderboard</span>
+            <span class="nav-desc">Top ranked car spotters</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="What are the rarest one-of-one hypercars recorded in CarDex?">
+          <span class="nav-icon">🌟</span>
+          <div class="nav-text">
+            <span class="nav-label">Rarest 1-of-1 Hypercars</span>
+            <span class="nav-desc">Mythic production sightings</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-prompt="I need to submit a spot review or dispute a vehicle trim classification.">
+          <span class="nav-icon">🛡️</span>
+          <div class="nav-text">
+            <span class="nav-label">Submit Spot Dispute</span>
+            <span class="nav-desc">Request expert trim review</span>
+          </div>
+        </button>
+      </div>
+
+      <!-- Category 5: Rarity Tiers Reference -->
+      <div class="nav-section">
+        <div class="nav-section-title">
+          <span>💎</span> Rarity Tiers Guide
+        </div>
+        <div class="rarity-chips-grid">
+          <div class="rarity-chip badge-mythic" data-prompt="Tell me about the Mythic 1-of-1 rarity tier in CarDex and what cars qualify.">
+            <span>⚡ Mythic 1-of-1</span>
+            <span class="chip-pts">10k+ PTS</span>
+          </div>
+          <div class="rarity-chip badge-legendary" data-prompt="Tell me about the Legendary rarity tier and examples of qualifying cars.">
+            <span>👑 Legendary</span>
+            <span class="chip-pts">5,000 PTS</span>
+          </div>
+          <div class="rarity-chip badge-epic" data-prompt="Tell me about the Epic rarity tier in CarDex.">
+            <span>🔥 Epic</span>
+            <span class="chip-pts">3,000 PTS</span>
+          </div>
+          <div class="rarity-chip badge-rare" data-prompt="Tell me about the Rare rarity tier in CarDex.">
+            <span>💎 Rare</span>
+            <span class="chip-pts">2,500 PTS</span>
+          </div>
+          <div class="rarity-chip badge-uncommon" data-prompt="Tell me about the Uncommon rarity tier in CarDex.">
+            <span>🟢 Uncommon</span>
+            <span class="chip-pts">1,000 PTS</span>
+          </div>
+          <div class="rarity-chip badge-common" data-prompt="Tell me about the Common rarity tier in CarDex.">
+            <span>⚪ Common</span>
+            <span class="chip-pts">500 PTS</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <button type="button" id="clear-chat-btn" class="sidebar-btn-secondary" title="Reset chat conversation">
+        <span>🗑️</span>
+        <span>Reset Chat Session</span>
+      </button>
+      <div class="sidebar-status-tag">
+        <span class="pulse-dot-sm"></span> A2A Protocol v1.1 Online
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Backdrop Overlay -->
+  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+  <!-- Main Chat Column -->
+  <main class="chat-main">
+    <div id="log">
+      <div class="welcome-banner">
+        <h2>Welcome to CarDex 🏁</h2>
+        <p>Catalogue, identify, and score real-world car sightings. Check production specs, rare trims, collector rarity scores, and spotter rankings.</p>
+      </div>
+    </div>
+
+    <!-- Tailored Example Prompts Row -->
+    <div class="prompts-container">
+      <div class="prompts-label">Quick Actions</div>
+      <div class="prompts-row">
+        <button class="prompt-btn" data-prompt="Identify this supercar I spotted: https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=800">
+          <span>📸</span> Identify Photo: Spotted Audi RS3
+        </button>
+        <button class="prompt-btn" data-prompt="Look up specs and rarity for 2024 Porsche 911 GT3 RS">
+          <span>🏎️</span> 2024 Porsche 911 GT3 RS Specs
+        </button>
+        <button class="prompt-btn" data-prompt="Show the global spotter leaderboard and rarest spots">
+          <span>🏆</span> Global Leaderboard
+        </button>
+        <button class="prompt-btn" data-prompt="Check my garage collection and spotter score">
+          <span>🏅</span> My Garage
+        </button>
+      </div>
+    </div>
+
+    <div id="preview-wrapper" class="preview-wrapper">
+      <div class="preview-box">
+        <img id="preview-img" class="preview-img" src="" alt="Spot preview">
+        <div class="preview-info">
+          <span id="preview-filename">photo.jpg</span>
+        </div>
+        <button type="button" id="preview-remove" class="preview-remove" title="Remove photo">✕</button>
+      </div>
+    </div>
+
+    <form id="form">
+      <input type="file" id="file-input" accept="image/*" style="display:none">
+      <button type="button" id="upload-btn" class="upload-btn" title="Upload or capture vehicle photo">
+        📷
+      </button>
+      <input id="input" placeholder="Spot a car, attach/paste a photo, or ask CarDex…" autocomplete="off" autofocus>
+      <button class="send-btn" type="submit">
+        <span>Spot</span>
+        <span>🏎️</span>
+      </button>
+    </form>
+  </main>
+</div>
 
 <script>
 const log = document.getElementById("log");
@@ -1024,6 +1528,67 @@ document.querySelectorAll(".prompt-btn").forEach(btn => {
       input.value = "";
       clearPendingImage();
       sendMessage(promptText);
+    }
+  });
+});
+
+// Sidebar Toggle & Interactivity
+const sidebar = document.getElementById("sidebar");
+const sidebarToggle = document.getElementById("sidebar-toggle");
+const sidebarBackdrop = document.getElementById("sidebar-backdrop");
+const clearChatBtn = document.getElementById("clear-chat-btn");
+
+function toggleSidebar() {
+  if (window.innerWidth <= 960) {
+    const isOpen = sidebar.classList.toggle("open");
+    sidebarBackdrop.classList.toggle("active", isOpen);
+  } else {
+    sidebar.classList.toggle("collapsed");
+  }
+}
+
+function closeSidebarMobile() {
+  if (window.innerWidth <= 960) {
+    sidebar.classList.remove("open");
+    sidebarBackdrop.classList.remove("active");
+  }
+}
+
+if (sidebarToggle) {
+  sidebarToggle.addEventListener("click", toggleSidebar);
+}
+if (sidebarBackdrop) {
+  sidebarBackdrop.addEventListener("click", closeSidebarMobile);
+}
+
+// Reset chat session
+if (clearChatBtn) {
+  clearChatBtn.addEventListener("click", () => {
+    log.innerHTML = `
+      <div class="welcome-banner">
+        <h2>Welcome to CarDex 🏁</h2>
+        <p>Catalogue, identify, and score real-world car sightings. Check production specs, rare trims, collector rarity scores, and spotter rankings.</p>
+      </div>
+    `;
+    closeSidebarMobile();
+  });
+}
+
+// Click handlers for sidebar navigation items and rarity chips
+document.querySelectorAll(".nav-item, .rarity-chip").forEach(item => {
+  item.addEventListener("click", () => {
+    const action = item.getAttribute("data-action");
+    if (action === "upload") {
+      fileInput.click();
+      closeSidebarMobile();
+      return;
+    }
+    const promptText = item.getAttribute("data-prompt");
+    if (promptText) {
+      input.value = "";
+      clearPendingImage();
+      sendMessage(promptText);
+      closeSidebarMobile();
     }
   });
 });
