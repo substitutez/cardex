@@ -6,6 +6,7 @@
 <title>CarDex | Supercar & Vehicle SpotterDex</title>
 <!-- Optional: used to draw A2UI Icon components. If it can't load, icons fall back to showing their name as text. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+<script src="/marked.min.js"></script>
 <style>
   :root {
     --accent: #ff6b00;
@@ -143,17 +144,17 @@
   }
   .bubble {
     display: inline-block;
-    padding: 0.75rem 1.05rem;
+    padding: 0.85rem 1.15rem;
     border-radius: 14px;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     color: var(--text-primary);
     text-align: left;
-    max-width: 85%;
-    white-space: pre-wrap;
-    line-height: 1.5;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    font-size: 0.94rem;
+    max-width: 88%;
+    line-height: 1.6;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    font-size: 0.95rem;
+    word-break: break-word;
   }
   .msg.user .bubble {
     background: var(--accent-gradient);
@@ -161,18 +162,228 @@
     border: none;
     border-bottom-right-radius: 4px;
     box-shadow: 0 4px 14px var(--accent-glow);
+    white-space: pre-wrap;
   }
   .msg.agent .bubble {
     border-bottom-left-radius: 4px;
+    background: #141b2a;
+    border: 1px solid #233047;
+    width: 100%;
+    max-width: 88%;
   }
-  /* Rich A2UI Card display */
-  .bubble.rich {
+
+  /* Rich Markdown Typography & Layout inside Agent Bubble */
+  .bubble h1, .bubble h2, .bubble h3, .bubble h4, .bubble h5, .bubble h6 {
+    color: #ffffff;
+    margin: 0.75rem 0 0.35rem 0;
+    line-height: 1.3;
+    font-weight: 700;
+  }
+  .bubble h1:first-child, .bubble h2:first-child, .bubble h3:first-child, .bubble h4:first-child {
+    margin-top: 0;
+  }
+  .bubble h1 { font-size: 1.35rem; border-bottom: 1px solid var(--border); padding-bottom: 0.35rem; }
+  .bubble h2 { font-size: 1.18rem; }
+  .bubble h3 { font-size: 1.05rem; }
+  .bubble h4 { font-size: 0.95rem; }
+  
+  .bubble p {
+    margin: 0 0 0.65rem 0;
+    line-height: 1.6;
+  }
+  .bubble p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .bubble ul, .bubble ol {
+    margin: 0.35rem 0 0.65rem 0;
+    padding-left: 1.35rem;
+  }
+  .bubble li {
+    margin-bottom: 0.3rem;
+    line-height: 1.55;
+  }
+  .bubble li::marker {
+    color: var(--accent);
+  }
+  
+  .bubble table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0.85rem 0;
+    font-size: 0.88rem;
+    background: rgba(11, 15, 25, 0.7);
+    border: 1px solid #233047;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .bubble th {
+    background: rgba(255, 107, 0, 0.12);
+    color: #ff9e40;
+    text-align: left;
+    padding: 0.6rem 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid #233047;
+  }
+  .bubble td {
+    padding: 0.5rem 0.85rem;
+    border-bottom: 1px solid rgba(35, 48, 71, 0.6);
+    color: var(--text-primary);
+  }
+  .bubble tr:last-child td {
+    border-bottom: none;
+  }
+  .bubble tr:nth-child(even) td {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  
+  .bubble code {
+    background: rgba(0, 0, 0, 0.45);
+    color: #ff9e40;
+    padding: 0.15rem 0.4rem;
+    border-radius: 5px;
+    font-family: 'SF Mono', Consolas, Monaco, monospace;
+    font-size: 0.86em;
+    border: 1px solid rgba(255, 107, 0, 0.2);
+  }
+  .bubble pre {
+    background: #090d16;
+    border: 1px solid #233047;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    overflow-x: auto;
+    margin: 0.7rem 0;
+  }
+  .bubble pre code {
     background: transparent;
-    border: none;
     padding: 0;
-    max-width: 100%;
-    white-space: normal;
-    box-shadow: none;
+    border: none;
+    color: #e2e8f0;
+    font-size: 0.88em;
+  }
+  
+  .bubble blockquote {
+    border-left: 3px solid var(--accent);
+    margin: 0.65rem 0;
+    padding: 0.4rem 0.85rem;
+    background: rgba(255, 107, 0, 0.06);
+    border-radius: 0 8px 8px 0;
+    color: var(--text-secondary);
+  }
+  
+  .bubble hr {
+    border: none;
+    border-top: 1px solid #233047;
+    margin: 0.85rem 0;
+  }
+  
+  .bubble strong {
+    color: #ffffff;
+    font-weight: 700;
+  }
+
+  .bubble a {
+    color: #ff9e40;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .bubble a:hover {
+    color: #ffb74d;
+  }
+
+  /* Rarity Badges & Telemetry Highlights */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.52rem;
+    border-radius: 6px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin: 0 0.15rem;
+    white-space: nowrap;
+    line-height: 1.35;
+  }
+  .badge-mythic {
+    background: linear-gradient(135deg, #7928ca, #ff0080);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255, 0, 128, 0.4);
+  }
+  .badge-legendary {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.35);
+  }
+  .badge-epic {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.35);
+  }
+  .badge-rare {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: #fff;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.35);
+  }
+  .badge-uncommon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+  }
+  .badge-common {
+    background: #334155;
+    color: #cbd5e1;
+    border: 1px solid #475569;
+  }
+  .badge-points {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    font-weight: 700;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.2);
+  }
+
+  /* Thinking / Scanning Animation */
+  .thinking-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    padding: 0.15rem 0;
+  }
+  .rev-dots {
+    display: inline-flex;
+    gap: 0.3rem;
+    align-items: center;
+  }
+  .rev-dot {
+    width: 7px;
+    height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: revPulse 1.2s infinite ease-in-out;
+  }
+  .rev-dot:nth-child(2) { animation-delay: 0.2s; }
+  .rev-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes revPulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.35; }
+    40% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 8px var(--accent); }
+  }
+
+  /* Card Container */
+  .agent-card-container {
+    margin: 0.65rem 0 0.2rem 0;
+  }
+  .agent-text-content + .agent-card-container {
+    margin-top: 0.85rem;
+  }
+  .agent-card-container + .agent-text-content {
+    margin-top: 0.85rem;
   }
 
   /* Example Prompts Row */
@@ -353,26 +564,40 @@
 
   /* --- A2UI component styles (Card, Column, Row, Text, Divider, List, Image, Icon) --- */
   .a2card {
-    border: 1px solid var(--card-border);
+    border: 1px solid rgba(255, 107, 0, 0.35);
     border-radius: 14px;
-    padding: 1.15rem;
-    background: var(--card-bg);
-    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    padding: 1.25rem;
+    background: linear-gradient(145deg, #161e2e 0%, #0e1422 100%);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45), 0 0 15px rgba(255, 107, 0, 0.08);
     max-width: 100%;
     color: var(--text-primary);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .a2card + .a2card, .a2col > .a2card { margin-top: 0.65rem; }
-  .a2col { display: flex; flex-direction: column; gap: 0.45rem; }
-  .a2row { display: flex; flex-direction: row; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
+  .a2card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.55), 0 0 20px rgba(255, 107, 0, 0.15);
+  }
+  .a2card + .a2card, .a2col > .a2card { margin-top: 0.75rem; }
+  .a2col { display: flex; flex-direction: column; gap: 0.55rem; }
+  .a2row { display: flex; flex-direction: row; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
   .a2row.between { justify-content: space-between; }
-  .a2text { margin: 0; line-height: 1.45; color: var(--text-primary); }
-  .a2text.a2-h1 { font-size: 1.45rem; font-weight: 800; color: #fff; }
-  .a2text.a2-h2 { font-size: 1.22rem; font-weight: 700; color: #fff; }
-  .a2text.a2-h3 { font-size: 1.08rem; font-weight: 700; color: #fff; }
-  .a2text.a2-h4 { font-size: 0.98rem; font-weight: 600; color: #fff; }
-  .a2text.a2-caption { font-size: 0.82rem; color: var(--text-muted); }
-  .a2divider { border: none; border-top: 1px solid var(--card-border); margin: 0.5rem 0; width: 100%; }
-  .a2img { max-width: 100%; border-radius: 10px; display: block; border: 1px solid var(--card-border); }
+  .a2text { margin: 0; line-height: 1.5; color: var(--text-primary); word-break: break-word; }
+  .a2text.a2-h1 { font-size: 1.45rem; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+  .a2text.a2-h2 { font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: -0.2px; }
+  .a2text.a2-h3 { font-size: 1.12rem; font-weight: 700; color: #fff; }
+  .a2text.a2-h4 { font-size: 1.0rem; font-weight: 600; color: #fff; }
+  .a2text.a2-caption { font-size: 0.84rem; color: var(--text-muted); line-height: 1.4; }
+  .a2divider { border: none; border-top: 1px solid rgba(255, 255, 255, 0.08); margin: 0.65rem 0; width: 100%; }
+  .a2img {
+    max-width: 100%;
+    max-height: 320px;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    display: block;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    margin: 0.35rem 0;
+  }
   .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.25rem; line-height: 1; vertical-align: middle; color: var(--accent); }
 </style>
 </head>
@@ -522,6 +747,7 @@ function buildNode(id, comps, seen) {
       if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
       else if (hint === "caption") t.classList.add("a2-caption");
       t.textContent = boundStr(props.text);
+      enhanceTextNodes(t);
       return t;
     }
     case "Divider":
@@ -567,19 +793,72 @@ function flattenText(messages) {
   return out.join("\n").trim();
 }
 
+function enhanceTextNodes(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+  const textNodes = [];
+  while (walker.nextNode()) {
+    const parent = walker.currentNode.parentNode;
+    if (parent && ["PRE", "CODE", "A", "SCRIPT", "STYLE"].includes(parent.tagName)) continue;
+    textNodes.push(walker.currentNode);
+  }
+  for (const node of textNodes) {
+    const val = node.nodeValue;
+    if (!val || val.length < 3) continue;
+    if (!/(?:Mythic|Legendary|Epic|Rare|Uncommon|Common|points|pts)/i.test(val)) continue;
+
+    const span = document.createElement("span");
+    span.innerHTML = val
+      .replace(/\b(Mythic 1-of-1|Mythic)\b/gi, '<span class="badge badge-mythic">⚡ $1</span>')
+      .replace(/\b(Legendary)\b/gi, '<span class="badge badge-legendary">👑 $1</span>')
+      .replace(/\b(Epic)\b/gi, '<span class="badge badge-epic">🔥 $1</span>')
+      .replace(/\b(Rare)\b/g, '<span class="badge badge-rare">💎 Rare</span>')
+      .replace(/\b(Uncommon)\b/g, '<span class="badge badge-uncommon">🟢 Uncommon</span>')
+      .replace(/\b(Common)\b/g, '<span class="badge badge-common">⚪ Common</span>')
+      .replace(/(\+?[0-9,]+)\s*(?:points|pts)\b/gi, '<span class="badge badge-points">+$1 PTS</span>');
+    if (span.innerHTML !== val) {
+      node.parentNode.replaceChild(span, node);
+    }
+  }
+}
+
 function renderReply(b, parts) {
   b.textContent = "";
-  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
-  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
-
-  const textStr = texts.join("\n").trim();
-  if (textStr) b.appendChild(el("div", null, textStr));
-
-  if (a2ui.length) {
-    b.classList.add("rich");
-    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  if (!parts || !parts.length) {
+    b.textContent = "(no response)";
+    return;
   }
-  if (!b.childNodes.length) b.textContent = "(no response)";
+
+  for (const part of parts) {
+    if (!part) continue;
+    if (part.kind === "text" || (!part.kind && part.text)) {
+      const rawText = (part.text || "").trim();
+      const cleanText = rawText.replace(/<a2ui-json>[\s\S]*?<\/a2ui-json>/gi, "")
+                               .replace(/<a2a_datapart_json>[\s\S]*?<\/a2a_datapart_json>/gi, "")
+                               .replace(/<\/?a2ui-json>/gi, "")
+                               .trim();
+      if (!cleanText) continue;
+
+      const textDiv = el("div", "agent-text-content");
+      if (window.marked && typeof window.marked.parse === "function") {
+        textDiv.innerHTML = window.marked.parse(cleanText, { gfm: true, breaks: true });
+      } else {
+        textDiv.textContent = cleanText;
+      }
+      enhanceTextNodes(textDiv);
+      b.appendChild(textDiv);
+    } else if (part.kind === "a2ui" && part.data) {
+      const cardDiv = el("div", "agent-card-container");
+      if (!renderSurface([part.data], cardDiv)) {
+        const fallback = flattenText([part.data]);
+        if (fallback) cardDiv.appendChild(el("div", null, fallback));
+      }
+      b.appendChild(cardDiv);
+    }
+  }
+
+  if (!b.childNodes.length) {
+    b.textContent = "(no response)";
+  }
   log.scrollTop = log.scrollHeight;
 }
 
@@ -654,7 +933,16 @@ async function sendMessage(text, imgData = null) {
   }
 
   const b = bubble("agent");
-  b.textContent = imgData ? "Analyzing vehicle photo with Gemini Vision…" : "…";
+  b.innerHTML = `
+    <div class="thinking-indicator">
+      <div class="rev-dots">
+        <span class="rev-dot"></span>
+        <span class="rev-dot"></span>
+        <span class="rev-dot"></span>
+      </div>
+      <span>${imgData ? "Analyzing vehicle photo with Gemini Vision…" : "Querying CarDex telemetry & databases…"}</span>
+    </div>
+  `;
 
   try {
     const payload = { message: text || "" };

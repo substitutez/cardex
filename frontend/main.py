@@ -134,21 +134,36 @@ def _extract_parts(parts: list) -> list[dict]:
         if isinstance(root, TextPart) and getattr(root, "text", None):
             text_val = root.text
             if "<a2ui-json>" in text_val and "</a2ui-json>" in text_val:
-                try:
-                    start = text_val.index("<a2ui-json>") + len("<a2ui-json>")
-                    end = text_val.index("</a2ui-json>")
-                    json_str = text_val[start:end].strip()
-                    card_data = json.loads(json_str)
-                    out.append({"kind": "a2ui", "data": {"surfaceUpdate": card_data}})
-                    before = text_val[:text_val.index("<a2ui-json>")].strip()
-                    after = text_val[end + len("</a2ui-json>"):].strip()
-                    if before:
-                        out.append({"kind": "text", "text": before})
-                    if after:
-                        out.append({"kind": "text", "text": after})
-                    continue
-                except Exception as e:
-                    print("Failed to parse <a2ui-json>:", e)
+                remaining_text = text_val
+                while "<a2ui-json>" in remaining_text and "</a2ui-json>" in remaining_text:
+                    try:
+                        start_tag_idx = remaining_text.index("<a2ui-json>")
+                        end_tag_idx = remaining_text.index("</a2ui-json>")
+                        before = remaining_text[:start_tag_idx].strip()
+                        if before:
+                            out.append({"kind": "text", "text": before})
+
+                        json_str = remaining_text[start_tag_idx + len("<a2ui-json>"):end_tag_idx].strip()
+                        card_data = json.loads(json_str)
+                        if isinstance(card_data, list):
+                            for item in card_data:
+                                if isinstance(item, dict) and ("surfaceUpdate" in item or "beginRendering" in item):
+                                    out.append({"kind": "a2ui", "data": item})
+                                else:
+                                    out.append({"kind": "a2ui", "data": {"surfaceUpdate": item}})
+                        elif isinstance(card_data, dict):
+                            if "surfaceUpdate" in card_data or "beginRendering" in card_data:
+                                out.append({"kind": "a2ui", "data": card_data})
+                            else:
+                                out.append({"kind": "a2ui", "data": {"surfaceUpdate": card_data}})
+
+                        remaining_text = remaining_text[end_tag_idx + len("</a2ui-json>"):].strip()
+                    except Exception as e:
+                        print("Failed to parse <a2ui-json>:", e)
+                        break
+                if remaining_text:
+                    out.append({"kind": "text", "text": remaining_text})
+                continue
             out.append({"kind": "text", "text": text_val})
         elif getattr(root, "data", None) is not None:
             data_val = root.data
@@ -282,14 +297,20 @@ async def chat(req: Request):
                 got_artifact_update = True
                 parts.extend(_extract_parts(update.parts))
 
-        # Non-streaming fallback: pull parts from the final task's artifacts.
-        if not got_artifact_update and last_task is not None:
-            print("FALLBACK: last_task =", last_task)
+        # Fallback: pull parts from the final task's artifacts, output, or history.
+        if not parts and last_task is not None:
             for artifact in getattr(last_task, "artifacts", None) or []:
                 parts.extend(_extract_parts(artifact.parts))
-            # Also check if task has messages or output
             if not parts and getattr(last_task, "output", None):
                 parts.extend(_extract_parts(last_task.output))
+            if not parts and getattr(last_task, "history", None):
+                for h_msg in reversed(last_task.history):
+                    h_parts = getattr(h_msg, "parts", None) or []
+                    extracted = _extract_parts(h_parts)
+                    valid_parts = [p for p in extracted if p.get("kind") in ("text", "a2ui")]
+                    if valid_parts:
+                        parts.extend(valid_parts)
+                        break
 
     if not parts:
         parts = [{"kind": "text", "text": "(The agent didn't return a reply.)"}]
