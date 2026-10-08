@@ -269,6 +269,80 @@
     transition: all 0.2s;
     box-shadow: 0 3px 10px var(--accent-glow);
   }
+  .upload-btn {
+    padding: 0.75rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    color: var(--accent);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    transition: all 0.2s;
+  }
+  .upload-btn:hover {
+    border-color: var(--accent);
+    background: rgba(255, 107, 0, 0.12);
+    box-shadow: 0 0 10px var(--accent-glow);
+    transform: translateY(-1px);
+  }
+  .preview-wrapper {
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0.4rem 1.4rem;
+    display: none;
+    background: var(--surface);
+  }
+  .preview-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: var(--card-bg);
+    border: 1px solid var(--accent);
+    padding: 0.35rem 0.75rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px var(--accent-glow);
+  }
+  .preview-img {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--card-border);
+  }
+  .preview-info {
+    font-size: 0.82rem;
+    color: var(--text-primary);
+  }
+  .preview-remove {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ff5722;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .preview-remove:hover {
+    background: rgba(255, 87, 34, 0.25);
+  }
+  .user-spot-img {
+    max-width: 240px;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    display: block;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+  }
   .send-btn:hover {
     filter: brightness(1.1);
     transform: translateY(-1px);
@@ -329,20 +403,37 @@
 <div class="prompts-container">
   <div class="prompts-label">Quick Actions</div>
   <div class="prompts-row">
+    <button class="prompt-btn" data-prompt="Identify this supercar I spotted: https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=800">
+      <span>📸</span> Identify Photo: Spotted Audi RS3
+    </button>
     <button class="prompt-btn" data-prompt="Look up specs and rarity for 2024 Porsche 911 GT3 RS">
-      <span>🏎️</span> Look up 2024 Porsche 911 GT3 RS
+      <span>🏎️</span> 2024 Porsche 911 GT3 RS Specs
     </button>
     <button class="prompt-btn" data-prompt="Show the global spotter leaderboard and rarest spots">
-      <span>🏆</span> Global Leaderboard & Rarest Spots
+      <span>🏆</span> Global Leaderboard
     </button>
     <button class="prompt-btn" data-prompt="Check my garage collection and spotter score">
-      <span>📸</span> My Garage & Spotter Score
+      <span>🏅</span> My Garage
     </button>
   </div>
 </div>
 
+<div id="preview-wrapper" class="preview-wrapper">
+  <div class="preview-box">
+    <img id="preview-img" class="preview-img" src="" alt="Spot preview">
+    <div class="preview-info">
+      <span id="preview-filename">photo.jpg</span>
+    </div>
+    <button type="button" id="preview-remove" class="preview-remove" title="Remove photo">✕</button>
+  </div>
+</div>
+
 <form id="form">
-  <input id="input" placeholder="Spot a car, check rarity, or ask CarDex…" autocomplete="off" autofocus>
+  <input type="file" id="file-input" accept="image/*" style="display:none">
+  <button type="button" id="upload-btn" class="upload-btn" title="Upload or capture vehicle photo">
+    📷
+  </button>
+  <input id="input" placeholder="Spot a car, attach/paste a photo, or ask CarDex…" autocomplete="off" autofocus>
   <button class="send-btn" type="submit">
     <span>Spot</span>
     <span>🏎️</span>
@@ -353,6 +444,14 @@
 const log = document.getElementById("log");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
+const fileInput = document.getElementById("file-input");
+const uploadBtn = document.getElementById("upload-btn");
+const previewWrapper = document.getElementById("preview-wrapper");
+const previewImg = document.getElementById("preview-img");
+const previewFilename = document.getElementById("preview-filename");
+const previewRemove = document.getElementById("preview-remove");
+
+let pendingImageData = null;
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);
@@ -430,7 +529,7 @@ function buildNode(id, comps, seen) {
     case "Image": {
       const src = boundStr(props.url || props.src);
       if (!/^https?:\/\//i.test(src)) return null;
-      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.altText || props.alt) || ""; return img;
     }
     case "Icon": {
       const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
@@ -484,16 +583,87 @@ function renderReply(b, parts) {
   log.scrollTop = log.scrollHeight;
 }
 
-async function sendMessage(text) {
-  if (!text) return;
-  bubble("user").textContent = text;
+function setPendingImage(file) {
+  if (!file || !file.type.startsWith("image/")) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    pendingImageData = e.target.result;
+    previewImg.src = pendingImageData;
+    previewFilename.textContent = file.name || "attached_photo.jpg";
+    previewWrapper.style.display = "block";
+    input.focus();
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPendingImage() {
+  pendingImageData = null;
+  previewImg.src = "";
+  previewFilename.textContent = "";
+  previewWrapper.style.display = "none";
+  fileInput.value = "";
+}
+
+uploadBtn.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", (e) => {
+  if (e.target.files && e.target.files[0]) {
+    setPendingImage(e.target.files[0]);
+  }
+});
+previewRemove.addEventListener("click", clearPendingImage);
+
+// Clipboard Paste (Ctrl+V / Cmd+V) for images
+window.addEventListener("paste", (e) => {
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  for (const item of items) {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      const file = item.getAsFile();
+      setPendingImage(file);
+      break;
+    }
+  }
+});
+
+// Drag and drop images onto chat
+["dragenter", "dragover"].forEach(name => {
+  window.addEventListener(name, (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+});
+window.addEventListener("drop", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+    setPendingImage(e.dataTransfer.files[0]);
+  }
+});
+
+async function sendMessage(text, imgData = null) {
+  if (!text && !imgData) return;
+  
+  const userBubble = bubble("user");
+  if (imgData) {
+    const userImg = el("img", "user-spot-img");
+    userImg.src = imgData;
+    userBubble.appendChild(userImg);
+  }
+  if (text) {
+    const userText = el("div", null, text);
+    userBubble.appendChild(userText);
+  }
+
   const b = bubble("agent");
-  b.textContent = "…";
+  b.textContent = imgData ? "Analyzing vehicle photo with Gemini Vision…" : "…";
+
   try {
+    const payload = { message: text || "" };
+    if (imgData) payload.image = imgData;
+
     const res = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
+      body: JSON.stringify(payload)
     });
     const raw = await res.text();
     let data;
@@ -508,9 +678,12 @@ async function sendMessage(text) {
 form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const text = input.value.trim();
-  if (!text) return;
+  const img = pendingImageData;
+  if (!text && !img) return;
+
   input.value = "";
-  await sendMessage(text);
+  clearPendingImage();
+  await sendMessage(text, img);
 });
 
 // Clickable Example Prompts
@@ -519,6 +692,7 @@ document.querySelectorAll(".prompt-btn").forEach(btn => {
     const promptText = btn.getAttribute("data-prompt");
     if (promptText) {
       input.value = "";
+      clearPendingImage();
       sendMessage(promptText);
     }
   });

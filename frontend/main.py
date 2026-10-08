@@ -24,6 +24,7 @@ Run:
   python main.py                 # -> http://localhost:8080
 """
 
+import json
 import os
 import uuid
 
@@ -131,12 +132,39 @@ def _extract_parts(parts: list) -> list[dict]:
     for p in parts:
         root = getattr(p, "root", p)
         if isinstance(root, TextPart) and getattr(root, "text", None):
-            out.append({"kind": "text", "text": root.text})
+            text_val = root.text
+            if "<a2ui-json>" in text_val and "</a2ui-json>" in text_val:
+                try:
+                    start = text_val.index("<a2ui-json>") + len("<a2ui-json>")
+                    end = text_val.index("</a2ui-json>")
+                    json_str = text_val[start:end].strip()
+                    card_data = json.loads(json_str)
+                    out.append({"kind": "a2ui", "data": {"surfaceUpdate": card_data}})
+                    before = text_val[:text_val.index("<a2ui-json>")].strip()
+                    after = text_val[end + len("</a2ui-json>"):].strip()
+                    if before:
+                        out.append({"kind": "text", "text": before})
+                    if after:
+                        out.append({"kind": "text", "text": after})
+                    continue
+                except Exception as e:
+                    print("Failed to parse <a2ui-json>:", e)
+            out.append({"kind": "text", "text": text_val})
         elif getattr(root, "data", None) is not None:
+            data_val = root.data
             meta = getattr(root, "metadata", None) or {}
             mime = meta.get("mimeType") if isinstance(meta, dict) else None
+            
+            # Check if root.data itself is a dict containing {"data": ..., "metadata": {"mimeType": "application/json+a2ui"}}
+            if isinstance(data_val, dict):
+                inner_meta = data_val.get("metadata") or {}
+                inner_mime = inner_meta.get("mimeType") if isinstance(inner_meta, dict) else None
+                if mime == _A2UI_MIME or inner_mime == _A2UI_MIME or "surfaceUpdate" in data_val or "beginRendering" in data_val:
+                    actual_a2ui = data_val.get("data", data_val)
+                    out.append({"kind": "a2ui", "data": actual_a2ui})
+                    continue
             if mime == _A2UI_MIME:
-                out.append({"kind": "a2ui", "data": root.data})
+                out.append({"kind": "a2ui", "data": data_val})
         elif isinstance(root, FilePart):
             uri = getattr(getattr(root, "file", None), "uri", None)
             if uri:
@@ -144,12 +172,74 @@ def _extract_parts(parts: list) -> list[dict]:
     return out
 
 
+BUCKET_NAME = os.environ.get("GCS_BUCKET", "cardex-spots-qwiklabs-gcp-04-6f324b699fdd")
+_storage_client = None
+
+
+def _get_storage_client():
+    global _storage_client
+    if _storage_client is None:
+        from google.cloud import storage
+        _storage_client = storage.Client()
+    return _storage_client
+
+
+def _upload_base64_image(b64_str: str) -> str:
+    """Uploads base64 image data to GCS and returns its public HTTPS URL."""
+    import base64
+    mime_type = "image/jpeg"
+    ext = "jpg"
+    data = b64_str
+    if "," in b64_str and "base64" in b64_str:
+        header, data = b64_str.split(",", 1)
+        if "png" in header:
+            mime_type = "image/png"
+            ext = "png"
+        elif "webp" in header:
+            mime_type = "image/webp"
+            ext = "webp"
+        elif "jpeg" in header or "jpg" in header:
+            mime_type = "image/jpeg"
+            ext = "jpg"
+    image_bytes = base64.b64decode(data)
+    client = _get_storage_client()
+    bucket = client.bucket(BUCKET_NAME)
+    blob_name = f"spots/{uuid.uuid4().hex[:16]}.{ext}"
+    blob = bucket.blob(blob_name)
+    blob.upload_from_string(image_bytes, content_type=mime_type)
+    return f"https://storage.googleapis.com/{BUCKET_NAME}/{blob_name}"
+
+
 @app.post("/chat")
 async def chat(req: Request):
     body = await req.json()
     message = body.get("message", "")
+    image_input = body.get("image")
     user_id = body.get("user_id") or "web-user"
     parts: list[dict] = []
+
+    uploaded_image_url = None
+    if image_input:
+        if image_input.startswith("http://") or image_input.startswith("https://"):
+            uploaded_image_url = image_input
+        else:
+            try:
+                uploaded_image_url = _upload_base64_image(image_input)
+            except Exception as e:
+                print("Failed to upload image to GCS:", e)
+
+    # Build agent prompt
+    if uploaded_image_url:
+        if message.strip():
+            agent_text = (
+                f"I spotted this car and took this photo: {uploaded_image_url}. {message.strip()}"
+            )
+        else:
+            agent_text = (
+                f"Please identify the car in this photo I spotted and record the spot: {uploaded_image_url}"
+            )
+    else:
+        agent_text = message
 
     async with httpx.AsyncClient(headers=_auth_headers(), timeout=120) as client:
         card = await _get_card(client)
@@ -167,16 +257,20 @@ async def chat(req: Request):
         msg = Message(
             message_id=str(uuid.uuid4()),
             role=Role.user,
-            parts=[Part(root=TextPart(text=message))],
+            parts=[Part(root=TextPart(text=agent_text))],
             context_id=_contexts.get(user_id),
         )
 
         last_task = None
         got_artifact_update = False
         async for event in a2a_client.send_message(msg):
+            print("A2A EVENT RECEIVED:", type(event), event)
             if not isinstance(event, tuple):
+                if isinstance(event, Message):
+                    parts.extend(_extract_parts(event.parts))
                 continue
             task, update = event
+            print("TASK:", type(task), "UPDATE:", type(update), update)
             if task is not None:
                 last_task = task
                 if getattr(task, "context_id", None):
@@ -184,17 +278,22 @@ async def chat(req: Request):
             if isinstance(update, TaskArtifactUpdateEvent):
                 got_artifact_update = True
                 parts.extend(_extract_parts(update.artifact.parts))
+            elif isinstance(update, Message):
+                got_artifact_update = True
+                parts.extend(_extract_parts(update.parts))
 
         # Non-streaming fallback: pull parts from the final task's artifacts.
         if not got_artifact_update and last_task is not None:
+            print("FALLBACK: last_task =", last_task)
             for artifact in getattr(last_task, "artifacts", None) or []:
                 parts.extend(_extract_parts(artifact.parts))
+            # Also check if task has messages or output
+            if not parts and getattr(last_task, "output", None):
+                parts.extend(_extract_parts(last_task.output))
 
     if not parts:
-        # The turn produced no text or UI (e.g. the agent only ran tools, or a
-        # tool stalled). Be honest rather than silent.
         parts = [{"kind": "text", "text": "(The agent didn't return a reply.)"}]
-    return JSONResponse({"parts": parts})
+    return JSONResponse({"parts": parts, "image_url": uploaded_image_url})
 
 
 # Serve the chat UI (keep this mount last so /chat wins).
