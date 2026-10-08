@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CarDex | Supercar & Vehicle SpotterDex</title>
+<!-- Optional: used to draw A2UI Icon components. If it can't load, icons fall back to showing their name as text. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+<style>
+  :root {
+    --accent: #ff6b00;
+    --accent-glow: rgba(255, 107, 0, 0.25);
+    --accent-gradient: linear-gradient(135deg, #ff5722 0%, #ff8f00 100%);
+    --bg: #0b0f19;
+    --surface: #121826;
+    --card-bg: #1a2234;
+    --card-border: #26334d;
+    --border: #222d42;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  /* Header */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.85rem 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    z-index: 10;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .header-logo {
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+  .header-title-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .header-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .header-status {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.1);
+    padding: 0.3rem 0.65rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(74, 222, 128, 0.2);
+  }
+  .header-status .pulse-dot {
+    width: 7px;
+    height: 7px;
+    background: #4ade80;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #4ade80;
+  }
+
+  /* Chat Message Area */
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.4rem;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .welcome-banner {
+    background: linear-gradient(180deg, rgba(255, 107, 0, 0.08) 0%, rgba(26, 34, 52, 0.4) 100%);
+    border: 1px solid rgba(255, 107, 0, 0.2);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  .welcome-banner h2 {
+    margin: 0 0 0.4rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .welcome-banner p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+
+  /* Dialogue Messages */
+  .msg {
+    display: flex;
+    flex-direction: column;
+    margin: 0.2rem 0;
+  }
+  .msg.user {
+    align-items: flex-end;
+  }
+  .msg.agent {
+    align-items: flex-start;
+  }
+  .msg-meta {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+  .bubble {
+    display: inline-block;
+    padding: 0.75rem 1.05rem;
+    border-radius: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-primary);
+    text-align: left;
+    max-width: 85%;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font-size: 0.94rem;
+  }
+  .msg.user .bubble {
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 14px var(--accent-glow);
+  }
+  .msg.agent .bubble {
+    border-bottom-left-radius: 4px;
+  }
+  /* Rich A2UI Card display */
+  .bubble.rich {
+    background: transparent;
+    border: none;
+    padding: 0;
+    max-width: 100%;
+    white-space: normal;
+    box-shadow: none;
+  }
+
+  /* Example Prompts Row */
+  .prompts-container {
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0.4rem 1.4rem 0.2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .prompts-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .prompts-row {
+    display: flex;
+    gap: 0.55rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+  .prompt-btn {
+    flex: 1;
+    min-width: 200px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.55rem 0.85rem;
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .prompt-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: rgba(255, 107, 0, 0.08);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px var(--accent-glow);
+  }
+
+  /* Input Form */
+  form {
+    display: flex;
+    gap: 0.65rem;
+    padding: 0.75rem 1.4rem 1.1rem 1.4rem;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+  input::placeholder {
+    color: var(--text-muted);
+  }
+  .send-btn {
+    padding: 0.75rem 1.35rem;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent-gradient);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+    box-shadow: 0 3px 10px var(--accent-glow);
+  }
+  .send-btn:hover {
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+  }
+  .send-btn:active {
+    transform: translateY(0);
+  }
+
+  /* --- A2UI component styles (Card, Column, Row, Text, Divider, List, Image, Icon) --- */
+  .a2card {
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 1.15rem;
+    background: var(--card-bg);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    max-width: 100%;
+    color: var(--text-primary);
+  }
+  .a2card + .a2card, .a2col > .a2card { margin-top: 0.65rem; }
+  .a2col { display: flex; flex-direction: column; gap: 0.45rem; }
+  .a2row { display: flex; flex-direction: row; gap: 0.7rem; align-items: center; flex-wrap: wrap; }
+  .a2row.between { justify-content: space-between; }
+  .a2text { margin: 0; line-height: 1.45; color: var(--text-primary); }
+  .a2text.a2-h1 { font-size: 1.45rem; font-weight: 800; color: #fff; }
+  .a2text.a2-h2 { font-size: 1.22rem; font-weight: 700; color: #fff; }
+  .a2text.a2-h3 { font-size: 1.08rem; font-weight: 700; color: #fff; }
+  .a2text.a2-h4 { font-size: 0.98rem; font-weight: 600; color: #fff; }
+  .a2text.a2-caption { font-size: 0.82rem; color: var(--text-muted); }
+  .a2divider { border: none; border-top: 1px solid var(--card-border); margin: 0.5rem 0; width: 100%; }
+  .a2img { max-width: 100%; border-radius: 10px; display: block; border: 1px solid var(--card-border); }
+  .material-symbols-outlined { font-family: 'Material Symbols Outlined'; font-size: 1.25rem; line-height: 1; vertical-align: middle; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <span class="header-logo">🏎️</span>
+    <div class="header-title-group">
+      <span class="header-title">CarDex</span>
+      <span class="header-subtitle">Supercar & Exotic Vehicle SpotterDex</span>
+    </div>
+  </div>
+  <div class="header-status">
+    <span class="pulse-dot"></span>
+    <span>Connected to Agent Engine</span>
+  </div>
+</header>
+
+<div id="log">
+  <div class="welcome-banner">
+    <h2>Welcome to CarDex 🏁</h2>
+    <p>Catalogue, identify, and score real-world car sightings. Check production specs, rare trims, collector rarity scores, and spotter rankings.</p>
+  </div>
+</div>
+
+<!-- Tailored Example Prompts Row -->
+<div class="prompts-container">
+  <div class="prompts-label">Quick Actions</div>
+  <div class="prompts-row">
+    <button class="prompt-btn" data-prompt="Look up specs and rarity for 2024 Porsche 911 GT3 RS">
+      <span>🏎️</span> Look up 2024 Porsche 911 GT3 RS
+    </button>
+    <button class="prompt-btn" data-prompt="Show the global spotter leaderboard and rarest spots">
+      <span>🏆</span> Global Leaderboard & Rarest Spots
+    </button>
+    <button class="prompt-btn" data-prompt="Check my garage collection and spotter score">
+      <span>📸</span> My Garage & Spotter Score
+    </button>
+  </div>
+</div>
+
+<form id="form">
+  <input id="input" placeholder="Spot a car, check rarity, or ask CarDex…" autocomplete="off" autofocus>
+  <button class="send-btn" type="submit">
+    <span>Spot</span>
+    <span>🏎️</span>
+  </button>
+</form>
+
+<script>
+const log = document.getElementById("log");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+
+function bubble(who) {
+  const m = el("div", "msg " + who);
+  const meta = el("div", "msg-meta", who === "user" ? "You" : "CarDex AI");
+  const b = el("div", "bubble");
+  m.appendChild(meta);
+  m.appendChild(b);
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  return b;
+}
+
+/* ----------------------------------------------------------------------------
+ * A2UI mini-renderer (v0.8 Basic Catalog subset).
+ * Renders Card / Column / Row / Text / Divider / List / Image / Icon.
+ * -------------------------------------------------------------------------- */
+function boundStr(v) {
+  if (v == null) return "";
+  if (typeof v === "string") return v;
+  if (typeof v.literalString === "string") return v.literalString;
+  return "";
+}
+
+function childIds(props) {
+  const ids = [];
+  if (props && typeof props.child === "string") ids.push(props.child);
+  const ch = props && props.children;
+  if (ch && Array.isArray(ch.explicitList)) for (const c of ch.explicitList) if (typeof c === "string") ids.push(c);
+  return ids;
+}
+
+function iconName(n) {
+  return String(n || "").replace(/([a-z0-9])([A-Z])/g, "$1_$2").replace(/\s+/g, "_").toLowerCase();
+}
+
+function buildNode(id, comps, seen) {
+  if (!id || seen.has(id)) return null;
+  seen.add(id);
+  const spec = comps[id];
+  if (!spec || typeof spec !== "object") return null;
+  const type = Object.keys(spec)[0];
+  const props = spec[type] || {};
+  const kids = () => childIds(props).map(cid => buildNode(cid, comps, seen)).filter(Boolean);
+
+  switch (type) {
+    case "Card": {
+      const d = el("div", "a2card"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Column":
+    case "List": {
+      const horizontal = type === "List" && props.direction === "horizontal";
+      const d = el("div", horizontal ? "a2row" : "a2col"); kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Row": {
+      const d = el("div", "a2row" + (props.distribution === "spaceBetween" ? " between" : ""));
+      kids().forEach(n => d.appendChild(n)); return d;
+    }
+    case "Text": {
+      const t = el("div", "a2text");
+      const hint = String(props.usageHint || "body").toLowerCase();
+      if (["h1", "h2", "h3", "h4", "h5", "h6"].includes(hint)) t.classList.add("a2-" + hint);
+      else if (hint === "caption") t.classList.add("a2-caption");
+      t.textContent = boundStr(props.text);
+      return t;
+    }
+    case "Divider":
+      return el("hr", "a2divider");
+    case "Image": {
+      const src = boundStr(props.url || props.src);
+      if (!/^https?:\/\//i.test(src)) return null;
+      const img = el("img", "a2img"); img.src = src; img.alt = boundStr(props.alt) || ""; return img;
+    }
+    case "Icon": {
+      const s = el("span", "material-symbols-outlined"); s.textContent = iconName(boundStr(props.name) || props.name); return s;
+    }
+    default:
+      return null;
+  }
+}
+
+function renderSurface(messages, container) {
+  const comps = {};
+  const roots = [];
+  for (const m of messages) {
+    if (m.beginRendering && typeof m.beginRendering.root === "string") roots.push(m.beginRendering.root);
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.id && c.component) comps[c.id] = c.component;
+  }
+  let rootIds = roots.filter(r => comps[r]);
+  if (rootIds.length === 0) {
+    const referenced = new Set();
+    for (const id in comps) { const spec = comps[id]; childIds(spec[Object.keys(spec)[0]] || {}).forEach(c => referenced.add(c)); }
+    rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+  }
+  let drew = false;
+  for (const rid of rootIds) { const node = buildNode(rid, comps, new Set()); if (node) { container.appendChild(node); drew = true; } }
+  return drew;
+}
+
+function flattenText(messages) {
+  const out = [];
+  for (const m of messages) {
+    const su = m.surfaceUpdate;
+    if (su && Array.isArray(su.components)) for (const c of su.components) if (c && c.component && c.component.Text) out.push(boundStr(c.component.Text.text));
+  }
+  return out.join("\n").trim();
+}
+
+function renderReply(b, parts) {
+  b.textContent = "";
+  const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+  const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+  const textStr = texts.join("\n").trim();
+  if (textStr) b.appendChild(el("div", null, textStr));
+
+  if (a2ui.length) {
+    b.classList.add("rich");
+    if (!renderSurface(a2ui, b)) b.appendChild(el("div", null, flattenText(a2ui) || "(no card content)"));
+  }
+  if (!b.childNodes.length) b.textContent = "(no response)";
+  log.scrollTop = log.scrollHeight;
+}
+
+async function sendMessage(text) {
+  if (!text) return;
+  bubble("user").textContent = text;
+  const b = bubble("agent");
+  b.textContent = "…";
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
+    renderReply(b, data.parts || []);
+  } catch (e) {
+    b.textContent = "Error: " + e.message;
+  }
+}
+
+form.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  await sendMessage(text);
+});
+
+// Clickable Example Prompts
+document.querySelectorAll(".prompt-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const promptText = btn.getAttribute("data-prompt");
+    if (promptText) {
+      input.value = "";
+      sendMessage(promptText);
+    }
+  });
+});
+</script>
+</body>
+</html>
