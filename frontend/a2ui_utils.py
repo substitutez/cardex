@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """Make an ADK agent's A2UI output render in the ADK dev UI (`adk web`).
 
 `adk web` has a built-in A2UI renderer, but it only fires when a response part is
@@ -25,9 +27,14 @@ Robustness notes (why this file is more than a one-liner):
 import json
 import re
 
-from google.genai import types
-from google.adk.agents.callback_context import CallbackContext
-from google.adk.models.llm_response import LlmResponse
+try:
+    from google.genai import types
+    from google.adk.agents.callback_context import CallbackContext
+    from google.adk.models.llm_response import LlmResponse
+except ImportError:
+    types = None
+    CallbackContext = None
+    LlmResponse = None
 
 # A2UI message kinds this renderer understands (v0.8).
 _A2UI_KEYS = ("beginRendering", "surfaceUpdate", "dataModelUpdate", "deleteSurface")

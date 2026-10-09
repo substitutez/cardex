@@ -51,6 +51,9 @@ import auth_db
 import quota_limiter
 import anti_cheat
 import firestore_db
+import billing
+import a2ui_utils
+import paint_matcher
 
 try:
     from dotenv import load_dotenv
@@ -232,11 +235,12 @@ def _upload_base64_image(b64_str: str) -> str:
 
 
 @app.post("/api/auth/signup")
+@app.post("/api/auth/register")
 async def signup(req: Request):
     """Registers a new spotter and initializes their garage and points balance."""
     try:
         body = await req.json()
-        username = body.get("username", "")
+        username = body.get("username") or body.get("spotter_handle") or ""
         email = body.get("email", "")
         password = body.get("password", "")
         result = auth_db.register_user(username=username, email=email, password=password)
@@ -248,6 +252,7 @@ async def signup(req: Request):
 
 
 @app.post("/api/auth/signin")
+@app.post("/api/auth/login")
 async def signin(req: Request):
     """Authenticates a spotter with username/email and password."""
     try:
@@ -387,6 +392,43 @@ async def upgrade_user_pro_endpoint(req: Request):
     return JSONResponse(res)
 
 
+@app.post("/api/billing/create-checkout-session")
+async def create_checkout_session_endpoint(req: Request):
+    """Creates a Stripe Checkout Session for Pro subscription ($9.99/mo) or Refill pack ($1.99)."""
+    body = await req.json()
+    session_type = body.get("type", "subscription")
+
+    user_id = body.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    user_id = user_id or "spotter_1"
+
+    success_url = str(req.base_url)
+    res = billing.create_checkout_session(
+        user_id=user_id,
+        session_type=session_type,
+        success_url=success_url,
+    )
+    return JSONResponse(res)
+
+
+@app.post("/api/billing/webhook")
+async def stripe_webhook_endpoint(req: Request):
+    """Stripe webhook handler for checkout.session.completed."""
+    payload = await req.body()
+    sig_header = req.headers.get("stripe-signature")
+    try:
+        res = billing.handle_stripe_webhook(payload, sig_header)
+        return JSONResponse(res)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 @app.get("/api/reviews/pending")
 async def pending_disputes_endpoint(req: Request):
     """Retrieves disputes waiting for Master Spotter consensus review."""
@@ -445,6 +487,7 @@ async def submit_dispute_endpoint(req: Request):
 
 
 @app.post("/chat")
+@app.post("/api/spots/upload")
 async def chat(req: Request):
     body = await req.json()
     message = body.get("message", "")
@@ -465,27 +508,25 @@ async def chat(req: Request):
     if image_input:
         allowed, reason, quota_info = quota_limiter.check_and_reserve_scan(user_id)
         if not allowed:
-            return JSONResponse({
-                "parts": [
-                    {
-                        "kind": "text",
-                        "text": f"⚠️ **Daily Scan Limit Reached (5/5 Scans)**\n{reason}\n\nTo preserve platform economics and prevent server abuse, free accounts are limited to 5 scans per rolling 24 hours. Unlock unlimited scans with CarDex Pro or grab an instant 5-scan refill pack!",
-                    },
-                    {
-                        "kind": "a2ui",
-                        "data": {
-                            "type": "paywall_card",
-                            "title": "Daily Quota Limit Reached",
-                            "subtitle": "5 of 5 Free Scans Used Today",
-                            "message": "Upgrade to CarDex Pro or grab an instant scan refill pack.",
-                            "quota": quota_info,
+            paywall_card = a2ui_utils.build_paywall_card(quota_info)
+            return JSONResponse(
+                {
+                    "parts": [
+                        {
+                            "kind": "text",
+                            "text": f"⚠️ **Daily Scan Limit Reached ({quota_info.get('scans_today', 5)}/{quota_info.get('daily_limit', 5)} Scans)**\n{reason}\n\nTo preserve platform economics and prevent server abuse, free accounts are limited to 5 scans per rolling 24 hours. Unlock unlimited scans with CarDex Pro or grab an instant 5-scan refill pack!",
                         },
-                    },
-                ],
-                "quota_exceeded": True,
-                "quota": quota_info,
-                "user": user_profile,
-            })
+                        {
+                            "kind": "a2ui",
+                            "data": paywall_card,
+                        },
+                    ],
+                    "quota_exceeded": True,
+                    "quota": quota_info,
+                    "user": user_profile,
+                },
+                status_code=429,
+            )
 
     parts: list[dict] = []
 
@@ -605,6 +646,29 @@ async def chat(req: Request):
 
     if not parts:
         parts = [{"kind": "text", "text": "(The agent didn't return a reply.)"}]
+
+    if decoded_bytes:
+        try:
+            paint_match = paint_matcher.match_oem_paint_color(decoded_bytes)
+            de00 = paint_match.get("delta_e00", 999.0)
+            has_paint_card = any(
+                p.get("kind") == "a2ui" and p.get("data", {}).get("type") == "verified_paint_match"
+                for p in parts
+            )
+            if not has_paint_card and paint_match.get("matched") and de00 <= 2.0:
+                rgb = paint_match.get("rgb", [58, 28, 68])
+                hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+                paint_card = a2ui_utils.build_paint_match_card(
+                    paint_code=paint_match.get("paint_code", ""),
+                    commercial_name=paint_match.get("paint_name", ""),
+                    program=paint_match.get("program", "Factory Finish"),
+                    hex_color=hex_color,
+                    delta_e=de00,
+                    multiplier=paint_match.get("multiplier", 1.35),
+                )
+                parts.append({"kind": "a2ui", "data": paint_card})
+        except Exception:
+            pass
 
     # Deduct quota scan credit on successful spotting scan
     latest_quota = None

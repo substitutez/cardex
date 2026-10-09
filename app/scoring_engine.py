@@ -69,6 +69,7 @@ KNOWN_PRODUCTION_RUNS: dict[str, int] = {
 
 def lookup_production_run(make: str, model: str, trim: str = "") -> int:
     """Estimate or lookup production volume N_prod for a vehicle."""
+    import re
     import unicodedata
 
     def _clean(s: str) -> str:
@@ -80,23 +81,42 @@ def lookup_production_run(make: str, model: str, trim: str = "") -> int:
     key = _clean(f"{make} {model}")
     full_key = _clean(f"{make} {model} {trim}")
 
+    # 1. Exact or canonical enthusiast production runs table
     for k, v in KNOWN_PRODUCTION_RUNS.items():
         k_clean = _clean(k)
         if k_clean in full_key or k_clean in key or full_key in k_clean:
             return v
 
-    # Heuristics based on model and trim name
-    if any(w in full_key for w in ["1 of 1", "one of one", "unique", "bespoke"]):
-        return 1
-    if any(w in full_key for w in ["weissach", "gtd", "amr", "track weapon", "special edition"]):
-        return 500
-    if any(w in full_key for w in ["gt3 rs", "gt2 rs", "gt3", "gt4", "superleggera", "svj", "scuderia"]):
-        return 4500 if "gt3 rs" in full_key else 3000
-    if any(w in full_key for w in ["turbo s", "m8", "black series", "amg gt"]):
-        return 10000
+    # 2. Check SQLite vehicles database if a specific limited edition is seeded
+    try:
+        from app.vehicle_db import get_vehicle_production_units
+        db_units = get_vehicle_production_units(make, model)
+        if db_units and db_units < 1000000:
+            return db_units
+    except Exception:
+        pass
 
-    # Default mass-production assumption
-    return 150000
+    # Word-boundary matching for heuristics based on model and trim name
+    def _has_word(words: list[str], text: str) -> bool:
+        return any(bool(re.search(r'\b' + re.escape(w) + r'\b', text)) for w in words)
+
+    if _has_word(["1 of 1", "one of one", "unique", "bespoke"], full_key):
+        return 1
+    if _has_word(["weissach", "gtd", "amr", "track weapon", "special edition"], full_key):
+        return 500
+    if _has_word(["gt3 rs", "gt2 rs", "gt3", "gt4", "superleggera", "svj", "scuderia"], full_key):
+        return 4500 if "gt3 rs" in full_key else 3000
+    if _has_word(["turbo s", "m8", "black series", "amg gt"], full_key):
+        return 10000
+    if any(w in full_key for w in ["supercar", "hypercar"]):
+        return 150000
+
+    # Default mass-production assumption from vehicle_db or 1,000,000
+    try:
+        from app.vehicle_db import get_vehicle_production_units
+        return get_vehicle_production_units(make, model)
+    except Exception:
+        return 1000000
 
 
 def calculate_base_points(n_prod: int) -> int:
@@ -212,6 +232,12 @@ def compute_dynamic_spot_score(
     return {
         "final_points": final_points,
         "rarity_tier": rarity_tier,
+        "base_points": base_points,
+        "production_run": n_prod,
+        "recent_spots_30d": encounters_30d,
+        "decay_factor": d_30,
+        "paint_multiplier": m_paint,
+        "first_spotter_bonus": b_first,
         "breakdown": {
             "n_prod": n_prod,
             "base_points": base_points,

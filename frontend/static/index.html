@@ -2121,6 +2121,206 @@
     background: linear-gradient(90deg, #a855f7, #ec4899);
     color: #fff;
   }
+
+  /* --- Holographic Verified Paint Card --- */
+  .verified-paint-card {
+    background: linear-gradient(135deg, rgba(20, 24, 38, 0.95), rgba(10, 14, 24, 0.98));
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    margin-top: 0.75rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+    background-clip: padding-box;
+  }
+  .verified-paint-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      60deg,
+      rgba(255, 0, 128, 0.2),
+      rgba(0, 255, 255, 0.25),
+      rgba(255, 230, 0, 0.2),
+      rgba(138, 43, 226, 0.25)
+    );
+    z-index: -1;
+    animation: holographicShimmer 6s linear infinite;
+  }
+  @keyframes holographicShimmer {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .paint-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .paint-swatch-glow {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.6);
+    flex-shrink: 0;
+  }
+  .paint-details {
+    flex: 1;
+  }
+  .paint-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+  .paint-oem-tag {
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #38bdf8;
+    letter-spacing: 0.05em;
+  }
+  .paint-multiplier-badge {
+    background: linear-gradient(90deg, #ec4899, #8b5cf6);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+  }
+  .paint-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+  }
+  .paint-code-line {
+    margin: 0.2rem 0 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+  .paint-telemetry-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.75rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .paint-telemetry-row strong {
+    color: #34d399;
+  }
+
+  /* --- Dynamic Point Breakdown Card --- */
+  .point-breakdown-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-top: 0.75rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .breakdown-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .breakdown-header .bd-icon {
+    font-size: 1.4rem;
+  }
+  .breakdown-header h4 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #38bdf8;
+  }
+  .bd-car-name {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+  .bd-tier-pill {
+    margin-left: auto;
+    background: rgba(255, 107, 0, 0.2);
+    border: 1px solid rgba(255, 107, 0, 0.5);
+    color: #ff9800;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+  .breakdown-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .bd-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .bd-val {
+    font-weight: 600;
+    color: #fff;
+  }
+  .bd-val.highlight {
+    color: #38bdf8;
+  }
+  .bd-row.bd-total {
+    margin-top: 0.35rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #fff;
+  }
+  .bd-val.total-pts {
+    color: #10b981;
+    font-size: 1.05rem;
+  }
+
+  /* --- Out of Fuel Paywall Card Styling --- */
+  .paywall-progress-container {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .paywall-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+  }
+  .paywall-progress-bar {
+    width: 100%;
+    height: 7px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .paywall-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff9800, #ef4444);
+    border-radius: 999px;
+  }
+  .paywall-countdown {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+  }
+  .countdown-timer {
+    color: #f59e0b;
+  }
 </style>
 </head>
 <body>
@@ -2621,7 +2821,7 @@
           <li>Full Access to CIEDE2000 Paint Matcher</li>
           <li>Instant Activation via Firestore</li>
         </ul>
-        <button type="button" class="btn-plan-action btn-plan-refill" onclick="handleRefillPurchase(1)">⚡ Refill +5 Scans ($1.99)</button>
+        <button type="button" class="btn-plan-action btn-plan-refill" onclick="triggerStripeCheckout('refill')">⚡ Refill +5 Scans ($1.99)</button>
       </div>
 
       <!-- Pro Tier -->
@@ -2638,7 +2838,7 @@
           <li>Deflationary 1-of-1 Discovery Multiplier</li>
           <li>Exclusive Discord Master Spotter Role</li>
         </ul>
-        <button type="button" class="btn-plan-action btn-plan-pro" onclick="handleUpgradePro('pro')">👑 Upgrade to Pro ($9.99/mo)</button>
+        <button type="button" class="btn-plan-action btn-plan-pro" onclick="triggerStripeCheckout('subscription')">👑 Upgrade to Pro ($9.99/mo)</button>
       </div>
     </div>
   </div>
@@ -2848,20 +3048,96 @@ function renderReply(b, parts) {
       enhanceTextNodes(textDiv);
       b.appendChild(textDiv);
     } else if (part.kind === "a2ui" && part.data) {
-      if (part.data.type === "paywall_card") {
-        const pw = el("div", "paywall-chat-card");
-        pw.innerHTML = `
-          <div class="paywall-chat-header">
-            <span class="pw-icon">⚡</span>
-            <div>
-              <h4>${escapeHtml(part.data.title || "Daily Scan Limit Reached")}</h4>
-              <p>${escapeHtml(part.data.subtitle || "5/5 Free Scans Used Today")}</p>
+      if (part.data.type === "verified_paint_match") {
+        const pc = el("div", "verified-paint-card");
+        const hex = part.data.hex_color || "#3A1C44";
+        const deltaEVal = part.data.delta_e != null ? part.data.delta_e : (part.data.delta_e00 != null ? part.data.delta_e00 : "0.0");
+        pc.innerHTML = `
+          <div class="paint-card-header">
+            <div class="paint-swatch-glow" style="background-color: ${escapeHtml(hex)}; box-shadow: 0 0 16px ${escapeHtml(hex)};"></div>
+            <div class="paint-details">
+              <div class="paint-badge-row">
+                <span class="paint-oem-tag">🎨 VERIFIED OEM FINISH</span>
+                <span class="paint-multiplier-badge">${escapeHtml(part.data.multiplier_badge || '+35% Paint Multiplier')}</span>
+              </div>
+              <h4 class="paint-name">${escapeHtml(part.data.commercial_name || part.data.paint_name || 'Factory Paint')}</h4>
+              <p class="paint-code-line">${escapeHtml(part.data.badge_text || ('Code ' + (part.data.paint_code || '') + ': ' + (part.data.commercial_name || '')))}</p>
             </div>
           </div>
-          <p class="paywall-chat-desc">${escapeHtml(part.data.message || "")}</p>
+          <div class="paint-telemetry-row">
+            <span class="paint-delta">CIEDE2000 ΔE*₀₀: <strong>${escapeHtml(deltaEVal)}</strong> (Exact Factory Spec)</span>
+            <span class="paint-hex">HEX: <code>${escapeHtml(hex)}</code></span>
+          </div>
+        `;
+        b.appendChild(pc);
+      } else if (part.data.type === "point_breakdown") {
+        const bd = el("div", "point-breakdown-card");
+        const basePts = Number(part.data.base_points || 0).toLocaleString();
+        const finalPts = Number(part.data.final_points || 0).toLocaleString();
+        const units = part.data.production_units ? Number(part.data.production_units).toLocaleString() : "1,000,000";
+        bd.innerHTML = `
+          <div class="breakdown-header">
+            <span class="bd-icon">📊</span>
+            <div>
+              <h4>Dynamic Point Telemetry</h4>
+              <p class="bd-car-name">${escapeHtml(part.data.car_name || 'Vehicle Sighting')}</p>
+            </div>
+            <span class="bd-tier-pill">${escapeHtml(part.data.rarity_tier || 'Rare')}</span>
+          </div>
+          <div class="breakdown-table">
+            <div class="bd-row">
+              <span class="bd-label">Base Model Points</span>
+              <span class="bd-val">${basePts} PTS</span>
+            </div>
+            <div class="bd-row">
+              <span class="bd-label">Scarcity Run</span>
+              <span class="bd-val highlight">${escapeHtml(part.data.scarcity_label || ('Units produced: ' + units))}</span>
+            </div>
+            <div class="bd-row">
+              <span class="bd-label">30-Day Velocity Decay</span>
+              <span class="bd-val">${escapeHtml(part.data.velocity_label || 'Spotted 0 times this month')}</span>
+            </div>
+            ${part.data.paint_multiplier && part.data.paint_multiplier > 1.0 ? `
+            <div class="bd-row">
+              <span class="bd-label">Paint Finish Multiplier</span>
+              <span class="bd-val highlight">+${Math.round((part.data.paint_multiplier - 1.0)*100)}% PTS Bonus</span>
+            </div>` : ''}
+            <div class="bd-row bd-total">
+              <span class="bd-label">Total Net Score Awarded</span>
+              <span class="bd-val total-pts">+${finalPts} PTS</span>
+            </div>
+          </div>
+        `;
+        b.appendChild(bd);
+      } else if (part.data.type === "paywall_card") {
+        const pw = el("div", "paywall-chat-card");
+        const progressPct = part.data.progress_pct || 100;
+        const countdown = part.data.countdown_text || "Midnight UTC";
+        pw.innerHTML = `
+          <div class="paywall-chat-header">
+            <span class="pw-icon">⛽</span>
+            <div>
+              <h4>${escapeHtml(part.data.title || "Daily Scan Limit Reached")}</h4>
+              <p>${escapeHtml(part.data.subtitle || "5/5 Daily Scans Used Today")}</p>
+            </div>
+          </div>
+          <div class="paywall-progress-container">
+            <div class="paywall-progress-label">
+              <span>Daily Fuel Status</span>
+              <span>${escapeHtml(part.data.subtitle || "5/5 Used")}</span>
+            </div>
+            <div class="paywall-progress-bar">
+              <div class="paywall-progress-fill" style="width: ${progressPct}%;"></div>
+            </div>
+            <div class="paywall-countdown">
+              <span>⏳ Fuel Resets In:</span>
+              <strong class="countdown-timer">${escapeHtml(countdown)}</strong>
+            </div>
+          </div>
+          <p class="paywall-chat-desc">${escapeHtml(part.data.message || "Free daily spotting fuel exhausted. Refill scans instantly or unlock CarDex Pro.")}</p>
           <div class="paywall-chat-actions">
-            <button type="button" class="btn-pw-refill" onclick="openQuotaModal()">⚡ Refill +5 Scans ($1.99)</button>
-            <button type="button" class="btn-pw-pro" onclick="openQuotaModal()">👑 Upgrade to Pro ($9.99/mo)</button>
+            <button type="button" class="btn-pw-refill" onclick="triggerStripeCheckout('refill')">⚡ Refill +5 Scans ($1.99)</button>
+            <button type="button" class="btn-pw-pro" onclick="triggerStripeCheckout('subscription')">👑 Upgrade to Pro ($9.99/mo)</button>
           </div>
         `;
         b.appendChild(pw);
@@ -3104,6 +3380,10 @@ async function sendMessage(text, imgData = null) {
     // Sync quota status if returned by server
     if (data.quota) {
       updateQuotaDisplay(data.quota);
+    }
+
+    if (res.status === 429 || data.quota_exceeded) {
+      openQuotaModal();
     }
 
     // If server returned updated user profile stats from Firestore, sync UI
@@ -3772,6 +4052,43 @@ async function handleUpgradePro(tier = "pro") {
   }
 }
 
+async function triggerStripeCheckout(type = 'subscription') {
+  const userId = currentSpotter ? currentSpotter.user_id : "spotter_1";
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
+    const res = await fetch("/api/billing/create-checkout-session", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ user_id: userId, type: type })
+    });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    if (data.checkout_url) {
+      if (data.sandboxed || data.simulated || data.checkout_url.startsWith("#")) {
+        // In local/sandbox mode without active live Stripe keys, simulate immediate fulfillment
+        if (type === 'subscription') {
+          await handleUpgradePro('pro');
+        } else {
+          await handleRefillPurchase(1);
+        }
+        closeQuotaModal();
+      } else {
+        // Direct redirect to Stripe Checkout
+        window.location.href = data.checkout_url;
+      }
+    }
+  } catch (e) {
+    console.warn("Stripe Checkout fallback:", e);
+    if (type === 'subscription') {
+      await handleUpgradePro('pro');
+    } else {
+      await handleRefillPurchase(1);
+    }
+    closeQuotaModal();
+  }
+}
+
 /* --- Master Spotter Review Queue & Consensus Adjudication --- */
 async function openDisputesModal() {
   const modal = document.getElementById("disputes-modal-backdrop");
@@ -3931,6 +4248,7 @@ window.openQuotaModal = openQuotaModal;
 window.closeQuotaModal = closeQuotaModal;
 window.handleRefillPurchase = handleRefillPurchase;
 window.handleUpgradePro = handleUpgradePro;
+window.triggerStripeCheckout = triggerStripeCheckout;
 window.openDisputesModal = openDisputesModal;
 window.closeDisputesModal = closeDisputesModal;
 window.handleCastDisputeVote = handleCastDisputeVote;

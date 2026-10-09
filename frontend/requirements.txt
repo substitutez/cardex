@@ -8,4 +8,5 @@ google-cloud-firestore
 numpy
 pillow
 scipy
+stripe
 

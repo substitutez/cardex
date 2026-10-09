@@ -1,482 +1,1256 @@
 [
   {
-    "name": "Viola Metallic",
+    "make": "Porsche",
     "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
+    "paint_code": "3AE",
     "code": "3AE",
-    "rgb": [58, 28, 68],
-    "lab": [16.8, 22.4, -18.2],
+    "commercial_name": "Viola Metallic",
+    "name": "Viola Metallic",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
     "tier": "PTS",
+    "rgb": [
+      58,
+      28,
+      68
+    ],
+    "lab": [
+      16.24,
+      22.53,
+      -19.28
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Rubystar Neo",
+    "make": "Porsche",
     "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
+    "paint_code": "430",
     "code": "430",
-    "rgb": [182, 36, 102],
-    "lab": [38.2, 63.5, 4.8],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Oak Green Metallic",
-    "oem": "Porsche",
+    "commercial_name": "Ruby Star Neo",
+    "name": "Ruby Star Neo",
+    "category": "pts",
     "program": "Paint to Sample (PTS)",
-    "code": "22L",
-    "rgb": [26, 54, 39],
-    "lab": [20.8, -17.4, 7.1],
     "tier": "PTS",
+    "rgb": [
+      182,
+      36,
+      102
+    ],
+    "lab": [
+      41.48,
+      60.71,
+      -1.21
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Mint Green",
+    "make": "Porsche",
     "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "22R",
-    "rgb": [121, 209, 171],
-    "lab": [77.3, -37.8, 10.4],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Signal Yellow",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "114",
-    "rgb": [242, 178, 0],
-    "lab": [76.5, 12.8, 80.2],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Voodoo Blue",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "Z68",
-    "rgb": [0, 114, 206],
-    "lab": [46.8, -0.6, -53.4],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Amethyst Metallic",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "M4Z",
-    "rgb": [72, 44, 76],
-    "lab": [22.6, 18.2, -14.1],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Chalk / Crayon",
-    "oem": "Porsche",
-    "program": "Special Paint",
-    "code": "3H",
-    "rgb": [198, 200, 196],
-    "lab": [79.8, -1.2, 1.8],
-    "tier": "Special",
-    "multiplier": 1.2
-  },
-  {
-    "name": "Acid Green",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "2M8",
-    "rgb": [168, 222, 54],
-    "lab": [81.5, -39.1, 71.6],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Ultraviolet",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "M4A",
-    "rgb": [91, 62, 117],
-    "lab": [30.8, 25.1, -27.3],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Maritime Blue",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "01S",
-    "rgb": [30, 84, 158],
-    "lab": [36.2, 5.8, -48.2],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Irish Green",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "Y79",
-    "rgb": [18, 52, 34],
-    "lab": [19.2, -18.6, 8.4],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Brewster Green",
-    "oem": "Porsche",
-    "program": "Paint to Sample (PTS)",
-    "code": "22B",
-    "rgb": [22, 38, 30],
-    "lab": [14.5, -10.2, 3.8],
-    "tier": "PTS",
-    "multiplier": 1.35
-  },
-  {
+    "paint_code": "3I2",
+    "code": "3I2",
+    "commercial_name": "Python Green",
     "name": "Python Green",
-    "oem": "Porsche",
+    "category": "pts",
     "program": "Paint to Sample (PTS)",
-    "code": "3I",
-    "rgb": [0, 168, 64],
-    "lab": [59.4, -60.8, 41.2],
     "tier": "PTS",
+    "rgb": [
+      34,
+      180,
+      52
+    ],
+    "lab": [
+      64.35,
+      -61.33,
+      52.27
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Nardo Grey",
-    "oem": "BMW / Audi",
-    "program": "Individual",
-    "code": "P8C",
-    "rgb": [136, 140, 141],
-    "lab": [58.1, -1.4, -0.6],
-    "tier": "Individual",
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "22L",
+    "code": "22L",
+    "commercial_name": "Oak Green Metallic",
+    "name": "Oak Green Metallic",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      26,
+      54,
+      39
+    ],
+    "lab": [
+      20.06,
+      -14.88,
+      6.19
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "San Marino Blue",
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "22R",
+    "code": "22R",
+    "commercial_name": "Mint Green",
+    "name": "Mint Green",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      121,
+      209,
+      171
+    ],
+    "lab": [
+      77.64,
+      -35.17,
+      10.65
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "114",
+    "code": "114",
+    "commercial_name": "Signal Yellow",
+    "name": "Signal Yellow",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      242,
+      178,
+      0
+    ],
+    "lab": [
+      76.51,
+      11.6,
+      79.29
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "Z68",
+    "code": "Z68",
+    "commercial_name": "Voodoo Blue",
+    "name": "Voodoo Blue",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      0,
+      114,
+      206
+    ],
+    "lab": [
+      47.61,
+      8.38,
+      -54.9
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "Z77",
+    "code": "Z77",
+    "commercial_name": "Oslo Blue",
+    "name": "Oslo Blue",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      10,
+      48,
+      86
+    ],
+    "lab": [
+      19.43,
+      2.81,
+      -26.68
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "M4Z",
+    "code": "M4Z",
+    "commercial_name": "Ultraviolet",
+    "name": "Ultraviolet",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      65,
+      43,
+      90
+    ],
+    "lab": [
+      22.27,
+      21.01,
+      -24.58
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "2M8",
+    "code": "2M8",
+    "commercial_name": "Acid Green",
+    "name": "Acid Green",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      175,
+      235,
+      30
+    ],
+    "lab": [
+      86.32,
+      -43.9,
+      80.61
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "22B",
+    "code": "22B",
+    "commercial_name": "Brewster Green",
+    "name": "Brewster Green",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      18,
+      38,
+      28
+    ],
+    "lab": [
+      13.22,
+      -11.1,
+      4.14
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "J9",
+    "code": "J9",
+    "commercial_name": "Gulf Blue",
+    "name": "Gulf Blue",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      152,
+      198,
+      224
+    ],
+    "lab": [
+      77.55,
+      -8.97,
+      -17.8
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "Z54",
+    "code": "Z54",
+    "commercial_name": "Meissen Blue",
+    "name": "Meissen Blue",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      173,
+      209,
+      222
+    ],
+    "lab": [
+      81.71,
+      -9.05,
+      -10.36
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "84A",
+    "code": "84A",
+    "commercial_name": "Guards Red",
+    "name": "Guards Red",
+    "category": "standard",
+    "program": "Factory Standard",
+    "tier": "Standard",
+    "rgb": [
+      204,
+      0,
+      0
+    ],
+    "lab": [
+      42.52,
+      67.7,
+      56.8
+    ],
+    "multiplier": 1.0
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "M9A",
+    "code": "M9A",
+    "commercial_name": "Chalk",
+    "name": "Chalk",
+    "category": "standard",
+    "program": "Factory Standard",
+    "tier": "Standard",
+    "rgb": [
+      214,
+      214,
+      210
+    ],
+    "lab": [
+      85.53,
+      -0.72,
+      1.97
+    ],
+    "multiplier": 1.05
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "M7Z",
+    "code": "M7Z",
+    "commercial_name": "GT Silver Metallic",
+    "name": "GT Silver Metallic",
+    "category": "standard",
+    "program": "Factory Standard",
+    "tier": "Standard",
+    "rgb": [
+      168,
+      172,
+      175
+    ],
+    "lab": [
+      70.12,
+      -0.83,
+      -2.03
+    ],
+    "multiplier": 1.0
+  },
+  {
+    "make": "Porsche",
+    "oem": "Porsche",
+    "paint_code": "I0",
+    "code": "I0",
+    "commercial_name": "Frozen Berry Metallic",
+    "name": "Frozen Berry Metallic",
+    "category": "pts",
+    "program": "Paint to Sample (PTS)",
+    "tier": "PTS",
+    "rgb": [
+      186,
+      148,
+      155
+    ],
+    "lab": [
+      64.95,
+      15.35,
+      1.75
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "BMW",
     "oem": "BMW",
-    "program": "Individual",
-    "code": "B51",
-    "rgb": [22, 48, 142],
-    "lab": [24.1, 23.4, -58.2],
-    "tier": "Individual",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Twilight Purple",
-    "oem": "BMW",
-    "program": "Individual",
-    "code": "P28",
-    "rgb": [96, 32, 110],
-    "lab": [26.4, 41.2, -31.6],
-    "tier": "Individual",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Isle of Man Green",
-    "oem": "BMW",
-    "program": "Individual / M",
+    "paint_code": "C4G",
     "code": "C4G",
-    "rgb": [0, 92, 68],
-    "lab": [34.5, -34.8, 7.8],
-    "tier": "Individual",
-    "multiplier": 1.35
+    "commercial_name": "Isle of Man Green",
+    "name": "Isle of Man Green",
+    "category": "standard",
+    "program": "M Paint Standard",
+    "tier": "Standard",
+    "rgb": [
+      0,
+      92,
+      70
+    ],
+    "lab": [
+      34.18,
+      -29.81,
+      6.04
+    ],
+    "multiplier": 1.05
   },
   {
-    "name": "Dakar Yellow",
+    "make": "BMW",
     "oem": "BMW",
-    "program": "Individual",
+    "paint_code": "P6N",
+    "code": "P6N",
+    "commercial_name": "Frozen Dark Grey",
+    "name": "Frozen Dark Grey",
+    "category": "pts",
+    "program": "BMW Individual",
+    "tier": "PTS",
+    "rgb": [
+      95,
+      98,
+      100
+    ],
+    "lab": [
+      41.36,
+      -0.74,
+      -1.54
+    ],
+    "multiplier": 1.25
+  },
+  {
+    "make": "BMW",
+    "oem": "BMW",
+    "paint_code": "267",
     "code": "267",
-    "rgb": [240, 218, 112],
-    "lab": [86.8, -9.4, 56.2],
-    "tier": "Individual",
+    "commercial_name": "Dakar Yellow",
+    "name": "Dakar Yellow",
+    "category": "pts",
+    "program": "BMW Individual",
+    "tier": "PTS",
+    "rgb": [
+      238,
+      213,
+      106
+    ],
+    "lab": [
+      85.41,
+      -4.27,
+      55.25
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Frozen Dark Silver",
+    "make": "BMW",
     "oem": "BMW",
-    "program": "Individual Frozen",
-    "code": "P67",
-    "rgb": [84, 88, 92],
-    "lab": [37.4, -0.9, -2.1],
-    "tier": "Individual",
-    "multiplier": 1.35
+    "paint_code": "C1K",
+    "code": "C1K",
+    "commercial_name": "Marina Bay Blue",
+    "name": "Marina Bay Blue",
+    "category": "standard",
+    "program": "M Paint Standard",
+    "tier": "Standard",
+    "rgb": [
+      0,
+      75,
+      141
+    ],
+    "lab": [
+      31.7,
+      7.13,
+      -42.07
+    ],
+    "multiplier": 1.05
   },
   {
-    "name": "Grigio Telesto",
-    "oem": "BMW / Lamborghini",
-    "program": "Individual",
-    "code": "P6M",
-    "rgb": [118, 122, 124],
-    "lab": [51.2, -1.2, -1.4],
-    "tier": "Individual",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Laguna Seca Blue",
+    "make": "BMW",
     "oem": "BMW",
-    "program": "Individual",
-    "code": "448",
-    "rgb": [0, 138, 178],
-    "lab": [53.2, -22.4, -31.8],
-    "tier": "Individual",
+    "paint_code": "P28",
+    "code": "P28",
+    "commercial_name": "Twilight Purple",
+    "name": "Twilight Purple",
+    "category": "pts",
+    "program": "BMW Individual",
+    "tier": "PTS",
+    "rgb": [
+      78,
+      35,
+      95
+    ],
+    "lab": [
+      22.47,
+      31.11,
+      -27.44
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Techno Violet",
+    "make": "BMW",
     "oem": "BMW",
-    "program": "Individual",
+    "paint_code": "299",
     "code": "299",
-    "rgb": [72, 38, 78],
-    "lab": [20.4, 24.2, -18.6],
-    "tier": "Individual",
+    "commercial_name": "Techno Violet",
+    "name": "Techno Violet",
+    "category": "pts",
+    "program": "BMW Individual",
+    "tier": "PTS",
+    "rgb": [
+      61,
+      40,
+      68
+    ],
+    "lab": [
+      19.75,
+      15.77,
+      -13.77
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Fire Orange",
+    "make": "BMW",
     "oem": "BMW",
-    "program": "Individual",
+    "paint_code": "448",
+    "code": "448",
+    "commercial_name": "Laguna Seca Blue",
+    "name": "Laguna Seca Blue",
+    "category": "pts",
+    "program": "BMW Individual",
+    "tier": "PTS",
+    "rgb": [
+      0,
+      142,
+      180
+    ],
+    "lab": [
+      54.7,
+      -18.09,
+      -28.82
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "BMW",
+    "oem": "BMW",
+    "paint_code": "U94",
     "code": "U94",
-    "rgb": [238, 88, 18],
-    "lab": [54.8, 56.4, 63.8],
-    "tier": "Individual",
+    "commercial_name": "Fire Orange",
+    "name": "Fire Orange",
+    "category": "pts",
+    "program": "BMW Individual",
+    "tier": "PTS",
+    "rgb": [
+      240,
+      80,
+      10
+    ],
+    "lab": [
+      56.38,
+      59.14,
+      64.86
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Rosso Corsa",
+    "make": "BMW",
+    "oem": "BMW",
+    "paint_code": "B51",
+    "code": "B51",
+    "commercial_name": "San Marino Blue",
+    "name": "San Marino Blue",
+    "category": "standard",
+    "program": "M Paint Standard",
+    "tier": "Standard",
+    "rgb": [
+      20,
+      40,
+      130
+    ],
+    "lab": [
+      21.12,
+      28.27,
+      -52.42
+    ],
+    "multiplier": 1.05
+  },
+  {
+    "make": "BMW",
+    "oem": "BMW",
+    "paint_code": "C4H",
+    "code": "C4H",
+    "commercial_name": "Sao Paulo Yellow",
+    "name": "Sao Paulo Yellow",
+    "category": "standard",
+    "program": "M Paint Standard",
+    "tier": "Standard",
+    "rgb": [
+      222,
+      238,
+      54
+    ],
+    "lab": [
+      90.3,
+      -26.03,
+      79.73
+    ],
+    "multiplier": 1.05
+  },
+  {
+    "make": "Ferrari",
     "oem": "Ferrari",
-    "program": "Historical",
+    "paint_code": "322",
     "code": "322",
-    "rgb": [212, 0, 0],
-    "lab": [44.8, 72.4, 58.2],
-    "tier": "Historical",
-    "multiplier": 1.2
+    "commercial_name": "Rosso Corsa",
+    "name": "Rosso Corsa",
+    "category": "standard",
+    "program": "Ferrari Historical",
+    "tier": "Standard",
+    "rgb": [
+      212,
+      0,
+      0
+    ],
+    "lab": [
+      44.24,
+      69.68,
+      58.46
+    ],
+    "multiplier": 1.0
   },
   {
-    "name": "Giallo Modena",
+    "make": "Ferrari",
     "oem": "Ferrari",
-    "program": "Historical",
-    "code": "4305",
-    "rgb": [255, 214, 0],
-    "lab": [86.2, 4.2, 90.6],
-    "tier": "Historical",
-    "multiplier": 1.25
-  },
-  {
-    "name": "Blu Pozzi",
-    "oem": "Ferrari",
-    "program": "Historical",
-    "code": "521",
-    "rgb": [8, 18, 48],
-    "lab": [8.4, 4.8, -22.4],
-    "tier": "Historical",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Verde British",
-    "oem": "Ferrari",
-    "program": "Tailor Made",
-    "code": "611",
-    "rgb": [12, 44, 28],
-    "lab": [16.4, -18.2, 7.2],
-    "tier": "Tailor Made",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Bianco Fuji",
-    "oem": "Ferrari",
-    "program": "Tailor Made Triple-Layer",
-    "code": "FER102",
-    "rgb": [245, 246, 248],
-    "lab": [96.8, -0.4, -0.6],
-    "tier": "Tailor Made",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Grigio Silverstone",
-    "oem": "Ferrari",
-    "program": "Historical",
+    "paint_code": "740",
     "code": "740",
-    "rgb": [86, 90, 94],
-    "lab": [38.2, -0.8, -2.4],
-    "tier": "Historical",
-    "multiplier": 1.2
+    "commercial_name": "Grigio Medio",
+    "name": "Grigio Medio",
+    "category": "pts",
+    "program": "Ferrari Tailor Made",
+    "tier": "PTS",
+    "rgb": [
+      120,
+      122,
+      125
+    ],
+    "lab": [
+      51.14,
+      -0.14,
+      -1.9
+    ],
+    "multiplier": 1.35
   },
   {
-    "name": "Azzurro Dino",
+    "make": "Ferrari",
     "oem": "Ferrari",
-    "program": "Historical",
-    "code": "FER542",
-    "rgb": [0, 142, 208],
-    "lab": [55.4, -16.2, -45.8],
-    "tier": "Historical",
-    "multiplier": 1.45
+    "paint_code": "102",
+    "code": "102",
+    "commercial_name": "Giallo Modena",
+    "name": "Giallo Modena",
+    "category": "standard",
+    "program": "Ferrari Historical",
+    "tier": "Standard",
+    "rgb": [
+      255,
+      215,
+      0
+    ],
+    "lab": [
+      86.93,
+      -1.92,
+      87.13
+    ],
+    "multiplier": 1.05
   },
   {
-    "name": "Rosso Scuderia",
+    "make": "Ferrari",
     "oem": "Ferrari",
-    "program": "Historical",
+    "paint_code": "521",
+    "code": "521",
+    "commercial_name": "Blu Pozzi",
+    "name": "Blu Pozzi",
+    "category": "pts",
+    "program": "Ferrari Historical",
+    "tier": "PTS",
+    "rgb": [
+      15,
+      28,
+      55
+    ],
+    "lab": [
+      10.61,
+      4.91,
+      -19.35
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Ferrari",
+    "oem": "Ferrari",
+    "paint_code": "611",
+    "code": "611",
+    "commercial_name": "Verde Pino",
+    "name": "Verde Pino",
+    "category": "pts",
+    "program": "Ferrari Historical",
+    "tier": "PTS",
+    "rgb": [
+      28,
+      50,
+      36
+    ],
+    "lab": [
+      18.61,
+      -12.58,
+      6.21
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Ferrari",
+    "oem": "Ferrari",
+    "paint_code": "100",
+    "code": "100",
+    "commercial_name": "Bianco Avus",
+    "name": "Bianco Avus",
+    "category": "standard",
+    "program": "Ferrari Historical",
+    "tier": "Standard",
+    "rgb": [
+      245,
+      245,
+      248
+    ],
+    "lab": [
+      96.61,
+      0.53,
+      -1.44
+    ],
+    "multiplier": 1.0
+  },
+  {
+    "make": "Ferrari",
+    "oem": "Ferrari",
+    "paint_code": "323",
     "code": "323",
-    "rgb": [234, 38, 18],
-    "lab": [48.6, 68.2, 59.4],
-    "tier": "Historical",
+    "commercial_name": "Rosso Scuderia",
+    "name": "Rosso Scuderia",
+    "category": "standard",
+    "program": "Ferrari Historical",
+    "tier": "Standard",
+    "rgb": [
+      228,
+      24,
+      8
+    ],
+    "lab": [
+      48.47,
+      71.26,
+      59.84
+    ],
+    "multiplier": 1.05
+  },
+  {
+    "make": "Ferrari",
+    "oem": "Ferrari",
+    "paint_code": "522",
+    "code": "522",
+    "commercial_name": "Blu Corsa",
+    "name": "Blu Corsa",
+    "category": "pts",
+    "program": "Ferrari Special",
+    "tier": "PTS",
+    "rgb": [
+      0,
+      102,
+      180
+    ],
+    "lab": [
+      42.45,
+      5.57,
+      -48.14
+    ],
     "multiplier": 1.25
   },
   {
-    "name": "Rosso Dino",
-    "oem": "Ferrari",
-    "program": "Historical",
-    "code": "350",
-    "rgb": [232, 78, 18],
-    "lab": [52.8, 56.4, 61.2],
-    "tier": "Historical",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Papaya Spark",
-    "oem": "McLaren",
-    "program": "MSO Elite",
-    "code": "MSO-PAP",
-    "rgb": [255, 118, 0],
-    "lab": [62.4, 48.6, 74.8],
-    "tier": "MSO",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Curacao Blue",
-    "oem": "McLaren",
-    "program": "MSO Defined",
-    "code": "MSO-CUR",
-    "rgb": [0, 164, 218],
-    "lab": [62.8, -21.4, -43.2],
-    "tier": "MSO",
+    "make": "Mercedes-AMG",
+    "oem": "Mercedes-AMG",
+    "paint_code": "376",
+    "code": "376",
+    "commercial_name": "Green Hell Magno",
+    "name": "Green Hell Magno",
+    "category": "pts",
+    "program": "AMG Manufaktur",
+    "tier": "PTS",
+    "rgb": [
+      52,
+      148,
+      50
+    ],
+    "lab": [
+      54.17,
+      -47.66,
+      42.32
+    ],
     "multiplier": 1.35
   },
   {
-    "name": "Lantana Purple",
+    "make": "Mercedes-AMG",
+    "oem": "Mercedes-AMG",
+    "paint_code": "054",
+    "code": "054",
+    "commercial_name": "Monza Grey Magno",
+    "name": "Monza Grey Magno",
+    "category": "pts",
+    "program": "AMG Manufaktur",
+    "tier": "PTS",
+    "rgb": [
+      110,
+      112,
+      114
+    ],
+    "lab": [
+      47.13,
+      -0.35,
+      -1.37
+    ],
+    "multiplier": 1.25
+  },
+  {
+    "make": "Mercedes-AMG",
+    "oem": "Mercedes-AMG",
+    "paint_code": "278",
+    "code": "278",
+    "commercial_name": "Solarbeam Yellow",
+    "name": "Solarbeam Yellow",
+    "category": "pts",
+    "program": "AMG Performance",
+    "tier": "PTS",
+    "rgb": [
+      252,
+      186,
+      3
+    ],
+    "lab": [
+      79.51,
+      11.73,
+      81.54
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Mercedes-AMG",
+    "oem": "Mercedes-AMG",
+    "paint_code": "056",
+    "code": "056",
+    "commercial_name": "Magno Night Black",
+    "name": "Magno Night Black",
+    "category": "pts",
+    "program": "AMG Manufaktur",
+    "tier": "PTS",
+    "rgb": [
+      28,
+      28,
+      30
+    ],
+    "lab": [
+      10.34,
+      0.52,
+      -1.38
+    ],
+    "multiplier": 1.25
+  },
+  {
+    "make": "Mercedes-AMG",
+    "oem": "Mercedes-AMG",
+    "paint_code": "644",
+    "code": "644",
+    "commercial_name": "Brilliant Blue Magno",
+    "name": "Brilliant Blue Magno",
+    "category": "pts",
+    "program": "AMG Manufaktur",
+    "tier": "PTS",
+    "rgb": [
+      30,
+      80,
+      150
+    ],
+    "lab": [
+      34.43,
+      9.76,
+      -43.15
+    ],
+    "multiplier": 1.25
+  },
+  {
+    "make": "Mercedes-AMG",
+    "oem": "Mercedes-AMG",
+    "paint_code": "297",
+    "code": "297",
+    "commercial_name": "Selenite Grey Magno",
+    "name": "Selenite Grey Magno",
+    "category": "standard",
+    "program": "AMG Standard",
+    "tier": "Standard",
+    "rgb": [
+      125,
+      127,
+      130
+    ],
+    "lab": [
+      53.11,
+      -0.14,
+      -1.89
+    ],
+    "multiplier": 1.05
+  },
+  {
+    "make": "McLaren",
     "oem": "McLaren",
+    "paint_code": "MPAY",
+    "code": "MPAY",
+    "commercial_name": "Papaya Orange",
+    "name": "Papaya Orange",
+    "category": "bespoke",
     "program": "MSO Bespoke",
-    "code": "MSO-LAN",
-    "rgb": [92, 42, 114],
-    "lab": [26.8, 36.4, -32.8],
-    "tier": "MSO",
-    "multiplier": 1.55
-  },
-  {
-    "name": "Paris Blue",
-    "oem": "McLaren",
-    "program": "MSO Defined",
-    "code": "MSO-PAR",
-    "rgb": [0, 88, 172],
-    "lab": [37.8, 8.4, -54.2],
-    "tier": "MSO",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Volcano Red",
-    "oem": "McLaren",
-    "program": "MSO Elite",
-    "code": "MSO-VOL",
-    "rgb": [178, 14, 26],
-    "lab": [32.4, 62.8, 41.2],
-    "tier": "MSO",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Verde Ithaca",
-    "oem": "Lamborghini",
-    "program": "Ad Personam",
-    "code": "0077",
-    "rgb": [108, 204, 34],
-    "lab": [73.8, -56.2, 68.4],
-    "tier": "Ad Personam",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Giallo Orion",
-    "oem": "Lamborghini",
-    "program": "Ad Personam Pearl",
-    "code": "0056",
-    "rgb": [252, 210, 0],
-    "lab": [84.8, 6.2, 89.4],
-    "tier": "Ad Personam",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Arancio Argos",
-    "oem": "Lamborghini",
-    "program": "Ad Personam Pearl",
-    "code": "0108",
-    "rgb": [236, 72, 14],
-    "lab": [51.4, 60.8, 64.2],
-    "tier": "Ad Personam",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Viola Pasifae",
-    "oem": "Lamborghini",
-    "program": "Ad Personam Metallic",
-    "code": "0135",
-    "rgb": [98, 24, 126],
-    "lab": [26.2, 48.4, -42.8],
-    "tier": "Ad Personam",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Blu Cepheus",
-    "oem": "Lamborghini",
-    "program": "Ad Personam",
-    "code": "0104",
-    "rgb": [0, 178, 234],
-    "lab": [67.2, -23.4, -44.8],
-    "tier": "Ad Personam",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Grigio Titans",
-    "oem": "Lamborghini",
-    "program": "Ad Personam Matt",
-    "code": "0112",
-    "rgb": [78, 80, 82],
-    "lab": [34.1, -0.6, -1.8],
-    "tier": "Ad Personam",
-    "multiplier": 1.45
-  },
-  {
-    "name": "Verde Mantis",
-    "oem": "Lamborghini",
-    "program": "Ad Personam",
-    "code": "0106",
-    "rgb": [72, 192, 28],
-    "lab": [68.4, -58.8, 63.2],
-    "tier": "Ad Personam",
-    "multiplier": 1.35
-  },
-  {
-    "name": "Exposed Carbon Weave",
-    "oem": "Bespoke Hypercar",
-    "program": "Full Naked Carbon",
-    "code": "CF-RAW",
-    "rgb": [32, 34, 36],
-    "lab": [13.8, -0.4, -1.2],
-    "tier": "Bespoke",
-    "multiplier": 1.75
-  },
-  {
-    "name": "French Racing Blue",
-    "oem": "Bugatti",
-    "program": "Heritage",
-    "code": "BUG-FRB",
-    "rgb": [0, 118, 196],
-    "lab": [48.2, -4.2, -48.4],
-    "tier": "Heritage",
+    "tier": "PTS",
+    "rgb": [
+      255,
+      128,
+      0
+    ],
+    "lab": [
+      67.05,
+      42.83,
+      74.02
+    ],
     "multiplier": 1.5
   },
   {
-    "name": "Aston Martin Racing Green",
+    "make": "McLaren",
+    "oem": "McLaren",
+    "paint_code": "MLAN",
+    "code": "MLAN",
+    "commercial_name": "Lantana Purple",
+    "name": "Lantana Purple",
+    "category": "bespoke",
+    "program": "MSO Bespoke",
+    "tier": "PTS",
+    "rgb": [
+      85,
+      35,
+      100
+    ],
+    "lab": [
+      23.85,
+      34.24,
+      -28.46
+    ],
+    "multiplier": 1.5
+  },
+  {
+    "make": "McLaren",
+    "oem": "McLaren",
+    "paint_code": "MCUR",
+    "code": "MCUR",
+    "commercial_name": "Curacao Blue",
+    "name": "Curacao Blue",
+    "category": "bespoke",
+    "program": "MSO Bespoke",
+    "tier": "PTS",
+    "rgb": [
+      0,
+      168,
+      204
+    ],
+    "lab": [
+      63.64,
+      -23.36,
+      -28.5
+    ],
+    "multiplier": 1.5
+  },
+  {
+    "make": "McLaren",
+    "oem": "McLaren",
+    "paint_code": "MSAR",
+    "code": "MSAR",
+    "commercial_name": "Sarigan Quartz",
+    "name": "Sarigan Quartz",
+    "category": "bespoke",
+    "program": "MSO Bespoke",
+    "tier": "PTS",
+    "rgb": [
+      150,
+      145,
+      140
+    ],
+    "lab": [
+      60.45,
+      0.91,
+      3.3
+    ],
+    "multiplier": 1.5
+  },
+  {
+    "make": "McLaren",
+    "oem": "McLaren",
+    "paint_code": "MVOL",
+    "code": "MVOL",
+    "commercial_name": "Volcano Yellow",
+    "name": "Volcano Yellow",
+    "category": "bespoke",
+    "program": "MSO Defined",
+    "tier": "PTS",
+    "rgb": [
+      250,
+      200,
+      20
+    ],
+    "lab": [
+      82.75,
+      3.78,
+      81.87
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Lamborghini",
+    "oem": "Lamborghini",
+    "paint_code": "0058",
+    "code": "0058",
+    "commercial_name": "Verde Mantis",
+    "name": "Verde Mantis",
+    "category": "pts",
+    "program": "Ad Personam",
+    "tier": "PTS",
+    "rgb": [
+      80,
+      190,
+      40
+    ],
+    "lab": [
+      68.52,
+      -56.84,
+      60.89
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Lamborghini",
+    "oem": "Lamborghini",
+    "paint_code": "0059",
+    "code": "0059",
+    "commercial_name": "Arancio Borealis",
+    "name": "Arancio Borealis",
+    "category": "pts",
+    "program": "Ad Personam",
+    "tier": "PTS",
+    "rgb": [
+      245,
+      100,
+      10
+    ],
+    "lab": [
+      60.39,
+      52.41,
+      67.67
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Lamborghini",
+    "oem": "Lamborghini",
+    "paint_code": "0109",
+    "code": "0109",
+    "commercial_name": "Viola Parsifae",
+    "name": "Viola Parsifae",
+    "category": "pts",
+    "program": "Ad Personam",
+    "tier": "PTS",
+    "rgb": [
+      70,
+      25,
+      90
+    ],
+    "lab": [
+      18.95,
+      33.11,
+      -29.82
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Lamborghini",
+    "oem": "Lamborghini",
+    "paint_code": "0135",
+    "code": "0135",
+    "commercial_name": "Giallo Inti",
+    "name": "Giallo Inti",
+    "category": "pts",
+    "program": "Ad Personam",
+    "tier": "PTS",
+    "rgb": [
+      255,
+      210,
+      10
+    ],
+    "lab": [
+      85.7,
+      0.69,
+      85.39
+    ],
+    "multiplier": 1.25
+  },
+  {
+    "make": "Lamborghini",
+    "oem": "Lamborghini",
+    "paint_code": "0062",
+    "code": "0062",
+    "commercial_name": "Blu Cepheus",
+    "name": "Blu Cepheus",
+    "category": "pts",
+    "program": "Ad Personam",
+    "tier": "PTS",
+    "rgb": [
+      0,
+      160,
+      220
+    ],
+    "lab": [
+      61.92,
+      -13.44,
+      -40.07
+    ],
+    "multiplier": 1.35
+  },
+  {
+    "make": "Aston Martin",
     "oem": "Aston Martin",
+    "paint_code": "AST5044D",
+    "code": "AST5044D",
+    "commercial_name": "British Racing Green",
+    "name": "British Racing Green",
+    "category": "standard",
+    "program": "Aston Martin Heritage",
+    "tier": "Standard",
+    "rgb": [
+      15,
+      60,
+      35
+    ],
+    "lab": [
+      21.78,
+      -22.18,
+      11.12
+    ],
+    "multiplier": 1.05
+  },
+  {
+    "make": "Aston Martin",
+    "oem": "Aston Martin",
+    "paint_code": "AST1322D",
+    "code": "AST1322D",
+    "commercial_name": "Cosmos Black",
+    "name": "Cosmos Black",
+    "category": "standard",
+    "program": "Aston Martin Standard",
+    "tier": "Standard",
+    "rgb": [
+      22,
+      22,
+      24
+    ],
+    "lab": [
+      7.32,
+      0.51,
+      -1.38
+    ],
+    "multiplier": 1.0
+  },
+  {
+    "make": "Aston Martin",
+    "oem": "Aston Martin",
+    "paint_code": "AMR01",
+    "code": "AMR01",
+    "commercial_name": "Aston Martin Racing Green",
+    "name": "Aston Martin Racing Green",
+    "category": "bespoke",
     "program": "Q by Aston Martin",
-    "code": "Q-AMR",
-    "rgb": [0, 68, 54],
-    "lab": [26.4, -28.6, 5.2],
-    "tier": "Q Bespoke",
-    "multiplier": 1.4
+    "tier": "PTS",
+    "rgb": [
+      20,
+      82,
+      54
+    ],
+    "lab": [
+      30.52,
+      -27.01,
+      10.93
+    ],
+    "multiplier": 1.5
+  },
+  {
+    "make": "Bugatti",
+    "oem": "Bugatti",
+    "paint_code": "BUG01",
+    "code": "BUG01",
+    "commercial_name": "French Racing Blue",
+    "name": "French Racing Blue",
+    "category": "bespoke",
+    "program": "Sur Mesure",
+    "tier": "PTS",
+    "rgb": [
+      0,
+      120,
+      215
+    ],
+    "lab": [
+      49.9,
+      8.18,
+      -56.33
+    ],
+    "multiplier": 1.5
+  },
+  {
+    "make": "Bugatti",
+    "oem": "Bugatti",
+    "paint_code": "BUG02",
+    "code": "BUG02",
+    "commercial_name": "Bugatti Light Blue Sport",
+    "name": "Bugatti Light Blue Sport",
+    "category": "bespoke",
+    "program": "Sur Mesure",
+    "tier": "PTS",
+    "rgb": [
+      90,
+      170,
+      230
+    ],
+    "lab": [
+      67.0,
+      -6.81,
+      -37.51
+    ],
+    "multiplier": 1.5
+  },
+  {
+    "make": "Bugatti",
+    "oem": "Bugatti",
+    "paint_code": "BUG03",
+    "code": "BUG03",
+    "commercial_name": "Atlantic Blue",
+    "name": "Atlantic Blue",
+    "category": "bespoke",
+    "program": "Sur Mesure",
+    "tier": "PTS",
+    "rgb": [
+      12,
+      35,
+      75
+    ],
+    "lab": [
+      14.33,
+      7.8,
+      -27.41
+    ],
+    "multiplier": 1.5
   }
 ]

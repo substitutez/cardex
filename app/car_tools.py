@@ -37,6 +37,7 @@ from .anti_cheat import verify_image_integrity
 from .paint_matcher import match_oem_paint_color
 from .quota_limiter import check_and_reserve_scan, commit_scan_deduction
 from .scoring_engine import compute_dynamic_spot_score
+from .a2ui_utils import build_paint_match_card, build_point_breakdown_card, build_paywall_card
 
 CLOUD_STORAGE_BUCKET = "cardex-spots-qwiklabs-gcp-04-6f324b699fdd"
 VERTEX_PROJECT_ID = "qwiklabs-gcp-04-6f324b699fdd"
@@ -184,7 +185,7 @@ def submit_car_review(
     Returns:
         A dictionary with the submission status and review ID.
     """
-    return submit_dispute_review(
+    res = submit_dispute_review(
         car_name=car_name,
         issue_description=issue_description,
         proposed_correction=proposed_correction,
@@ -196,6 +197,9 @@ def submit_car_review(
         proposed_trim=proposed_trim,
         proposed_color=proposed_color,
     )
+    res_dict = dict(res)
+    res_dict["status"] = "pending_review"
+    return res_dict
 
 
 def decode_vin_specifications(vin: str) -> dict[str, Any]:
@@ -542,7 +546,7 @@ def identify_and_spot_car(
         return {"success": False, "error": "Empty or invalid image data provided."}
 
     # 2. Anti-Cheat & Forensic Verification (Moiré screen detection + pHash duplicate check)
-    integrity = verify_image_integrity(image_bytes)
+    integrity = verify_image_integrity(image_bytes, user_id=user_id)
     if not integrity["passed"]:
         return {
             "success": False,
@@ -665,6 +669,35 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
     # 8. Commit quota deduction only on successful vehicle identification
     updated_quota = commit_scan_deduction(user_id)
 
+    # 9. Dynamic A2UI Cards
+    a2ui_cards = []
+    de00 = paint_match.get("delta_e00", 999.0)
+    if de00 <= 2.0 and paint_match.get("matched"):
+        rgb = paint_match.get("rgb", [58, 28, 68])
+        hex_color = f"#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}"
+        paint_card = build_paint_match_card(
+            paint_code=paint_match.get("paint_code", ""),
+            commercial_name=paint_match.get("paint_name", ""),
+            program=paint_match.get("program", "Factory"),
+            hex_color=hex_color,
+            delta_e=de00,
+            multiplier=paint_match.get("multiplier", 1.35),
+        )
+        a2ui_cards.append(paint_card)
+
+    breakdown_card = build_point_breakdown_card(
+        car_name=query_name,
+        base_points=score_info["base_points"],
+        production_units=score_info.get("production_run", 1_000_000),
+        recent_spots_30d=score_info.get("recent_spots_30d", 0),
+        final_points=final_points,
+        paint_multiplier=score_info.get("paint_multiplier", 1.0),
+        first_spotter_bonus=score_info.get("first_spotter_bonus", 1.0),
+        decay_factor=score_info.get("decay_factor", 1.0),
+        rarity_tier=rarity_tier,
+    )
+    a2ui_cards.append(breakdown_card)
+
     return {
         "success": True,
         "image_public_url": public_image_url,
@@ -677,6 +710,7 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         "spot_details": spot_info,
         "quota": updated_quota,
         "phash": phash,
+        "a2ui_cards": a2ui_cards,
     }
 
 

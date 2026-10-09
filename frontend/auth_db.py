@@ -321,3 +321,19 @@ def get_user_stats(user_id: str) -> dict[str, Any]:
     profile["rarity_counts"] = rarity_counts
     profile["submissions_count"] = len(submissions)
     return profile
+
+
+def update_user_quota_tier(user_id: str, tier: str = "pro") -> dict[str, Any]:
+    """Updates the user quota tier in Firestore."""
+    db = get_firestore_client()
+    user_ref = db.collection("users").document(user_id)
+    user_ref.set({"quota": {"tier": tier.lower()}}, merge=True)
+    return {"user_id": user_id, "tier": tier.lower()}
+
+
+def increment_user_refill_credits(user_id: str, count: int = 5) -> dict[str, Any]:
+    """Atomically increments the user refill_credits in Firestore."""
+    db = get_firestore_client()
+    user_ref = db.collection("users").document(user_id)
+    user_ref.set({"quota": {"refill_credits": firestore.Increment(count)}}, merge=True)
+    return {"user_id": user_id, "refill_credits_added": count}

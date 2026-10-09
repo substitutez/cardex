@@ -205,51 +205,64 @@ def extract_dominant_panel_color(image_bytes: bytes) -> tuple[int, int, int]:
         return 128, 128, 128
 
 
-def match_oem_paint_color(image_bytes: bytes, make_hint: str = "") -> dict[str, Any]:
-    """Analyze image panel color and find nearest factory OEM finish via CIEDE2000.
+def match_cielab_coordinates(
+    sample_lab: tuple[float, float, float] | list[float],
+    make_hint: str = "",
+) -> dict[str, Any]:
+    """Find nearest factory OEM finish for given CIE L*a*b* coordinates via CIEDE2000.
 
     Returns match details, Delta E 00 distance, factory code, and PTS multiplier.
     """
     db = load_paint_database()
-    r, g, b = extract_dominant_panel_color(image_bytes)
-    sample_lab = rgb_to_cielab(r, g, b)
+    sample_lab_tuple = (float(sample_lab[0]), float(sample_lab[1]), float(sample_lab[2]))
 
     best_match = None
     min_delta_e = 999.0
-
     make_lower = make_hint.lower().strip()
 
     for entry in db:
         entry_lab = (entry["lab"][0], entry["lab"][1], entry["lab"][2])
-        de00 = ciede2000(sample_lab, entry_lab)
+        de00 = ciede2000(sample_lab_tuple, entry_lab)
 
         # Slight prioritization bias if OEM brand matches make hint
-        bias = -0.4 if (make_lower and make_lower in entry["oem"].lower()) else 0.0
+        oem_brand = entry.get("make") or entry.get("oem") or ""
+        bias = -0.4 if (make_lower and make_lower in oem_brand.lower()) else 0.0
         adjusted_de = de00 + bias
 
         if adjusted_de < min_delta_e:
             min_delta_e = adjusted_de
             best_match = entry | {"delta_e00": de00}
 
-    is_exact_match = best_match and best_match["delta_e00"] <= 3.5
-    is_close_match = best_match and best_match["delta_e00"] <= 7.0
+    is_exact_match = best_match is not None and best_match["delta_e00"] <= 3.5
+    is_close_match = best_match is not None and best_match["delta_e00"] <= 7.0
 
     if best_match and is_close_match:
         multiplier = best_match.get("multiplier", 1.35)
-        badge = f"🎨 Verified OEM: {best_match['oem']} {best_match['name']} ({best_match['program']} Code {best_match['code']})"
+        name = best_match.get("commercial_name") or best_match.get("name") or "OEM Finish"
+        oem = best_match.get("make") or best_match.get("oem") or ""
+        code = best_match.get("paint_code") or best_match.get("code") or ""
+        program = best_match.get("program") or best_match.get("category") or "Factory"
+        category = best_match.get("category") or ("pts" if best_match.get("tier") == "PTS" else "standard")
+        is_pts = category in ("pts", "bespoke") or best_match.get("tier") == "PTS"
+        badge = f"🎨 Verified OEM: {oem} {name} ({program} Code {code})"
         return {
             "matched": True,
             "is_exact_match": is_exact_match,
-            "is_pts": True,
-            "paint_name": best_match["name"],
-            "oem_brand": best_match["oem"],
-            "program": best_match["program"],
-            "paint_code": best_match["code"],
+            "is_pts": is_pts,
+            "paint_name": name,
+            "commercial_name": name,
+            "name": name,
+            "oem_brand": oem,
+            "make": oem,
+            "program": program,
+            "paint_code": code,
+            "code": code,
+            "category": category,
             "delta_e00": round(best_match["delta_e00"], 2),
             "multiplier": multiplier,
             "badge_text": badge,
-            "sample_rgb": [r, g, b],
-            "sample_lab": sample_lab,
+            "sample_lab": sample_lab_tuple,
+            "rgb": best_match.get("rgb", [128, 128, 128]),
         }
 
     return {
@@ -257,8 +270,22 @@ def match_oem_paint_color(image_bytes: bytes, make_hint: str = "") -> dict[str, 
         "is_exact_match": False,
         "is_pts": False,
         "paint_name": "Standard Production Finish",
+        "commercial_name": "Standard Production Finish",
+        "name": "Standard Production Finish",
         "multiplier": 1.0,
+        "delta_e00": round(min_delta_e, 2) if best_match else 999.0,
         "badge_text": "🎨 Factory Standard Colorway",
-        "sample_rgb": [r, g, b],
-        "sample_lab": sample_lab,
+        "sample_lab": sample_lab_tuple,
     }
+
+
+def match_oem_paint_color(image_bytes: bytes, make_hint: str = "") -> dict[str, Any]:
+    """Analyze image panel color and find nearest factory OEM finish via CIEDE2000.
+
+    Returns match details, Delta E 00 distance, factory code, and PTS multiplier.
+    """
+    r, g, b = extract_dominant_panel_color(image_bytes)
+    sample_lab = rgb_to_cielab(r, g, b)
+    res = match_cielab_coordinates(sample_lab, make_hint=make_hint)
+    res["sample_rgb"] = [r, g, b]
+    return res

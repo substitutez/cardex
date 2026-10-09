@@ -218,3 +218,54 @@ def get_vehicle_specs_by_make_model(make: str, model: str) -> dict[str, Any] | N
         "drivetrain": row["drivetrain"],
         "curb_weight_kg": row["curb_weight_kg"],
     }
+
+
+def get_vehicle_production_units(make: str, model: str) -> int:
+    """Retrieve verified global production run units for a given make and model.
+
+    Defaults to 1,000,000 for standard mass-market series.
+    """
+    conn = get_sqlite_connection()
+    if not conn:
+        return 1_000_000
+
+    cursor = conn.cursor()
+    try:
+        # Check vehicles table first
+        cursor.execute(
+            """
+            SELECT production_units 
+            FROM vehicles 
+            WHERE LOWER(make) = LOWER(?) AND LOWER(model) LIKE LOWER(?)
+            ORDER BY production_units ASC
+            LIMIT 1
+            """,
+            (make.strip(), f"%{model.strip()}%"),
+        )
+        row = cursor.fetchone()
+        if row and row["production_units"] is not None:
+            conn.close()
+            return int(row["production_units"])
+
+        # Check models table
+        cursor.execute(
+            """
+            SELECT mo.production_units 
+            FROM models mo
+            JOIN makes mk ON mo.make_id = mk.id
+            WHERE LOWER(mk.name) = LOWER(?) AND LOWER(mo.name) LIKE LOWER(?)
+            ORDER BY mo.production_units ASC
+            LIMIT 1
+            """,
+            (make.strip(), f"%{model.strip()}%"),
+        )
+        row = cursor.fetchone()
+        conn.close()
+        if row and row["production_units"] is not None:
+            return int(row["production_units"])
+    except Exception as e:
+        logger.warning("Error querying vehicle production units: %s", e)
+        if conn:
+            conn.close()
+
+    return 1_000_000
