@@ -21,6 +21,7 @@ CarDex acts as an interactive automotive companion with real backend integration
    - Automatically cross-references the catalog and records new sightings.
 
 2. **Pokédex-Style Spotting & Personal Garage**:
+   - **Strict Live Device Camera Verification**: Enforces hardware camera capture via W3C HTML Media Capture (`capture="environment"`) on mobile and an in-app Cockpit Camera HUD reticle on desktop to guarantee authentic real-world sightings (album and file uploads disabled).
    - Classifies vehicles into 6 rarity tiers: **Mythic 1-of-1**, **Legendary**, **Epic**, **Rare**, **Uncommon**, and **Common**.
    - Awards spotter points and tracks sighting streaks.
    - Manages personal garages in Google Cloud Firestore, recording spot timestamps, user collections, and global Shazam-style spot counts.
