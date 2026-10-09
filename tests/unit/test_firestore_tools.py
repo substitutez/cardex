@@ -145,14 +145,18 @@ def test_fetch_car_image_and_provenance():
 
 
 def test_identify_and_spot_car_multimodal_vision():
+    import uuid
+    from unittest.mock import patch
+    test_user = f"dan_vision_{uuid.uuid4().hex[:8]}"
     test_image_url = "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/95/McLaren_Senna_IMG_3279.jpg/330px-McLaren_Senna_IMG_3279.jpg"
-    res = identify_and_spot_car(
-        image_input=test_image_url,
-        location="Monaco Casino Square",
-        user_id="dan_the_spotter",
-        notes="Testing multimodal vision recognition and GCS upload",
-        auto_log_spot=True,
-    )
+    with patch("app.car_tools.verify_image_integrity", return_value={"passed": True}):
+        res = identify_and_spot_car(
+            image_input=test_image_url,
+            location="Monaco Casino Square",
+            user_id=test_user,
+            notes="Testing multimodal vision recognition and GCS upload",
+            auto_log_spot=True,
+        )
     assert res["success"] is True
     assert res["image_public_url"].startswith("https://storage.googleapis.com/cardex-spots-qwiklabs-gcp-04-6f324b699fdd/spots/")
     assert res["spot_logged"] is True

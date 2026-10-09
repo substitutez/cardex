@@ -7502,9 +7502,46 @@ window.exportSpotStoryCard = function(spotData) {
   }
 };
 
+// Mock Payment & Billing Return Detection
+function showCockpitHUDToast(message, type = "success") {
+  if (window.CarDexOfflineSync && typeof window.CarDexOfflineSync.showCockpitNotification === "function") {
+    window.CarDexOfflineSync.showCockpitNotification(message, type);
+    return;
+  }
+  let container = document.getElementById("hud-notification-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "hud-notification-container";
+    container.style.cssText = "position: fixed; top: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; pointer-events: none;";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = `hud-toast hud-toast-${type}`;
+  toast.style.cssText = "background: rgba(16, 185, 129, 0.95); border: 1px solid #34d399; color: #fff; padding: 12px 18px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; font-family: monospace; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);";
+  toast.textContent = message;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 4500);
+}
+
+function checkPaymentStatusParam() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentStatus = urlParams.get("payment_status");
+  const billingStatus = urlParams.get("billing_status");
+
+  if (paymentStatus === "mock_success" || billingStatus === "success") {
+    showCockpitHUDToast("Mock Payment Successful — Fuel Recharged!", "success");
+    fetchUserQuota();
+    try {
+      const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+      window.history.replaceState({ path: cleanUrl }, "", cleanUrl);
+    } catch (e) {}
+  }
+}
+
 // Run auth & quota initialization on load
 initAuth();
 fetchUserQuota();
+checkPaymentStatusParam();
 </script>
 </body>
 </html>

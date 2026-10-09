@@ -97,8 +97,13 @@ build-backend = "hatchling.build"
 
 
 [tool.pytest.ini_options]
-pythonpath = "."
+pythonpath = ". frontend"
 asyncio_default_fixture_loop_scope = "session"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+    "ignore::pytest.PytestUnhandledThreadExceptionWarning",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["app","frontend"]

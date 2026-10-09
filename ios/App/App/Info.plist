@@ -71,6 +71,6 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>CarDex uses your location to map car sightings on the local radar.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>CarDex requires microphone access to measure exhaust decibels and verify engine acoustics.</string>
+	<string>CarDex uses the microphone to capture optional vehicle exhaust audio clips. It is also used to measure exhaust decibels and verify engine acoustics.</string>
 </dict>
 </plist>

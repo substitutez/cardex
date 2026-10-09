@@ -32,18 +32,36 @@ import google.auth
 import google.auth.transport.requests
 import httpx
 from a2a.client import ClientConfig, ClientFactory
-from a2a.types import (
-    AgentCard,
-    FilePart,
-    Message,
-    Part,
-    Role,
-    TaskArtifactUpdateEvent,
-    TextPart,
-    TransportProtocol,
-)
+try:
+    from a2a.types import (
+        AgentCard,
+        FilePart,
+        Message,
+        Part,
+        Role,
+        TaskArtifactUpdateEvent,
+        TextPart,
+        TransportProtocol,
+    )
+except ImportError:
+    from a2a.types import (
+        AgentCard,
+        Message,
+        Part,
+        Role,
+        TaskArtifactUpdateEvent,
+    )
+    class FilePart:
+        pass
+    class TextPart:
+        def __init__(self, text=""):
+            self.text = text
+    class TransportProtocol:
+        jsonrpc = "jsonrpc"
+        http_json = "http_json"
+import logging
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 import base64
@@ -117,6 +135,44 @@ def _auth_headers() -> dict[str, str]:
 
 
 app = FastAPI()
+
+logger = logging.getLogger("cardex_frontend")
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+
+# Billing Configuration & Mock Fallback Detection
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "").strip()
+REVENUECAT_WEBHOOK_AUTH_KEY = os.getenv("REVENUECAT_WEBHOOK_AUTH_KEY", "").strip()
+
+IS_BILLING_MOCK = (
+    not STRIPE_SECRET_KEY
+    or STRIPE_SECRET_KEY.startswith("sk_test_placeholder")
+    or "mock" in STRIPE_SECRET_KEY.lower()
+    or "..." in STRIPE_SECRET_KEY
+    or not REVENUECAT_WEBHOOK_AUTH_KEY
+    or "placeholder" in REVENUECAT_WEBHOOK_AUTH_KEY.lower()
+)
+
+if IS_BILLING_MOCK:
+    logger.info("[BILLING] Running in SANDBOX / MOCK MODE")
+    print("[BILLING] Running in SANDBOX / MOCK MODE")
+
+
+@app.api_route("/privacy", methods=["GET", "HEAD"])
+async def privacy_policy():
+    """Apple-compliant Privacy Policy for Camera, Microphone, and Location."""
+    privacy_file = os.path.join(_static_dir, "privacy.html")
+    if os.path.exists(privacy_file):
+        return FileResponse(privacy_file, media_type="text/html")
+    return JSONResponse({"error": "Privacy policy not found"}, status_code=404)
+
+
+@app.api_route("/terms", methods=["GET", "HEAD"])
+async def terms_of_service():
+    """Apple-compliant Terms of Use (EULA) and In-App Purchase terms."""
+    terms_file = os.path.join(_static_dir, "terms.html")
+    if os.path.exists(terms_file):
+        return FileResponse(terms_file, media_type="text/html")
+    return JSONResponse({"error": "Terms of service not found"}, status_code=404)
 
 
 @app.exception_handler(Exception)
@@ -527,6 +583,15 @@ async def create_checkout_session_endpoint(req: Request):
             user_id = auth_db.validate_session(token)
     user_id = user_id or "spotter_1"
 
+    if IS_BILLING_MOCK or not STRIPE_SECRET_KEY:
+        mock_checkout_url = f"/api/billing/mock-success?user_id={user_id}&type={session_type}"
+        return JSONResponse({
+            "checkout_url": mock_checkout_url,
+            "session_id": f"mock_session_{session_type}_{uuid.uuid4().hex[:8]}",
+            "type": session_type,
+            "mock": True
+        })
+
     success_url = str(req.base_url)
     res = billing.create_checkout_session(
         user_id=user_id,
@@ -534,6 +599,21 @@ async def create_checkout_session_endpoint(req: Request):
         success_url=success_url,
     )
     return JSONResponse(res)
+
+
+@app.api_route("/api/billing/mock-success", methods=["GET", "HEAD"])
+async def mock_billing_success_endpoint(req: Request, user_id: str = "spotter_1", type: str = "subscription"):
+    """Simulates a successful checkout completion in sandbox mode.
+    Updates Firestore users/{userId}/quota directly (sets tier = 'pro' or adds 5 refill credits).
+    Redirects back to / with a query param ?payment_status=mock_success.
+    """
+    logger.info("[BILLING] Processing mock checkout success: user_id=%s, type=%s", user_id, type)
+    if type in ("subscription", "pro"):
+        quota_limiter.set_user_tier(user_id, "pro")
+    else:
+        quota_limiter.add_refill_credits(user_id, 5)
+
+    return RedirectResponse(url="/?payment_status=mock_success", status_code=303)
 
 
 @app.post("/api/billing/stripe/webhook")

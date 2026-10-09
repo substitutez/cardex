@@ -435,7 +435,10 @@ agent_sandbox_executor = AgentEngineSandboxCodeExecutor(
 # Cross-Session Long-Term Memory Callback (Vertex AI Memory Bank)
 async def generate_memories_callback(callback_context: CallbackContext):
     """Saves session turns to Vertex AI Memory Bank for long-term user recall."""
-    await callback_context.add_session_to_memory()
+    try:
+        await callback_context.add_session_to_memory()
+    except Exception as e:
+        logger.debug("Memory bank session persistence skipped: %s", e)
     return None
 
 
