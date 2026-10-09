@@ -162,6 +162,15 @@ def record_car_spot_entry(
             "last_spotted_at": now,
         })
 
+    # Also update 'users' collection if registered account exists
+    auth_user_ref = db.collection("users").document(user_id)
+    if auth_user_ref.get().exists:
+        auth_user_ref.update({
+            "total_points": firestore.Increment(points),
+            "total_spots": firestore.Increment(1),
+            "last_spotted_at": now,
+        })
+
     return spot_data
 
 

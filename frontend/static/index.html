@@ -549,8 +549,8 @@
     transition: all 0.2s;
     box-shadow: 0 3px 10px var(--accent-glow);
   }
-  .upload-btn {
-    padding: 0.75rem 1rem;
+  .upload-btn, .camera-btn {
+    padding: 0.75rem 1.15rem;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 10px;
@@ -559,10 +559,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.15rem;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
     transition: all 0.2s;
   }
-  .upload-btn:hover {
+  .upload-btn:hover, .camera-btn:hover {
     border-color: var(--accent);
     background: rgba(255, 107, 0, 0.12);
     box-shadow: 0 0 10px var(--accent-glow);
@@ -1440,6 +1443,183 @@
     font-size: 0.9rem;
   }
 
+  /* Camera Viewfinder HUD Modal */
+  .camera-modal-window {
+    max-width: 620px;
+    width: 95%;
+    background: #0d121d;
+    border: 1px solid rgba(255, 107, 0, 0.4);
+    box-shadow: 0 0 35px rgba(255, 107, 0, 0.2), 0 25px 60px rgba(0, 0, 0, 0.9);
+  }
+  .camera-viewport {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    max-height: 420px;
+    background: #000;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #camera-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .camera-reticle-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  .camera-hud-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .camera-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(220, 38, 38, 0.35);
+    border: 1px solid #ef4444;
+    color: #fca5a5;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+  }
+  .blink-dot {
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    animation: blinker 1s infinite alternate;
+  }
+  @keyframes blinker {
+    0% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+  .camera-flip-btn {
+    pointer-events: auto;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 6px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .camera-flip-btn:hover {
+    background: rgba(255, 107, 0, 0.3);
+    border-color: var(--accent);
+  }
+  .camera-reticle-box {
+    width: 75%;
+    height: 60%;
+    border: 2px dashed rgba(255, 107, 0, 0.55);
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: inset 0 0 20px rgba(255, 107, 0, 0.15);
+  }
+  .camera-reticle-crosshair {
+    width: 24px;
+    height: 24px;
+    position: relative;
+  }
+  .camera-reticle-crosshair::before,
+  .camera-reticle-crosshair::after {
+    content: '';
+    position: absolute;
+    background: var(--accent);
+  }
+  .camera-reticle-crosshair::before {
+    left: 11px;
+    top: 0;
+    width: 2px;
+    height: 24px;
+  }
+  .camera-reticle-crosshair::after {
+    left: 0;
+    top: 11px;
+    width: 24px;
+    height: 2px;
+  }
+  .camera-hud-bottom {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.65);
+    border: 1px solid rgba(255, 107, 0, 0.3);
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
+  }
+  .camera-controls-bar {
+    padding: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: #0d121d;
+    border-top: 1px solid var(--border);
+  }
+  .camera-shutter-btn {
+    background: linear-gradient(135deg, #ff6b00, #ff8533);
+    border: none;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.95rem;
+    padding: 0.85rem 1.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+    transition: all 0.2s ease;
+  }
+  .camera-shutter-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 20px rgba(255, 107, 0, 0.6);
+  }
+  .camera-aux-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .camera-aux-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .camera-error-msg {
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
   /* Responsive Rules */
   @media (max-width: 960px) {
     .sidebar {
@@ -1581,8 +1761,11 @@
     .send-btn span:first-child {
       display: none;
     }
-    .upload-btn {
+    .upload-btn, .camera-btn {
       padding: 0.75rem 0.85rem;
+    }
+    .camera-btn-text {
+      display: none;
     }
     .rarity-chips-grid {
       grid-template-columns: 1fr 1fr;
@@ -1621,13 +1804,13 @@
     </div>
     <div class="header-auth-section" id="header-auth-section">
       <!-- Guest state button -->
-      <button id="btn-auth-open" class="btn-auth-trigger" type="button" title="Sign In or Create Account">
+      <button id="btn-auth-open" class="btn-auth-trigger" type="button" title="Sign In or Create Account" onclick="openAuthModal('signin')">
         <span>🔑</span>
         <span>Sign In / Sign Up</span>
       </button>
       <!-- Logged-in state pill -->
       <div class="user-pill-container" id="user-pill-container" style="display: none;">
-        <button type="button" id="btn-submissions-open" class="btn-submissions-pill" title="View my saved submissions & garage">
+        <button type="button" id="btn-submissions-open" class="btn-submissions-pill" title="View my saved submissions & garage" onclick="openSubmissionsModal()">
           <span>📂</span>
           <span>My Submissions</span>
           <span class="submissions-count-badge" id="submissions-count-badge">0</span>
@@ -1637,7 +1820,7 @@
           <span class="user-name-display" id="header-username">@Spotter</span>
           <span class="user-points-badge" id="header-points-badge">0 PTS</span>
         </div>
-        <button type="button" id="btn-signout" class="btn-signout-chip" title="Sign Out">Sign Out</button>
+        <button type="button" id="btn-signout" class="btn-signout-chip" title="Sign Out" onclick="signOut()">Sign Out</button>
       </div>
     </div>
   </div>
@@ -1654,8 +1837,8 @@
         <div class="spotter-handle" id="sidebar-handle">@Guest</div>
         <div class="spotter-points-sub" id="sidebar-points-val">0 PTS</div>
       </div>
-      <button type="button" class="spotter-action-btn" id="sidebar-auth-btn" title="Sign In or Register">Sign In</button>
-      <button type="button" id="sidebar-close" class="sidebar-close-btn" title="Close sidebar" aria-label="Close sidebar">✕</button>
+      <button type="button" class="spotter-action-btn" id="sidebar-auth-btn" title="Sign In or Register" onclick="handleSidebarAuthClick()">Sign In</button>
+      <button type="button" id="sidebar-close" class="sidebar-close-btn" title="Close sidebar" aria-label="Close sidebar" onclick="closeSidebarMobile()">✕</button>
     </div>
 
     <!-- Navigation / Categories -->
@@ -1666,11 +1849,11 @@
         <div class="nav-section-title">
           <span>📸</span> AI Spotting & Vision
         </div>
-        <button type="button" class="nav-item action-upload" data-action="upload">
-          <span class="nav-icon">📷</span>
+        <button type="button" class="nav-item action-camera" data-action="camera" onclick="triggerCameraCapture()">
+          <span class="nav-icon">📸</span>
           <div class="nav-text">
-            <span class="nav-label">Upload Car Photo</span>
-            <span class="nav-desc">Identify make, model & trim</span>
+            <span class="nav-label">Take Car Photo</span>
+            <span class="nav-desc">Live device camera sighting</span>
           </div>
         </button>
         <button type="button" class="nav-item" data-prompt="I just spotted a rare supercar! How do I log it into my garage?">
@@ -1694,10 +1877,10 @@
         <div class="nav-section-title">
           <span>🏎️</span> Garage & Collection
         </div>
-        <button type="button" class="nav-item action-upload" id="nav-btn-submissions">
+        <button type="button" class="nav-item action-submissions" id="nav-btn-submissions" onclick="openSubmissionsModal()">
           <span class="nav-icon">📂</span>
           <div class="nav-text">
-            <span class="nav-label">My Submissions & Photos</span>
+            <span class="nav-label">My Submissions & Garage</span>
             <span class="nav-desc">All saved spots & points</span>
           </div>
         </button>
@@ -1869,18 +2052,20 @@
       <div class="preview-box">
         <img id="preview-img" class="preview-img" src="" alt="Spot preview">
         <div class="preview-info">
-          <span id="preview-filename">photo.jpg</span>
+          <span id="preview-filename">live_spot.jpg</span>
         </div>
-        <button type="button" id="preview-remove" class="preview-remove" title="Remove photo">✕</button>
+        <button type="button" id="preview-remove" class="preview-remove" title="Remove photo" onclick="clearPendingImage()">✕</button>
       </div>
     </div>
 
     <form id="form">
-      <input type="file" id="file-input" accept="image/*" style="display:none">
-      <button type="button" id="upload-btn" class="upload-btn" title="Upload or capture vehicle photo">
-        📷
+      <!-- Native camera capture input: bypasses photo library / file selection on mobile per HTML Media Capture spec -->
+      <input type="file" id="camera-capture-input" accept="image/*" capture="environment" style="display:none">
+      <button type="button" id="camera-btn" class="upload-btn camera-btn" title="Take photo of car with device camera" onclick="triggerCameraCapture()">
+        <span>📸</span>
+        <span class="camera-btn-text">Take Photo</span>
       </button>
-      <input id="input" placeholder="Spot a car, attach/paste a photo, or ask CarDex…" autocomplete="off" autofocus>
+      <input id="input" placeholder="Spot a car, take a photo with camera, or ask CarDex…" autocomplete="off" autofocus>
       <button class="send-btn" type="submit">
         <span>Spot</span>
         <span>🏎️</span>
@@ -1889,12 +2074,157 @@
   </main>
 </div>
 
+<!-- Camera Viewfinder HUD Modal -->
+<div class="modal-backdrop" id="camera-modal-backdrop">
+  <div class="modal-window camera-modal-window" id="camera-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>📸</span> Live Device Camera Spot</h3>
+        <p class="modal-subtitle">Take a live photo of the car · No albums or files allowed</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="camera-modal-close" onclick="closeCameraModal()" aria-label="Close camera modal">✕</button>
+    </div>
+
+    <!-- Live Viewport Container -->
+    <div class="camera-viewport" id="camera-viewport">
+      <video id="camera-video" autoplay playsinline muted></video>
+      <div class="camera-reticle-overlay">
+        <div class="camera-hud-top">
+          <span class="camera-live-badge"><span class="blink-dot"></span> LIVE CAMERA</span>
+          <button type="button" class="camera-flip-btn" id="camera-flip-btn" onclick="flipCamera()" title="Switch camera front/rear">🔄 Flip</button>
+        </div>
+        <div class="camera-reticle-box">
+          <div class="camera-reticle-crosshair"></div>
+        </div>
+        <div class="camera-hud-bottom">ALIGN VEHICLE IN RETICLE · SNAP TO VERIFY SPOT</div>
+      </div>
+    </div>
+
+    <!-- Camera Error / Permission Fallback Container -->
+    <div id="camera-error-box" class="camera-error-msg" style="display: none;"></div>
+
+    <!-- Action Controls -->
+    <div class="camera-controls-bar">
+      <button type="button" id="camera-shutter-btn" class="camera-shutter-btn" onclick="snapCameraPhoto()">
+        <span>📸</span>
+        <span>SNAP CAR SPOT</span>
+      </button>
+      <button type="button" class="camera-aux-btn" onclick="openNativeCameraFallback()" title="Use your phone's native camera app">
+        <span>📱 Native Camera</span>
+      </button>
+    </div>
+    <canvas id="camera-canvas" style="display: none;"></canvas>
+  </div>
+</div>
+
+<!-- Auth Modal (Sign In & Sign Up) -->
+<div class="modal-backdrop" id="auth-modal-backdrop">
+  <div class="modal-window" id="auth-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>🏎️</span> CarDex Spotter Account</h3>
+        <p class="modal-subtitle">Save and remember all your submissions, garage spots, and points.</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="auth-modal-close" onclick="closeAuthModal()" aria-label="Close modal">✕</button>
+    </div>
+
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab-btn active" id="tab-btn-signin" onclick="switchAuthTab('signin')">Sign In</button>
+      <button type="button" class="auth-tab-btn" id="tab-btn-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Sign In Pane -->
+    <form class="auth-body" id="form-signin" onsubmit="handleSignIn(event)">
+      <div class="auth-alert" id="signin-alert"></div>
+      <div class="auth-form-group">
+        <label for="signin-username">Username or Email</label>
+        <input type="text" id="signin-username" class="auth-input" placeholder="e.g. supercar_hunter" required autocomplete="username" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signin-password">Password</label>
+        <input type="password" id="signin-password" class="auth-input" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="auth-submit-btn" id="btn-submit-signin">🏁 Sign In to CarDex</button>
+      
+      <div class="auth-demo-divider">Or quick test</div>
+      <button type="button" class="auth-demo-btn" id="btn-demo-signin" onclick="handleDemoLogin()">
+        <span>⚡</span>
+        <span>1-Click Demo Login (@Dan_the_spotter · 108k PTS)</span>
+      </button>
+    </form>
+
+    <!-- Sign Up Pane -->
+    <form class="auth-body" id="form-signup" onsubmit="handleSignUp(event)" style="display: none;">
+      <div class="auth-alert" id="signup-alert"></div>
+      <div class="auth-form-group">
+        <label for="signup-username">Spotter Handle / Username</label>
+        <input type="text" id="signup-username" class="auth-input" placeholder="e.g. apex_chaser" required autocomplete="username" minlength="3" maxlength="30" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signup-email">Email Address</label>
+        <input type="email" id="signup-email" class="auth-input" placeholder="name@example.com" required autocomplete="email" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" class="auth-input" placeholder="At least 4 characters" required autocomplete="new-password" minlength="4" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signup-password-confirm">Confirm Password</label>
+        <input type="password" id="signup-password-confirm" class="auth-input" placeholder="Confirm your password" required autocomplete="new-password" minlength="4" />
+      </div>
+      <button type="submit" class="auth-submit-btn" id="btn-submit-signup">✨ Create Spotter Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- Submissions & Garage Modal -->
+<div class="modal-backdrop" id="submissions-modal-backdrop">
+  <div class="modal-window submissions-modal-window" id="submissions-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>📂</span> My Spotter Submissions & Garage</h3>
+        <p class="modal-subtitle" id="submissions-modal-subtitle">All your spotted exotics saved in Google Cloud Firestore</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="submissions-modal-close" onclick="closeSubmissionsModal()" aria-label="Close modal">✕</button>
+    </div>
+
+    <!-- Summary Stats Bar -->
+    <div class="submissions-summary-bar" id="submissions-summary-bar">
+      <div class="stat-pill">
+        <span class="stat-pill-label">Total Points</span>
+        <span class="stat-pill-val gold" id="modal-stat-points">0 PTS</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Total Spots</span>
+        <span class="stat-pill-val" id="modal-stat-spots">0</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Prestige Rank</span>
+        <span class="stat-pill-val" id="modal-stat-rank">ROOKIE</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Saved In DB</span>
+        <span class="stat-pill-val" id="modal-stat-db" style="font-size:0.85rem; color:#4ade80;">Firestore 🟢</span>
+      </div>
+    </div>
+
+    <!-- Submissions List -->
+    <div class="submissions-list" id="submissions-list">
+      <div class="submissions-empty">
+        <span>Loading your garage spots from Firestore…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const log = document.getElementById("log");
 const form = document.getElementById("form");
 const input = document.getElementById("input");
-const fileInput = document.getElementById("file-input");
-const uploadBtn = document.getElementById("upload-btn");
+const cameraCaptureInput = document.getElementById("camera-capture-input");
+const cameraBtn = document.getElementById("camera-btn");
+const fileInput = cameraCaptureInput;
+const uploadBtn = cameraBtn;
 const previewWrapper = document.getElementById("preview-wrapper");
 const previewImg = document.getElementById("preview-img");
 const previewFilename = document.getElementById("preview-filename");
@@ -2086,48 +2416,149 @@ function renderReply(b, parts) {
   log.scrollTop = log.scrollHeight;
 }
 
-function setPendingImage(file) {
-  if (!file || !file.type.startsWith("image/")) return;
+function setPendingImage(fileOrBlob, defaultName = "live_camera_spot.jpg") {
+  if (!fileOrBlob || (fileOrBlob.type && !fileOrBlob.type.startsWith("image/"))) return;
   const reader = new FileReader();
   reader.onload = (e) => {
     pendingImageData = e.target.result;
-    previewImg.src = pendingImageData;
-    previewFilename.textContent = file.name || "attached_photo.jpg";
-    previewWrapper.style.display = "block";
-    input.focus();
+    if (previewImg) previewImg.src = pendingImageData;
+    if (previewFilename) previewFilename.innerHTML = `<span>🟢 Live Camera Spot</span> · ${fileOrBlob.name || defaultName}`;
+    if (previewWrapper) previewWrapper.style.display = "block";
+    if (input) input.focus();
   };
-  reader.readAsDataURL(file);
+  reader.readAsDataURL(fileOrBlob);
 }
 
 function clearPendingImage() {
   pendingImageData = null;
-  previewImg.src = "";
-  previewFilename.textContent = "";
-  previewWrapper.style.display = "none";
-  fileInput.value = "";
+  if (previewImg) previewImg.src = "";
+  if (previewFilename) previewFilename.textContent = "";
+  if (previewWrapper) previewWrapper.style.display = "none";
+  if (cameraCaptureInput) cameraCaptureInput.value = "";
 }
 
-uploadBtn.addEventListener("click", () => fileInput.click());
-fileInput.addEventListener("change", (e) => {
-  if (e.target.files && e.target.files[0]) {
-    setPendingImage(e.target.files[0]);
-  }
-});
-previewRemove.addEventListener("click", clearPendingImage);
+// --- Live Device Camera Viewfinder HUD ---
+let currentCameraStream = null;
+let currentFacingMode = "environment";
 
-// Clipboard Paste (Ctrl+V / Cmd+V) for images
-window.addEventListener("paste", (e) => {
-  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-  for (const item of items) {
-    if (item.kind === "file" && item.type.startsWith("image/")) {
-      const file = item.getAsFile();
-      setPendingImage(file);
-      break;
+function isMobileDevice() {
+  return ('ontouchstart' in window) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+function triggerCameraCapture() {
+  closeSidebarMobile();
+  // On mobile touch devices, <input capture="environment"> launches the hardware camera directly
+  // per W3C HTML Media Capture spec, bypassing photo library / album selection.
+  if (isMobileDevice() && cameraCaptureInput) {
+    cameraCaptureInput.value = "";
+    cameraCaptureInput.click();
+    return;
+  }
+  // On desktop / webcam devices, open in-app HUD camera viewfinder
+  openCameraModal();
+}
+
+async function openCameraModal() {
+  const modal = document.getElementById("camera-modal-backdrop");
+  const video = document.getElementById("camera-video");
+  const errorBox = document.getElementById("camera-error-box");
+  const viewport = document.getElementById("camera-viewport");
+
+  if (!modal || !video) return;
+  modal.classList.add("active");
+  if (errorBox) errorBox.style.display = "none";
+  if (viewport) viewport.style.display = "flex";
+
+  try {
+    if (currentCameraStream) {
+      currentCameraStream.getTracks().forEach(t => t.stop());
+    }
+    const constraints = {
+      video: {
+        facingMode: currentFacingMode,
+        width: { ideal: 1920 },
+        height: { ideal: 1080 }
+      },
+      audio: false
+    };
+    currentCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = currentCameraStream;
+    await video.play();
+  } catch (err) {
+    console.warn("Camera access error:", err);
+    if (viewport) viewport.style.display = "none";
+    if (errorBox) {
+      errorBox.style.display = "block";
+      errorBox.innerHTML = `
+        <div style="font-size:2.2rem; margin-bottom:0.6rem;">📸</div>
+        <div style="font-weight:700; font-size:1.1rem; margin-bottom:0.5rem; color:#fff;">Live Camera Required</div>
+        <div style="margin-bottom:1.25rem; color:var(--text-secondary); font-size:0.88rem; line-height:1.5;">
+          CarDex only accepts photos taken live with your device camera to verify real-world car spots.<br>
+          Please allow camera permission in your browser, or tap below to launch your device camera.
+        </div>
+        <button type="button" class="auth-submit-btn" style="width:auto; padding:0.65rem 1.4rem; margin:0 auto;" onclick="openNativeCameraFallback()">
+          📱 Open Native Camera
+        </button>
+      `;
     }
   }
-});
+}
 
-// Drag and drop images onto chat
+function closeCameraModal() {
+  const modal = document.getElementById("camera-modal-backdrop");
+  if (modal) modal.classList.remove("active");
+  if (currentCameraStream) {
+    currentCameraStream.getTracks().forEach(t => t.stop());
+    currentCameraStream = null;
+  }
+}
+
+function snapCameraPhoto() {
+  const video = document.getElementById("camera-video");
+  if (!video || !video.videoWidth) {
+    openNativeCameraFallback();
+    return;
+  }
+
+  const canvas = document.getElementById("camera-canvas") || document.createElement("canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  canvas.toBlob((blob) => {
+    if (blob) {
+      setPendingImage(blob, `live_camera_spot_${Date.now().toString().slice(-4)}.jpg`);
+      closeCameraModal();
+    }
+  }, "image/jpeg", 0.92);
+}
+
+function flipCamera() {
+  currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+  openCameraModal();
+}
+
+function openNativeCameraFallback() {
+  closeCameraModal();
+  if (cameraCaptureInput) {
+    cameraCaptureInput.value = "";
+    cameraCaptureInput.click();
+  }
+}
+
+// Camera input listener (when photo is snapped via native camera)
+if (cameraCaptureInput) {
+  cameraCaptureInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setPendingImage(e.target.files[0], e.target.files[0].name || "live_camera_spot.jpg");
+    }
+  });
+}
+if (cameraBtn) cameraBtn.addEventListener("click", triggerCameraCapture);
+if (previewRemove) previewRemove.addEventListener("click", clearPendingImage);
+
+// STRICTLY PREVENT drag-and-drop of photo files from albums / desktop
 ["dragenter", "dragover"].forEach(name => {
   window.addEventListener(name, (e) => {
     e.preventDefault();
@@ -2137,8 +2568,20 @@ window.addEventListener("paste", (e) => {
 window.addEventListener("drop", (e) => {
   e.preventDefault();
   e.stopPropagation();
-  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-    setPendingImage(e.dataTransfer.files[0]);
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+    alert("⚠️ File drop disabled!\nCarDex only allows photos taken live with your device camera to verify authentic sightings. Click 'Take Photo' to snap a photo.");
+  }
+});
+
+// STRICTLY PREVENT clipboard paste of image files
+window.addEventListener("paste", (e) => {
+  const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items || [];
+  for (const item of items) {
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      e.preventDefault();
+      alert("⚠️ Album & file uploads disabled!\nPlease use '📸 Take Photo' to capture a live photo of the car with your camera.");
+      return;
+    }
   }
 });
 
@@ -2322,8 +2765,8 @@ if (clearChatBtn) {
 document.querySelectorAll(".nav-item, .rarity-chip").forEach(item => {
   item.addEventListener("click", () => {
     const action = item.getAttribute("data-action");
-    if (action === "upload") {
-      fileInput.click();
+    if (action === "upload" || action === "camera") {
+      triggerCameraCapture();
       closeSidebarMobile();
       return;
     }
@@ -2500,114 +2943,140 @@ async function initAuth() {
 }
 
 // Sign In Handler
-if (formSignin) {
-  formSignin.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const username = document.getElementById("signin-username").value.trim();
-    const password = document.getElementById("signin-password").value;
-    const submitBtn = document.getElementById("btn-submit-signin");
+async function handleSignIn(e) {
+  if (e) e.preventDefault();
+  const usernameInput = document.getElementById("signin-username");
+  const passwordInput = document.getElementById("signin-password");
+  const submitBtn = document.getElementById("btn-submit-signin");
+  if (!usernameInput || !passwordInput) return;
 
+  const username = usernameInput.value.trim();
+  const password = passwordInput.value;
+
+  if (!username || !password) {
+    showAuthAlert(signinAlert, "Please enter your username/email and password.", true);
+    return;
+  }
+
+  if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.textContent = "Authenticating…";
-    clearAuthAlerts();
+  }
+  clearAuthAlerts();
 
-    try {
-      const res = await fetch("/api/auth/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showAuthAlert(signinAlert, data.detail || "Sign in failed.", true);
-        return;
-      }
-      updateSpotterState(data.user, data.token);
-      showAuthAlert(signinAlert, `Welcome back, ${data.user.username}! Loading spots…`, false);
-      setTimeout(() => {
-        closeAuthModal();
-        document.getElementById("signin-password").value = "";
-      }, 700);
-    } catch (err) {
-      showAuthAlert(signinAlert, "Network error: " + err.message, true);
-    } finally {
+  try {
+    const res = await fetch("/api/auth/signin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showAuthAlert(signinAlert, data.detail || "Sign in failed.", true);
+      return;
+    }
+    updateSpotterState(data.user, data.token);
+    showAuthAlert(signinAlert, `Welcome back, ${data.user.username}! Loading spots…`, false);
+    setTimeout(() => {
+      closeAuthModal();
+      passwordInput.value = "";
+    }, 700);
+  } catch (err) {
+    showAuthAlert(signinAlert, "Network error: " + err.message, true);
+  } finally {
+    if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = "🏁 Sign In to CarDex";
     }
-  });
+  }
 }
 
 // Sign Up Handler
-if (formSignup) {
-  formSignup.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const username = document.getElementById("signup-username").value.trim();
-    const email = document.getElementById("signup-email").value.trim();
-    const password = document.getElementById("signup-password").value;
-    const confirm = document.getElementById("signup-password-confirm").value;
-    const submitBtn = document.getElementById("btn-submit-signup");
+async function handleSignUp(e) {
+  if (e) e.preventDefault();
+  const usernameInput = document.getElementById("signup-username");
+  const emailInput = document.getElementById("signup-email");
+  const passwordInput = document.getElementById("signup-password");
+  const confirmInput = document.getElementById("signup-password-confirm");
+  const submitBtn = document.getElementById("btn-submit-signup");
 
-    if (password !== confirm) {
-      showAuthAlert(signupAlert, "Passwords do not match.", true);
-      return;
-    }
-    if (password.length < 4) {
-      showAuthAlert(signupAlert, "Password must be at least 4 characters.", true);
-      return;
-    }
+  if (!usernameInput || !emailInput || !passwordInput || !confirmInput) return;
 
+  const username = usernameInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+  const confirm = confirmInput.value;
+
+  if (password !== confirm) {
+    showAuthAlert(signupAlert, "Passwords do not match.", true);
+    return;
+  }
+  if (password.length < 4) {
+    showAuthAlert(signupAlert, "Password must be at least 4 characters.", true);
+    return;
+  }
+
+  if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.textContent = "Creating Account…";
-    clearAuthAlerts();
+  }
+  clearAuthAlerts();
 
-    try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        showAuthAlert(signupAlert, data.detail || "Registration failed.", true);
-        return;
-      }
-      updateSpotterState(data.user, data.token);
-      showAuthAlert(signupAlert, `Account created! Welcome to CarDex, ${data.user.username}.`, false);
-      setTimeout(() => {
-        closeAuthModal();
-        formSignup.reset();
-      }, 800);
-    } catch (err) {
-      showAuthAlert(signupAlert, "Network error: " + err.message, true);
-    } finally {
+  try {
+    const res = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showAuthAlert(signupAlert, data.detail || "Registration failed.", true);
+      return;
+    }
+    updateSpotterState(data.user, data.token);
+    showAuthAlert(signupAlert, `Account created! Welcome to CarDex, ${data.user.username}.`, false);
+    setTimeout(() => {
+      closeAuthModal();
+      if (formSignup) formSignup.reset();
+    }, 800);
+  } catch (err) {
+    showAuthAlert(signupAlert, "Network error: " + err.message, true);
+  } finally {
+    if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = "✨ Create Spotter Account";
     }
-  });
+  }
 }
 
 // Demo Login Button
-if (btnDemoSignin) {
-  btnDemoSignin.addEventListener("click", async () => {
-    document.getElementById("signin-username").value = "dan_the_spotter";
-    document.getElementById("signin-password").value = "password123";
-    formSignin.dispatchEvent(new Event("submit"));
-  });
+async function handleDemoLogin() {
+  const usernameInput = document.getElementById("signin-username");
+  const passwordInput = document.getElementById("signin-password");
+  if (usernameInput) usernameInput.value = "dan_the_spotter";
+  if (passwordInput) passwordInput.value = "password123";
+  await handleSignIn(null);
 }
 
 // Sign Out Handler
-if (btnSignout) {
-  btnSignout.addEventListener("click", async () => {
-    if (currentToken) {
-      try {
-        await fetch("/api/auth/signout", {
-          method: "POST",
-          headers: { "Authorization": `Bearer ${currentToken}` }
-        });
-      } catch (e) {}
-    }
-    updateSpotterState(null, null);
-  });
+async function signOut() {
+  if (currentToken) {
+    try {
+      await fetch("/api/auth/signout", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${currentToken}` }
+      });
+    } catch (e) {}
+  }
+  updateSpotterState(null, null);
+}
+
+function handleSidebarAuthClick() {
+  if (currentSpotter) {
+    openSubmissionsModal();
+  } else {
+    openAuthModal("signin");
+  }
 }
 
 // Submissions Modal Handlers
@@ -2647,7 +3116,7 @@ async function openSubmissionsModal() {
         <div class="submissions-empty">
           <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🏁</div>
           <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">No sightings logged yet!</div>
-          <div>Upload a photo or tell the CarDex agent about an exotic car you spotted to earn points.</div>
+          <div>Take a live camera photo of an exotic car you spotted to earn points.</div>
         </div>
       `;
       return;
@@ -2703,12 +3172,9 @@ function closeSubmissionsModal() {
   if (submissionsModalBackdrop) submissionsModalBackdrop.classList.remove("active");
 }
 
-// Modal open/close bindings
+// Modal open/close listeners
 if (btnAuthOpen) btnAuthOpen.addEventListener("click", () => openAuthModal("signin"));
-if (sidebarAuthBtn) sidebarAuthBtn.addEventListener("click", () => {
-  if (currentSpotter) openSubmissionsModal();
-  else openAuthModal("signin");
-});
+if (sidebarAuthBtn) sidebarAuthBtn.addEventListener("click", handleSidebarAuthClick);
 if (btnSubmissionsOpen) btnSubmissionsOpen.addEventListener("click", openSubmissionsModal);
 if (navBtnSubmissions) navBtnSubmissions.addEventListener("click", () => {
   closeSidebarMobile();
@@ -2721,12 +3187,19 @@ if (submissionsModalClose) submissionsModalClose.addEventListener("click", close
 if (tabBtnSignin) tabBtnSignin.addEventListener("click", () => switchAuthTab("signin"));
 if (tabBtnSignup) tabBtnSignup.addEventListener("click", () => switchAuthTab("signup"));
 
-// Backdrop close
-[authModalBackdrop, submissionsModalBackdrop].forEach(backdrop => {
+if (formSignin) formSignin.addEventListener("submit", handleSignIn);
+if (formSignup) formSignup.addEventListener("submit", handleSignUp);
+if (btnDemoSignin) btnDemoSignin.addEventListener("click", handleDemoLogin);
+if (btnSignout) btnSignout.addEventListener("click", signOut);
+
+// Backdrop close handlers
+const cameraModalBackdrop = document.getElementById("camera-modal-backdrop");
+[authModalBackdrop, submissionsModalBackdrop, cameraModalBackdrop].forEach(backdrop => {
   if (backdrop) {
     backdrop.addEventListener("click", (e) => {
       if (e.target === backdrop) {
-        backdrop.classList.remove("active");
+        if (backdrop === cameraModalBackdrop) closeCameraModal();
+        else backdrop.classList.remove("active");
       }
     });
   }
@@ -2737,112 +3210,31 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeAuthModal();
     closeSubmissionsModal();
+    closeCameraModal();
   }
 });
+
+// Expose functions globally on window for inline handlers
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = closeAuthModal;
+window.switchAuthTab = switchAuthTab;
+window.handleSignIn = handleSignIn;
+window.handleSignUp = handleSignUp;
+window.handleDemoLogin = handleDemoLogin;
+window.signOut = signOut;
+window.handleSidebarAuthClick = handleSidebarAuthClick;
+window.openSubmissionsModal = openSubmissionsModal;
+window.closeSubmissionsModal = closeSubmissionsModal;
+window.triggerCameraCapture = triggerCameraCapture;
+window.openCameraModal = openCameraModal;
+window.closeCameraModal = closeCameraModal;
+window.snapCameraPhoto = snapCameraPhoto;
+window.flipCamera = flipCamera;
+window.openNativeCameraFallback = openNativeCameraFallback;
+window.clearPendingImage = clearPendingImage;
 
 // Run auth initialization on load
 initAuth();
 </script>
-
-<!-- Auth Modal (Sign In & Sign Up) -->
-<div class="modal-backdrop" id="auth-modal-backdrop">
-  <div class="modal-window" id="auth-modal">
-    <div class="modal-header">
-      <div>
-        <h3><span>🏎️</span> CarDex Spotter Account</h3>
-        <p class="modal-subtitle">Save and remember all your submissions, garage spots, and points.</p>
-      </div>
-      <button type="button" class="modal-close-btn" id="auth-modal-close" aria-label="Close modal">✕</button>
-    </div>
-
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab-btn active" id="tab-btn-signin">Sign In</button>
-      <button type="button" class="auth-tab-btn" id="tab-btn-signup">Sign Up</button>
-    </div>
-
-    <!-- Sign In Pane -->
-    <form class="auth-body" id="form-signin">
-      <div class="auth-alert" id="signin-alert"></div>
-      <div class="auth-form-group">
-        <label for="signin-username">Username or Email</label>
-        <input type="text" id="signin-username" class="auth-input" placeholder="e.g. supercar_hunter" required autocomplete="username" />
-      </div>
-      <div class="auth-form-group">
-        <label for="signin-password">Password</label>
-        <input type="password" id="signin-password" class="auth-input" placeholder="••••••••" required autocomplete="current-password" />
-      </div>
-      <button type="submit" class="auth-submit-btn" id="btn-submit-signin">🏁 Sign In to CarDex</button>
-      
-      <div class="auth-demo-divider">Or quick test</div>
-      <button type="button" class="auth-demo-btn" id="btn-demo-signin">
-        <span>⚡</span>
-        <span>1-Click Demo Login (@Dan_the_spotter · 108k PTS)</span>
-      </button>
-    </form>
-
-    <!-- Sign Up Pane -->
-    <form class="auth-body" id="form-signup" style="display: none;">
-      <div class="auth-alert" id="signup-alert"></div>
-      <div class="auth-form-group">
-        <label for="signup-username">Spotter Handle / Username</label>
-        <input type="text" id="signup-username" class="auth-input" placeholder="e.g. apex_chaser" required autocomplete="username" minlength="3" maxlength="30" />
-      </div>
-      <div class="auth-form-group">
-        <label for="signup-email">Email Address</label>
-        <input type="email" id="signup-email" class="auth-input" placeholder="name@example.com" required autocomplete="email" />
-      </div>
-      <div class="auth-form-group">
-        <label for="signup-password">Password</label>
-        <input type="password" id="signup-password" class="auth-input" placeholder="At least 4 characters" required autocomplete="new-password" minlength="4" />
-      </div>
-      <div class="auth-form-group">
-        <label for="signup-password-confirm">Confirm Password</label>
-        <input type="password" id="signup-password-confirm" class="auth-input" placeholder="Confirm your password" required autocomplete="new-password" minlength="4" />
-      </div>
-      <button type="submit" class="auth-submit-btn" id="btn-submit-signup">✨ Create Spotter Account</button>
-    </form>
-  </div>
-</div>
-
-<!-- Submissions & Garage Modal -->
-<div class="modal-backdrop" id="submissions-modal-backdrop">
-  <div class="modal-window submissions-modal-window" id="submissions-modal">
-    <div class="modal-header">
-      <div>
-        <h3><span>📂</span> My Spotter Submissions & Garage</h3>
-        <p class="modal-subtitle" id="submissions-modal-subtitle">All your spotted exotics saved in Google Cloud Firestore</p>
-      </div>
-      <button type="button" class="modal-close-btn" id="submissions-modal-close" aria-label="Close modal">✕</button>
-    </div>
-
-    <!-- Summary Stats Bar -->
-    <div class="submissions-summary-bar" id="submissions-summary-bar">
-      <div class="stat-pill">
-        <span class="stat-pill-label">Total Points</span>
-        <span class="stat-pill-val gold" id="modal-stat-points">0 PTS</span>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-pill-label">Total Spots</span>
-        <span class="stat-pill-val" id="modal-stat-spots">0</span>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-pill-label">Prestige Rank</span>
-        <span class="stat-pill-val" id="modal-stat-rank">ROOKIE</span>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-pill-label">Saved In DB</span>
-        <span class="stat-pill-val" id="modal-stat-db" style="font-size:0.85rem; color:#4ade80;">Firestore 🟢</span>
-      </div>
-    </div>
-
-    <!-- Submissions List -->
-    <div class="submissions-list" id="submissions-list">
-      <div class="submissions-empty">
-        <span>Loading your garage spots from Firestore…</span>
-      </div>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
