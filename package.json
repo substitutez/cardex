@@ -1,0 +1,12 @@
+{
+  "name": "cardex",
+  "version": "2.0.0",
+  "description": "CarDex - Autonomous Multimodal Supercar Spotting & Telemetry Agent",
+  "private": true,
+  "dependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3",
+    "@revenuecat/purchases-capacitor": "^13.7.3"
+  }
+}

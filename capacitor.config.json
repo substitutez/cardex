@@ -1,0 +1,9 @@
+{
+  "appId": "com.cardex.spotter",
+  "appName": "CarDex",
+  "webDir": "frontend/static",
+  "server": {
+    "url": "https://cardex-frontend-861697384142.us-east1.run.app",
+    "cleartext": false
+  }
+}

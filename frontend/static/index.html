@@ -3266,10 +3266,10 @@
       <span class="pulse-dot"></span>
       <span>Connected to Agent Engine</span>
     </div>
-    <!-- Quota Indicator Pill -->
-    <button type="button" id="btn-quota-pill" class="btn-quota-pill" title="Daily Scan Quota & Refills" onclick="openQuotaModal()">
-      <span class="quota-bolt">⚡</span>
-      <span id="quota-text-header">5/5 Scans</span>
+    <!-- Quota Indicator Pill / Fuel Gauge -->
+    <button type="button" id="btn-quota-pill" class="btn-quota-pill" title="Fuel Gauge: Daily Scan Quota & Refills" onclick="openQuotaModal()">
+      <span class="quota-bolt">⛽</span>
+      <span id="quota-text-header">Scans Remaining: 5/5</span>
     </button>
     <div class="header-auth-section" id="header-auth-section">
       <!-- Guest state button -->
@@ -3830,39 +3830,38 @@
       </div>
     </div>
 
-    <!-- Monetization Options Grid -->
+    <!-- Monetization Options Grid (Paywall Modal) -->
     <div class="quota-plans-grid">
-      <!-- Refill Pack -->
-      <div class="quota-plan-card">
-        <div class="plan-card-header">
-          <span style="font-size: 1.5rem;">⚡</span>
-          <h4>Instant Refill Pack</h4>
-          <div class="plan-card-price">$1.99 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/ 5 Scans</span></div>
-        </div>
-        <ul class="plan-card-features">
-          <li>+5 High-Resolution Vehicle Scans</li>
-          <li>Never Expires (Carried Across Days)</li>
-          <li>Full Access to CIEDE2000 Paint Matcher</li>
-          <li>Instant Activation via Firestore</li>
-        </ul>
-        <button type="button" class="btn-plan-action btn-plan-refill" onclick="triggerStripeCheckout('refill')">⚡ Refill +5 Scans ($1.99)</button>
-      </div>
-
-      <!-- Pro Tier -->
+      <!-- Card 1: Pro Hunter Unlimited -->
       <div class="quota-plan-card pro-card">
         <div class="plan-card-header">
           <span style="font-size: 1.5rem;">👑</span>
-          <h4>CarDex Pro Member</h4>
+          <h4>Pro Hunter Unlimited</h4>
           <div class="plan-card-price">$9.99 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/ month</span></div>
         </div>
         <ul class="plan-card-features">
           <li><strong>Unlimited</strong> Daily Vehicle Scans</li>
-          <li>Full Spectrometric OEM Paint Matcher</li>
-          <li>Master Spotter Review Voting (+500 PTS)</li>
-          <li>Deflationary 1-of-1 Discovery Multiplier</li>
-          <li>Exclusive Discord Master Spotter Role</li>
+          <li>Priority Processing</li>
+          <li>Verified Badges & Master Spotter Status</li>
+          <li>Spectrometric OEM Paint Matcher</li>
         </ul>
-        <button type="button" class="btn-plan-action btn-plan-pro" onclick="triggerStripeCheckout('subscription')">👑 Upgrade to Pro ($9.99/mo)</button>
+        <button type="button" class="btn-plan-action btn-plan-pro" onclick="handlePaywallPurchase('subscription')">👑 Upgrade to Pro Hunter ($9.99/mo)</button>
+      </div>
+
+      <!-- Card 2: Emergency Refill -->
+      <div class="quota-plan-card">
+        <div class="plan-card-header">
+          <span style="font-size: 1.5rem;">⚡</span>
+          <h4>Emergency Refill</h4>
+          <div class="plan-card-price">$1.99 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/ 5 instant scans</span></div>
+        </div>
+        <ul class="plan-card-features">
+          <li>+5 Instant High-Resolution Vehicle Scans</li>
+          <li>Never Expires (Carried Across Days)</li>
+          <li>Instant Activation via Firestore & Memorystore</li>
+          <li>Full Access to Paint & Exhaust Sound Tools</li>
+        </ul>
+        <button type="button" class="btn-plan-action btn-plan-refill" onclick="handlePaywallPurchase('refill')">⚡ Emergency Refill ($1.99)</button>
       </div>
     </div>
   </div>
@@ -4654,12 +4653,20 @@ async function sendMessage(text, imgData = null) {
     catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
     renderReply(b, data.parts || []);
 
-    // Sync quota status if returned by server
+    // Sync quota status if returned by server, or fetch latest
     if (data.quota) {
       updateQuotaDisplay(data.quota);
+    } else {
+      fetchUserQuota();
     }
 
-    if (res.status === 429 || data.quota_exceeded) {
+    if (
+      res.status === 429 ||
+      data.quota_exceeded ||
+      data.error === "QUOTA_EXHAUSTED" ||
+      (typeof data.status === "string" && data.status.includes("QUOTA_EXHAUSTED")) ||
+      (data.code === "QUOTA_EXHAUSTED")
+    ) {
       openQuotaModal();
     }
 
@@ -5236,11 +5243,11 @@ function updateQuotaDisplay(q) {
   if (pill) {
     if (isPro) {
       pill.classList.add("pro");
-      if (text) text.innerHTML = "👑 Pro Unlimited";
+      if (text) text.innerHTML = "👑 Pro Active: Unlimited";
     } else {
       pill.classList.remove("pro");
-      const rem = q.remaining_scans != null ? q.remaining_scans : 5;
-      if (text) text.innerHTML = `⚡ ${rem}/5 Scans`;
+      const rem = q.remaining_scans != null ? q.remaining_scans : (q.remaining_free != null ? q.remaining_free : 5);
+      if (text) text.innerHTML = `⛽ Scans Remaining: ${rem}/5`;
     }
   }
 
@@ -5254,7 +5261,7 @@ function updateQuotaDisplay(q) {
   }
 
   if (tierBadge) {
-    tierBadge.innerHTML = isPro ? "👑 CAR DEX PRO" : "FREE SPOTTER";
+    tierBadge.innerHTML = isPro ? "👑 PRO HUNTER UNLIMITED" : "FREE SPOTTER";
     tierBadge.style.color = isPro ? "#c084fc" : "#ff9800";
   }
 
@@ -5296,6 +5303,55 @@ function closeQuotaModal() {
   if (modal) modal.classList.remove("active");
 }
 
+/* --- Native RevenueCat & Stripe Paywall Purchase Routing --- */
+const REVENUECAT_PUBLIC_KEY = "appl_cAeseGBStfGlKoSBM9JWmfcAbqo";
+
+async function handlePaywallPurchase(planType) {
+  const isPro = (planType === "subscription" || planType === "pro");
+  const currentUserId = (currentSpotter && currentSpotter.user_id) ? currentSpotter.user_id : "spotter_1";
+
+  // Check if running in native Capacitor shell (iOS App Store)
+  const isNative = typeof window.Capacitor !== "undefined" &&
+    typeof window.Capacitor.isNativePlatform === "function" &&
+    window.Capacitor.isNativePlatform();
+
+  if (isNative) {
+    try {
+      const Purchases = window.Purchases || (window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases);
+      if (!Purchases) {
+        throw new Error("RevenueCat Purchases plugin not found in native container");
+      }
+
+      // Configure RevenueCat SDK with public key if not yet initialized
+      if (!window.__revenueCatConfigured) {
+        await Purchases.configure({ apiKey: REVENUECAT_PUBLIC_KEY });
+        window.__revenueCatConfigured = true;
+      }
+
+      // Identify user with current authenticated spotter ID
+      await Purchases.logIn({ appUserID: currentUserId });
+
+      // Execute Apple StoreKit purchase
+      const productIdentifier = isPro ? "cardex_pro_monthly" : "cardex_scans_5";
+      const purchaseResult = await Purchases.purchaseProduct({ productIdentifier });
+      console.log("RevenueCat purchase success:", purchaseResult);
+
+      // Refresh quota & garage state
+      await fetchUserQuota();
+      closeQuotaModal();
+      alert(isPro ? "👑 Welcome to CarDex Pro Hunter Unlimited!" : "⚡ Emergency Refill Added (+5 Scans)!");
+      return;
+    } catch (err) {
+      console.warn("Native RevenueCat purchase failed or cancelled, falling back:", err);
+      if (err && (err.userCancelled || err.code === "1")) return;
+      // If error or running on dev simulator, fallback to standard web checkout
+    }
+  }
+
+  // Standard web browser fallback -> Stripe Checkout Session
+  await triggerStripeCheckout(isPro ? "subscription" : "refill");
+}
+
 async function handleRefillPurchase(packs = 1) {
   const userId = currentSpotter ? currentSpotter.user_id : "spotter_1";
   try {
@@ -5326,7 +5382,7 @@ async function handleUpgradePro(tier = "pro") {
     });
     const data = await res.json();
     if (data.quota) updateQuotaDisplay(data.quota);
-    alert("👑 Welcome to CarDex Pro! Unlimited daily scans and PTS paint verification unlocked.");
+    alert("👑 Welcome to CarDex Pro! Unlimited daily scans unlocked.");
   } catch (e) {
     alert("Pro upgrade failed: " + e.message);
   }
@@ -5337,7 +5393,7 @@ async function triggerStripeCheckout(type = 'subscription') {
   try {
     const headers = { "Content-Type": "application/json" };
     if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
-    const res = await fetch("/api/billing/create-checkout-session", {
+    const res = await fetch("/api/billing/stripe/create-checkout-session", {
       method: "POST",
       headers,
       body: JSON.stringify({ user_id: userId, type: type })

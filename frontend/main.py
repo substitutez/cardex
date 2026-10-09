@@ -461,6 +461,7 @@ async def upgrade_user_pro_endpoint(req: Request):
     return JSONResponse(res)
 
 
+@app.post("/api/billing/stripe/create-checkout-session")
 @app.post("/api/billing/create-checkout-session")
 async def create_checkout_session_endpoint(req: Request):
     """Creates a Stripe Checkout Session for Pro subscription ($9.99/mo) or Refill pack ($1.99)."""
@@ -484,6 +485,7 @@ async def create_checkout_session_endpoint(req: Request):
     return JSONResponse(res)
 
 
+@app.post("/api/billing/stripe/webhook")
 @app.post("/api/billing/webhook")
 async def stripe_webhook_endpoint(req: Request):
     """Stripe webhook handler for checkout.session.completed."""
@@ -496,6 +498,22 @@ async def stripe_webhook_endpoint(req: Request):
         return JSONResponse({"error": str(e)}, status_code=400)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@app.post("/api/billing/revenuecat-webhook")
+async def revenuecat_webhook_endpoint(req: Request):
+    """RevenueCat webhook handler for Apple In-App Purchases."""
+    auth_header = req.headers.get("Authorization", "")
+    payload = await req.body()
+    try:
+        res = billing.handle_revenuecat_webhook(payload, auth_header)
+        return JSONResponse(res)
+    except ValueError as e:
+        status_code = 401 if "Unauthorized" in str(e) or "Authorization" in str(e) else 400
+        return JSONResponse({"error": str(e)}, status_code=status_code)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
 
 
 @app.get("/api/reviews/pending")

@@ -196,3 +196,82 @@ def handle_stripe_webhook(payload: bytes, sig_header: Optional[str] = None) -> d
             }
 
     return {"status": "ignored", "event": event_type}
+
+
+def handle_revenuecat_webhook(
+    payload: dict[str, Any] | bytes,
+    auth_header: Optional[str] = None,
+) -> dict[str, Any]:
+    """Handle incoming RevenueCat Webhook events for iOS In-App Purchases.
+
+    Supported events:
+    - INITIAL_PURCHASE or RENEWAL with product 'cardex_pro_monthly':
+        sets user tier to 'pro'.
+    - INITIAL_PURCHASE or NON_RENEWING_PURCHASE with product 'cardex_scans_5':
+        atomically increments refill_credits by 5.
+    - CANCELLATION or EXPIRATION:
+        resets user tier to 'free'.
+    """
+    expected_key = os.getenv("REVENUECAT_WEBHOOK_AUTH_KEY", "")
+    if expected_key:
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise ValueError("Missing or invalid Authorization header")
+        token = auth_header.split(" ", 1)[1].strip()
+        if token != expected_key:
+            raise ValueError("Unauthorized RevenueCat webhook token")
+
+    if isinstance(payload, (bytes, bytearray)):
+        try:
+            body = json.loads(payload.decode("utf-8"))
+        except Exception as e:
+            raise ValueError(f"Invalid JSON payload: {e}")
+    else:
+        body = payload
+
+    event = body.get("event") or body
+    event_type = str(event.get("type", "")).upper()
+    app_user_id = event.get("app_user_id") or event.get("original_app_user_id") or "spotter_1"
+    product_id = event.get("product_id") or ""
+
+    logger.info("Processing RevenueCat event %s for user %s (product: %s)", event_type, app_user_id, product_id)
+
+    if event_type in ("INITIAL_PURCHASE", "RENEWAL") and product_id == "cardex_pro_monthly":
+        res = set_user_tier(app_user_id, "pro")
+        return {
+            "status": "success",
+            "event": event_type,
+            "product_id": product_id,
+            "user_id": app_user_id,
+            "tier": "pro",
+            "quota": res,
+        }
+
+    if event_type in ("INITIAL_PURCHASE", "NON_RENEWING_PURCHASE") and product_id == "cardex_scans_5":
+        res = add_refill_credits(app_user_id, 5)
+        return {
+            "status": "success",
+            "event": event_type,
+            "product_id": product_id,
+            "user_id": app_user_id,
+            "credits_added": 5,
+            "quota": res,
+        }
+
+    if event_type in ("CANCELLATION", "EXPIRATION"):
+        res = set_user_tier(app_user_id, "free")
+        return {
+            "status": "success",
+            "event": event_type,
+            "product_id": product_id,
+            "user_id": app_user_id,
+            "tier": "free",
+            "quota": res,
+        }
+
+    return {
+        "status": "ignored",
+        "event": event_type,
+        "product_id": product_id,
+        "user_id": app_user_id,
+    }
+
