@@ -1,6 +1,12 @@
 # CarDex — Automotive SpotterDex & Vehicle Intelligence Agent
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Cloud%20Run-blue?logo=google-cloud&style=for-the-badge)](https://cardex-frontend-861697384142.us-east1.run.app)
+[![Agent Runtime](https://img.shields.io/badge/Google%20Agent%20Engine-Deployed-brightgreen?logo=google&style=for-the-badge)](https://cardex-frontend-861697384142.us-east1.run.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
 **CarDex** is an agentic AI assistant built on the Google Agent Development Kit (ADK) and Google Cloud Agent Platform. Designed as a real-world "Pokédex for cars", CarDex enables automotive spotters and enthusiasts to identify vehicles from photos, track sightings in a personal garage, score points based on rarity tiers, query comprehensive production specifications, and view community leaderboards.
+
+🏎️ **Try the Live App**: [https://cardex-frontend-861697384142.us-east1.run.app](https://cardex-frontend-861697384142.us-east1.run.app)
 
 ---
 
@@ -30,15 +36,25 @@ CarDex acts as an interactive automotive companion with real backend integration
    - Queries global spotter leaderboards ranked by total points and unique finds in Firestore.
    - Accepts spot correction submissions and trim disputes into Firestore for human review.
 
-5. **Cross-Session Long-Term Memory**:
+5. **User Authentication & Spotter Persistence**:
+   - Secure sign-in and sign-up with PBKDF2-HMAC-SHA256 password hashing and session tokens.
+   - Saves vehicle submissions, photo URLs, and rarity points permanently to **Google Cloud Firestore**.
+   - Live synchronization of spotter prestige ranks (*Rookie Spotter* to *Apex Legend*) and real-time points updates.
+   - Dedicated "My Spotter Submissions & Garage" modal with full photo history and sighting metadata.
+   - 1-click demo login option (`@Dan_the_spotter` · 108,000 PTS · 12 exotic supercars).
+
+6. **Cross-Session Long-Term Memory**:
    - Integrated with **Vertex AI Memory Bank** to retain spotter preferences, favorite marques, dream cars, unit preferences (km/h vs. mph), and dietary/environmental sensitivities across sessions.
 
-6. **Agent Platform Code Sandbox Execution**:
+7. **Agent Platform Code Sandbox Execution**:
    - Executes Python code inside a secure Agent Engine Sandbox (`AgentEngineSandboxCodeExecutor`) to compute rarity multipliers, unit conversions, and scoring algorithms.
 
-7. **A2UI Rich Card Rendering & Web Frontend**:
+8. **A2UI Rich Card Rendering & Mobile-Optimized Cockpit Frontend**:
    - Emits structured A2UI (v0.8 Basic Catalog) components (Cards, Columns, Rows, Text, Images) for clean visual card displays.
    - Includes a standalone FastAPI proxy and cockpit-themed chat web interface communicating over the Agent-to-Agent (A2A) protocol.
+   - **Interactive Cockpit Sidebar**: Categorized quick prompts for Garage, Verification, and Field Spotting.
+   - **Mobile & Touch Ready**: Dynamic viewport height (`100dvh`), Apple notch & home indicator safe area insets, touch swipe drawer gestures, and virtual keyboard auto-scroll.
+   - **Seamless Design**: Thematic styling with custom invisible scrollbars preserving the deep cockpit aesthetic.
 
 ---
 
@@ -92,11 +108,13 @@ cardex/
 │   └── app_utils/             # A2A adapters, reasoning engine connectors, and services
 ├── frontend/
 │   ├── main.py                # FastAPI proxy translating chat requests to A2A protocol
+│   ├── auth_db.py             # User authentication, PBKDF2 hashing & Firestore spotter persistence
 │   ├── requirements.txt       # Frontend proxy dependencies
 │   ├── Procfile               # Cloud Run deployment entrypoint
 │   └── static/
-│       └── index.html         # Cockpit-themed chat UI with built-in A2UI card renderer
+│       └── index.html         # Cockpit-themed chat UI with auth modal, garage viewer & A2UI
 ├── tests/
+│   ├── test_auth.py           # User authentication and Firestore persistence tests
 │   └── unit/                  # Unit test suite verifying agent structure, tools, and DBs
 ├── agents-cli-manifest.yaml   # Deployment manifest for agents-cli
 ├── pyproject.toml             # Python dependencies and build configuration
