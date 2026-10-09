@@ -26,6 +26,16 @@ try:
 except ImportError:
     from firestore_db import get_db
 
+try:
+    from .cache import get_cached_user_quota, set_cached_user_quota, invalidate_user_quota
+except ImportError:
+    try:
+        from cache import get_cached_user_quota, set_cached_user_quota, invalidate_user_quota
+    except ImportError:
+        def get_cached_user_quota(user_id: str): return None
+        def set_cached_user_quota(user_id: str, quota_data: dict, ttl: int | None = None): return False
+        def invalidate_user_quota(user_id: str): return False
+
 DEFAULT_DAILY_LIMIT = 5
 
 
@@ -40,6 +50,10 @@ def _parse_iso(timestamp_str: str | None) -> datetime.datetime | None:
 
 def get_user_quota(user_id: str) -> dict[str, Any]:
     """Retrieve the current scan quota, tier, and refill credits for a spotter."""
+    cached = get_cached_user_quota(user_id)
+    if cached is not None:
+        return cached
+
     db = get_db()
     user_ref = db.collection("users").document(user_id)
     doc = user_ref.get()
@@ -49,7 +63,7 @@ def get_user_quota(user_id: str) -> dict[str, Any]:
 
     if not doc.exists:
         # Default quota structure for guest / fresh user
-        return {
+        default_quota = {
             "user_id": user_id,
             "scans_today": 0,
             "daily_limit": DEFAULT_DAILY_LIMIT,
@@ -62,6 +76,8 @@ def get_user_quota(user_id: str) -> dict[str, Any]:
             "next_reset_seconds": 86400,
             "last_reset": now_iso,
         }
+        set_cached_user_quota(user_id, default_quota)
+        return default_quota
 
     data = doc.to_dict() or {}
     quota = data.get("quota") or {}
@@ -102,7 +118,7 @@ def get_user_quota(user_id: str) -> dict[str, Any]:
     seconds_since_reset = (now - last_reset).total_seconds()
     next_reset_seconds = max(0, int(86400 - seconds_since_reset))
 
-    return {
+    result = {
         "user_id": user_id,
         "scans_today": scans_today,
         "daily_limit": daily_limit,
@@ -115,6 +131,8 @@ def get_user_quota(user_id: str) -> dict[str, Any]:
         "next_reset_seconds": next_reset_seconds,
         "last_reset": last_reset.isoformat(),
     }
+    set_cached_user_quota(user_id, result)
+    return result
 
 
 def check_and_reserve_scan(user_id: str) -> tuple[bool, str, dict[str, Any]]:
@@ -216,11 +234,14 @@ def commit_scan_deduction(user_id: str) -> dict[str, Any]:
         }
 
     txn = db.transaction()
-    return _deduct_txn(txn)
+    res = _deduct_txn(txn)
+    invalidate_user_quota(user_id)
+    return res
 
 
 def add_refill_credits(user_id: str, count: int = 5) -> dict[str, Any]:
     """Credit consumable scan refills to a user."""
+    invalidate_user_quota(user_id)
     db = get_db()
     user_ref = db.collection("users").document(user_id)
     user_ref.set(
@@ -232,6 +253,7 @@ def add_refill_credits(user_id: str, count: int = 5) -> dict[str, Any]:
 
 def set_user_tier(user_id: str, tier: str = "pro") -> dict[str, Any]:
     """Update user account tier between 'free' and 'pro'."""
+    invalidate_user_quota(user_id)
     db = get_db()
     user_ref = db.collection("users").document(user_id)
     user_ref.set(

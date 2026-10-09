@@ -56,6 +56,25 @@ import a2ui_utils
 import paint_matcher
 
 try:
+    from cache import (
+        get_cached_leaderboard,
+        set_cached_leaderboard,
+        get_cached_user_quota,
+        set_cached_user_quota,
+        invalidate_user_quota,
+        is_redis_available,
+    )
+except ImportError:
+    from app.cache import (
+        get_cached_leaderboard,
+        set_cached_leaderboard,
+        get_cached_user_quota,
+        set_cached_user_quota,
+        invalidate_user_quota,
+        is_redis_available,
+    )
+
+try:
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -234,6 +253,52 @@ def _upload_base64_image(b64_str: str) -> str:
     return f"https://storage.googleapis.com/{BUCKET_NAME}/{blob_name}"
 
 
+@app.get("/healthz")
+@app.get("/health")
+async def healthz():
+    """Health check probe endpoint for container orchestration and uptime monitors."""
+    import datetime
+    redis_ok = is_redis_available()
+    return JSONResponse(
+        content={
+            "status": "healthy",
+            "service": "cardex",
+            "version": "2.0.0",
+            "redis_cache": "connected" if redis_ok else "fallback_in_memory",
+            "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        },
+        status_code=200,
+    )
+
+
+@app.get("/api/leaderboard")
+async def get_leaderboard_endpoint(req: Request):
+    """Retrieves top spotters ranked by total points, with 60s Redis caching."""
+    limit_param = req.query_params.get("limit", "10")
+    try:
+        limit = max(1, min(100, int(limit_param)))
+    except ValueError:
+        limit = 10
+
+    cached = get_cached_leaderboard()
+    if cached is not None:
+        return JSONResponse(
+            content={"leaderboard": cached[:limit], "cached": True, "limit": limit},
+            headers={"X-Cache-Status": "HIT", "Cache-Control": "public, max-age=60"},
+        )
+
+    try:
+        rankings = firestore_db.get_leaderboard_rankings(limit=limit)
+    except Exception as e:
+        rankings = []
+
+    set_cached_leaderboard(rankings, ttl=60)
+    return JSONResponse(
+        content={"leaderboard": rankings, "cached": False, "limit": limit},
+        headers={"X-Cache-Status": "MISS", "Cache-Control": "public, max-age=60"},
+    )
+
+
 @app.post("/api/auth/signup")
 @app.post("/api/auth/register")
 async def signup(req: Request):
@@ -355,8 +420,12 @@ async def get_user_quota_endpoint(req: Request):
             token = auth_header.split(" ", 1)[1].strip()
             user_id = auth_db.validate_session(token)
     user_id = user_id or "spotter_1"
+    cached = get_cached_user_quota(user_id)
+    if cached is not None:
+        return JSONResponse(cached, headers={"X-Cache-Status": "HIT"})
     quota = quota_limiter.get_user_quota(user_id)
-    return JSONResponse(quota)
+    return JSONResponse(quota, headers={"X-Cache-Status": "MISS"})
+
 
 
 @app.post("/api/user/refill")
