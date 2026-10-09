@@ -486,6 +486,42 @@ async def submit_dispute_endpoint(req: Request):
     return JSONResponse(res)
 
 
+@app.get("/api/radar")
+async def get_radar_sightings_endpoint(req: Request):
+    """Retrieves privacy-quantized vehicle sightings within a given radius logged in the trailing 7 days.
+
+    Query parameters:
+      lat: float (default: 43.7384 - Monaco GP Circuit)
+      lng: float (default: 7.4246 - Monaco Harbour)
+      radius_km: float (default 10.0, max 50.0)
+
+    Returns JSON list of nearby car spotting contacts:
+      [{"id": ..., "make_model": ..., "rarity_tier": ..., "lat": ..., "lng": ..., "age_hours": ..., "distance_km": ...}]
+    """
+    try:
+        lat_str = req.query_params.get("lat")
+        lng_str = req.query_params.get("lng")
+        if not lat_str or not lng_str:
+            lat = 43.7384
+            lng = 7.4246
+        else:
+            lat = float(lat_str)
+            lng = float(lng_str)
+
+        radius_km = float(req.query_params.get("radius_km", 10.0))
+        radius_km = max(0.5, min(radius_km, 50.0))
+    except (ValueError, TypeError) as e:
+        return JSONResponse({"error": f"Invalid query parameters: {e}"}, status_code=400)
+
+    sightings = firestore_db.query_radar_sightings(
+        lat=lat,
+        lng=lng,
+        radius_km=radius_km,
+        max_age_days=7,
+    )
+    return JSONResponse(sightings)
+
+
 @app.post("/chat")
 @app.post("/api/spots/upload")
 async def chat(req: Request):
@@ -569,17 +605,21 @@ async def chat(req: Request):
             except Exception as e:
                 print("Failed to upload image to GCS:", e)
 
-    # Build agent prompt with explicit spotter identity context
-    spotter_tag = f"[Spotter Context: user_id='{user_id}', username='{username}']"
+    # Build agent prompt with explicit spotter identity and location context
+    req_lat = body.get("latitude") or body.get("lat")
+    req_lng = body.get("longitude") or body.get("lng")
+    loc_ctx = f", lat={req_lat}, lng={req_lng}" if req_lat and req_lng else ""
+    spotter_tag = f"[Spotter Context: user_id='{user_id}', username='{username}'{loc_ctx}]"
     if uploaded_image_url:
+        loc_phrase = f" at coordinates ({req_lat}, {req_lng})" if req_lat and req_lng else ""
         if message.strip():
             agent_text = (
-                f"{spotter_tag} I spotted this car and took this photo: {uploaded_image_url}. {message.strip()} "
+                f"{spotter_tag} I spotted this car{loc_phrase} and took this photo: {uploaded_image_url}. {message.strip()} "
                 f"Please identify the car, award rarity points, and record the spot in my garage (user_id='{user_id}')."
             )
         else:
             agent_text = (
-                f"{spotter_tag} Please identify the car in this photo I spotted and record the spot in my garage (user_id='{user_id}'): {uploaded_image_url}"
+                f"{spotter_tag} Please identify the car in this photo I spotted{loc_phrase} and record the spot in my garage (user_id='{user_id}'): {uploaded_image_url}"
             )
     else:
         lower_msg = message.lower()
@@ -688,7 +728,8 @@ async def chat(req: Request):
 
 
 # Serve the chat UI (keep this mount last so /chat wins).
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")
 
 
 if __name__ == "__main__":

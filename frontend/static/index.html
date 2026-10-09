@@ -11,6 +11,9 @@
 <!-- Optional: used to draw A2UI Icon components. If it can't load, icons fall back to showing their name as text. -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
 <script src="/marked.min.js"></script>
+<!-- Leaflet Map CSS & JS for Cockpit Field Radar -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
   :root {
     --accent: #ff6b00;
@@ -2321,6 +2324,601 @@
   .countdown-timer {
     color: #f59e0b;
   }
+
+  /* ========================================================
+     Cockpit Field Radar & Leaflet HUD Styling
+     ======================================================== */
+  .cockpit-tabs-bar {
+    display: flex;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 3px;
+    gap: 4px;
+    margin: 0 1rem;
+  }
+  .cockpit-tab-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 9999px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .cockpit-tab-pill:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .cockpit-tab-pill.active {
+    background: var(--accent-gradient);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(255, 107, 0, 0.35);
+  }
+  .radar-live-blip {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px #4ade80;
+    display: inline-block;
+    animation: radar-dot-pulse 1.5s infinite;
+  }
+  @keyframes radar-dot-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.3); }
+  }
+  .radar-tag {
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 0.1rem 0.35rem;
+    background: rgba(74, 222, 128, 0.2);
+    color: #4ade80;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Cockpit View Panes */
+  .cockpit-view-pane {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Radar HUD Container */
+  #cockpit-radar-view {
+    background: #080c14;
+    position: relative;
+    overflow: hidden;
+  }
+  .radar-hud-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: rgba(11, 15, 25, 0.95);
+    border-bottom: 1px solid var(--border);
+    gap: 1rem;
+    flex-wrap: wrap;
+    z-index: 10;
+  }
+  .radar-hud-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .radar-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .radar-hud-sweep-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #06b6d4;
+    box-shadow: 0 0 12px #06b6d4;
+    animation: radar-dot-pulse 1.2s infinite;
+  }
+  .radar-hud-title {
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #38bdf8;
+    text-transform: uppercase;
+  }
+  .radar-sector-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .radar-counter-badge {
+    background: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .radar-hud-right {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+  }
+  .radar-range-group {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 2px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .radar-range-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-weight: 800;
+    padding: 0 0.3rem;
+  }
+  .radar-range-btn {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .radar-range-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .radar-range-btn.active {
+    background: #0284c7;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(2, 132, 199, 0.5);
+  }
+  .radar-hotspots-group {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .radar-btn-action {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .radar-btn-action:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  .radar-btn-me {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: rgba(6, 182, 212, 0.4);
+    color: #38bdf8;
+  }
+  .radar-btn-me:hover {
+    background: rgba(6, 182, 212, 0.25);
+    border-color: #38bdf8;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+  }
+
+  /* Map Container & Wrapper */
+  .radar-map-wrapper {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    display: flex;
+  }
+  .field-radar-map {
+    width: 100%;
+    height: 100%;
+    background: #080c14;
+    z-index: 1;
+  }
+
+  /* Leaflet Map Dark Theme Overrides */
+  .leaflet-container {
+    background: #080c14 !important;
+    font-family: inherit !important;
+  }
+  .leaflet-bar a {
+    background-color: #121826 !important;
+    color: #f1f5f9 !important;
+    border-color: #26334d !important;
+  }
+  .leaflet-bar a:hover {
+    background-color: #1a2234 !important;
+    color: var(--accent) !important;
+  }
+  .leaflet-popup-content-wrapper {
+    background: #121826 !important;
+    color: #f1f5f9 !important;
+    border: 1px solid #26334d !important;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(255, 107, 0, 0.15) !important;
+    border-radius: 14px !important;
+    padding: 0 !important;
+    overflow: hidden;
+  }
+  .leaflet-popup-content {
+    margin: 0 !important;
+    line-height: 1.4 !important;
+  }
+  .leaflet-popup-tip {
+    background: #121826 !important;
+  }
+
+  /* Pulsing Radar Blip Markers */
+  .radar-blip-wrapper {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .radar-blip-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    position: absolute;
+    z-index: 2;
+    transition: transform 0.2s ease;
+  }
+  .radar-blip-wrapper:hover .radar-blip-dot {
+    transform: scale(1.3);
+  }
+  .radar-blip-pulse {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    opacity: 0.8;
+    animation: radar-blip-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    z-index: 1;
+  }
+  @keyframes radar-blip-ping {
+    0% { transform: scale(0.6); opacity: 0.9; }
+    70% { transform: scale(2.2); opacity: 0.15; }
+    100% { transform: scale(2.6); opacity: 0; }
+  }
+
+  /* Rarity color coding */
+  /* Mythic & Legendary: Gold */
+  .radar-blip-wrapper.rarity-mythic,
+  .radar-blip-wrapper.rarity-legendary {
+    color: #fbbf24;
+  }
+  .radar-blip-wrapper.rarity-mythic .radar-blip-dot,
+  .radar-blip-wrapper.rarity-legendary .radar-blip-dot {
+    background: #f59e0b;
+    border: 2px solid #fef08a;
+    box-shadow: 0 0 14px #fbbf24, 0 0 24px rgba(251, 191, 36, 0.6);
+  }
+
+  /* Epic: Purple */
+  .radar-blip-wrapper.rarity-epic {
+    color: #c084fc;
+  }
+  .radar-blip-wrapper.rarity-epic .radar-blip-dot {
+    background: #a855f7;
+    border: 2px solid #e9d5ff;
+    box-shadow: 0 0 14px #c084fc, 0 0 22px rgba(192, 132, 252, 0.6);
+  }
+
+  /* Rare: Blue / Cyan */
+  .radar-blip-wrapper.rarity-rare {
+    color: #38bdf8;
+  }
+  .radar-blip-wrapper.rarity-rare .radar-blip-dot {
+    background: #0284c7;
+    border: 2px solid #bae6fd;
+    box-shadow: 0 0 12px #38bdf8, 0 0 20px rgba(56, 189, 248, 0.5);
+  }
+
+  /* Uncommon & Common: Emerald */
+  .radar-blip-wrapper.rarity-uncommon,
+  .radar-blip-wrapper.rarity-common {
+    color: #34d399;
+  }
+  .radar-blip-wrapper.rarity-uncommon .radar-blip-dot,
+  .radar-blip-wrapper.rarity-common .radar-blip-dot {
+    background: #10b981;
+    border: 2px solid #a7f3d0;
+    box-shadow: 0 0 10px #34d399;
+  }
+
+  /* User Location Ping Marker */
+  .radar-user-wrapper {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .radar-user-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #06b6d4;
+    border: 2.5px solid #ffffff;
+    box-shadow: 0 0 16px #06b6d4, 0 0 28px rgba(6, 182, 212, 0.8);
+    z-index: 3;
+  }
+  .radar-user-sweep {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(6, 182, 212, 0.6);
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.2) 0%, transparent 70%);
+    animation: radar-blip-ping 2.5s infinite;
+  }
+
+  /* Radar Blip Preview Card (Inside Leaflet Popup) */
+  .radar-card-preview {
+    width: 300px;
+    background: #121826;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .radar-card-img-box {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    background: #0a0f1d;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .radar-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .radar-card-fallback {
+    font-size: 3.5rem;
+    opacity: 0.7;
+  }
+  .radar-card-rarity-pill {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 0.25rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  }
+  .radar-card-rarity-pill.rarity-mythic,
+  .radar-card-rarity-pill.rarity-legendary {
+    background: rgba(251, 191, 36, 0.95);
+    color: #78350f;
+  }
+  .radar-card-rarity-pill.rarity-epic {
+    background: rgba(192, 132, 252, 0.95);
+    color: #4c1d95;
+  }
+  .radar-card-rarity-pill.rarity-rare {
+    background: rgba(56, 189, 248, 0.95);
+    color: #0c4a6e;
+  }
+  .radar-card-rarity-pill.rarity-uncommon,
+  .radar-card-rarity-pill.rarity-common {
+    background: rgba(52, 211, 153, 0.95);
+    color: #064e3b;
+  }
+  .radar-card-age-pill {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    color: #e2e8f0;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+  .radar-card-body {
+    padding: 0.9rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+  .radar-card-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.25;
+  }
+  .radar-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.76rem;
+    gap: 0.5rem;
+  }
+  .radar-spec-label {
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .radar-spec-val {
+    color: var(--text-primary);
+    font-weight: 800;
+    text-align: right;
+  }
+  .radar-spec-val.finder-handle {
+    color: #38bdf8;
+  }
+  .radar-spec-val.distance-val {
+    color: #4ade80;
+  }
+  .radar-card-footer {
+    margin-top: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .radar-card-points {
+    font-size: 0.85rem;
+    font-weight: 900;
+    color: #fbbf24;
+  }
+  .radar-card-geohash {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    font-family: monospace;
+    letter-spacing: 0.5px;
+  }
+
+  /* Radar Floating Drawer */
+  .radar-drawer {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    width: 320px;
+    max-height: 280px;
+    background: rgba(18, 24, 38, 0.92);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .radar-drawer.collapsed {
+    max-height: 44px;
+  }
+  .radar-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.65rem 0.95rem;
+    background: rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .radar-drawer-title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #f1f5f9;
+  }
+  .radar-drawer-toggle {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+  .radar-drawer-list {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    overflow-y: auto;
+    max-height: 236px;
+  }
+  .radar-drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.45rem 0.6rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .radar-drawer-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 107, 0, 0.4);
+    transform: translateX(2px);
+  }
+  .radar-item-thumb {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #000;
+    flex-shrink: 0;
+  }
+  .radar-item-fallback {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: rgba(255, 107, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  .radar-item-details {
+    flex: 1;
+    min-width: 0;
+  }
+  .radar-item-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .radar-item-sub {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: space-between;
+  }
 </style>
 </head>
 <body>
@@ -2335,6 +2933,16 @@
       <span class="header-title">CarDex</span>
       <span class="header-subtitle">Supercar & Exotic Vehicle SpotterDex</span>
     </div>
+  </div>
+  <div class="cockpit-tabs-bar" role="tablist">
+    <button type="button" class="cockpit-tab-pill active" id="tab-btn-chat" role="tab" aria-selected="true" onclick="switchCockpitView('chat')">
+      <span>💬</span> <span>Cockpit Chat</span>
+    </button>
+    <button type="button" class="cockpit-tab-pill" id="tab-btn-radar" role="tab" aria-selected="false" onclick="switchCockpitView('radar')">
+      <span class="radar-live-blip"></span>
+      <span>📡</span> <span>Field Radar</span>
+      <span class="radar-tag">LIVE</span>
+    </button>
   </div>
   <div class="header-right-group">
     <div class="header-status">
@@ -2398,6 +3006,13 @@
           <div class="nav-text">
             <span class="nav-label">Take Car Photo</span>
             <span class="nav-desc">Live device camera sighting</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item action-radar" id="sidebar-nav-radar" onclick="switchCockpitView('radar')">
+          <span class="nav-icon">📡</span>
+          <div class="nav-text">
+            <span class="nav-label">Field Radar</span>
+            <span class="nav-desc">Live dark map & pulsing blips</span>
           </div>
         </button>
         <button type="button" class="nav-item" data-prompt="I just spotted a rare supercar! How do I log it into my garage?">
@@ -2578,57 +3193,121 @@
   <!-- Mobile Backdrop Overlay -->
   <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
 
-  <!-- Main Chat Column -->
+  <!-- Main Chat & Radar Column -->
   <main class="chat-main">
-    <div id="log">
-      <div class="welcome-banner">
-        <h2>Welcome to CarDex 🏁</h2>
-        <p>Catalogue, identify, and score real-world car sightings. Check production specs, rare trims, collector rarity scores, and spotter rankings.</p>
-      </div>
-    </div>
-
-    <!-- Tailored Example Prompts Row -->
-    <div class="prompts-container">
-      <div class="prompts-label">Quick Actions</div>
-      <div class="prompts-row">
-        <button class="prompt-btn" data-prompt="Identify this supercar I spotted: https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=800">
-          <span>📸</span> Identify Photo: Spotted Audi RS3
-        </button>
-        <button class="prompt-btn" data-prompt="Look up specs and rarity for 2024 Porsche 911 GT3 RS">
-          <span>🏎️</span> 2024 Porsche 911 GT3 RS Specs
-        </button>
-        <button class="prompt-btn" data-prompt="Show the global spotter leaderboard and rarest spots">
-          <span>🏆</span> Global Leaderboard
-        </button>
-        <button class="prompt-btn" data-prompt="Check my garage collection and spotter score">
-          <span>🏅</span> My Garage
-        </button>
-      </div>
-    </div>
-
-    <div id="preview-wrapper" class="preview-wrapper">
-      <div class="preview-box">
-        <img id="preview-img" class="preview-img" src="" alt="Spot preview">
-        <div class="preview-info">
-          <span id="preview-filename">live_spot.jpg</span>
+    <!-- Chat Telemetry View -->
+    <div id="cockpit-chat-view" class="cockpit-view-pane active">
+      <div id="log">
+        <div class="welcome-banner">
+          <h2>Welcome to CarDex 🏁</h2>
+          <p>Catalogue, identify, and score real-world car sightings. Check production specs, rare trims, collector rarity scores, and spotter rankings.</p>
         </div>
-        <button type="button" id="preview-remove" class="preview-remove" title="Remove photo" onclick="clearPendingImage()">✕</button>
       </div>
+
+      <!-- Tailored Example Prompts Row -->
+      <div class="prompts-container">
+        <div class="prompts-label">Quick Actions</div>
+        <div class="prompts-row">
+          <button class="prompt-btn" data-prompt="Identify this supercar I spotted: https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=800">
+            <span>📸</span> Identify Photo: Spotted Audi RS3
+          </button>
+          <button class="prompt-btn" data-prompt="Look up specs and rarity for 2024 Porsche 911 GT3 RS">
+            <span>🏎️</span> 2024 Porsche 911 GT3 RS Specs
+          </button>
+          <button class="prompt-btn" data-prompt="Show the global spotter leaderboard and rarest spots">
+            <span>🏆</span> Global Leaderboard
+          </button>
+          <button class="prompt-btn" data-prompt="Check my garage collection and spotter score">
+            <span>🏅</span> My Garage
+          </button>
+        </div>
+      </div>
+
+      <div id="preview-wrapper" class="preview-wrapper">
+        <div class="preview-box">
+          <img id="preview-img" class="preview-img" src="" alt="Spot preview">
+          <div class="preview-info">
+            <span id="preview-filename">live_spot.jpg</span>
+          </div>
+          <button type="button" id="preview-remove" class="preview-remove" title="Remove photo" onclick="clearPendingImage()">✕</button>
+        </div>
+      </div>
+
+      <form id="form">
+        <!-- Native camera capture input: bypasses photo library / file selection on mobile per HTML Media Capture spec -->
+        <input type="file" id="camera-capture-input" accept="image/*" capture="environment" style="display:none">
+        <button type="button" id="camera-btn" class="upload-btn camera-btn" title="Take photo of car with device camera" onclick="triggerCameraCapture()">
+          <span>📸</span>
+          <span class="camera-btn-text">Take Photo</span>
+        </button>
+        <input id="input" placeholder="Spot a car, take a photo with camera, or ask CarDex…" autocomplete="off" autofocus>
+        <button class="send-btn" type="submit">
+          <span>Spot</span>
+          <span>🏎️</span>
+        </button>
+      </form>
     </div>
 
-    <form id="form">
-      <!-- Native camera capture input: bypasses photo library / file selection on mobile per HTML Media Capture spec -->
-      <input type="file" id="camera-capture-input" accept="image/*" capture="environment" style="display:none">
-      <button type="button" id="camera-btn" class="upload-btn camera-btn" title="Take photo of car with device camera" onclick="triggerCameraCapture()">
-        <span>📸</span>
-        <span class="camera-btn-text">Take Photo</span>
-      </button>
-      <input id="input" placeholder="Spot a car, take a photo with camera, or ask CarDex…" autocomplete="off" autofocus>
-      <button class="send-btn" type="submit">
-        <span>Spot</span>
-        <span>🏎️</span>
-      </button>
-    </form>
+    <!-- Field Radar Cockpit HUD View -->
+    <div id="cockpit-radar-view" class="cockpit-view-pane" style="display: none;">
+      <!-- Radar HUD Control Bar -->
+      <div class="radar-hud-bar">
+        <div class="radar-hud-left">
+          <div class="radar-status-indicator">
+            <span class="radar-hud-sweep-dot"></span>
+            <span class="radar-hud-title">FIELD RADAR HUD</span>
+          </div>
+          <div class="radar-sector-badge" id="radar-sector-badge">
+            <span class="radar-sector-icon">🌐</span>
+            <span id="radar-sector-name">SECTOR: MONACO GP</span>
+          </div>
+          <div class="radar-counter-badge" id="radar-counter-badge">
+            <span id="radar-count-num">--</span> CONTACTS
+          </div>
+        </div>
+
+        <div class="radar-hud-right">
+          <!-- Range Selector -->
+          <div class="radar-range-group" role="group" aria-label="Radar scan radius">
+            <span class="radar-range-label">SCAN RADIUS:</span>
+            <button type="button" class="radar-range-btn" data-radius="5" onclick="setRadarRadius(5)">5km</button>
+            <button type="button" class="radar-range-btn active" data-radius="10" onclick="setRadarRadius(10)">10km</button>
+            <button type="button" class="radar-range-btn" data-radius="25" onclick="setRadarRadius(25)">25km</button>
+            <button type="button" class="radar-range-btn" data-radius="50" onclick="setRadarRadius(50)">50km</button>
+          </div>
+
+          <!-- Hotspot Presets & Locate Me -->
+          <div class="radar-hotspots-group">
+            <button type="button" class="radar-btn-action" title="Jump to Monaco Supercar Capital" onclick="jumpToRadarHotspot(43.7384, 7.4246, 'Monaco GP Circuit')">🏎️ Monaco</button>
+            <button type="button" class="radar-btn-action" title="Jump to Beverly Hills Exotic Strip" onclick="jumpToRadarHotspot(34.0673, -118.4008, 'Beverly Hills Rodeo Dr')">🌴 Beverly Hills</button>
+            <button type="button" class="radar-btn-action" title="Jump to Circuit Paul Ricard" onclick="jumpToRadarHotspot(43.2506, 5.7917, 'Circuit Paul Ricard')">🏁 Paul Ricard</button>
+            <button type="button" class="radar-btn-action radar-btn-me" id="btn-radar-locate" title="Center map on my live GPS location" onclick="geolocateMeOnRadar()">
+              <span>📍</span> <span>Locate Me</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Leaflet Dark Map Container -->
+      <div class="radar-map-wrapper">
+        <div id="field-radar-map" class="field-radar-map"></div>
+
+        <!-- Radar Floating Sighting Card Drawer -->
+        <div id="radar-drawer" class="radar-drawer">
+          <div class="radar-drawer-header" onclick="toggleRadarDrawer()">
+            <div class="radar-drawer-title">
+              <span>📡</span> <span>Sector Sighting Feed</span>
+            </div>
+            <button type="button" class="radar-drawer-toggle" id="radar-drawer-toggle-btn">▼</button>
+          </div>
+          <div class="radar-drawer-list" id="radar-drawer-list">
+            <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+              Scanning sector for contacts…
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -3360,6 +4039,10 @@ async function sendMessage(text, imgData = null) {
       username: currentSpotter ? currentSpotter.username : "Guest",
     };
     if (imgData) payload.image = imgData;
+    if (window.currentGpsLocation) {
+      payload.latitude = window.currentGpsLocation.latitude;
+      payload.longitude = window.currentGpsLocation.longitude;
+    }
 
     const headers = { "Content-Type": "application/json" };
     if (currentToken) {
@@ -4252,6 +4935,285 @@ window.triggerStripeCheckout = triggerStripeCheckout;
 window.openDisputesModal = openDisputesModal;
 window.closeDisputesModal = closeDisputesModal;
 window.handleCastDisputeVote = handleCastDisputeVote;
+
+/* ============================================================================
+ * Field Radar Cockpit HUD Controller (Leaflet Dark Map & Sighting Blips)
+ * ============================================================================ */
+let radarMap = null;
+let radarMarkersLayer = null;
+let currentRadarLat = 43.7384;
+let currentRadarLng = 7.4246;
+let currentRadarRadius = 10.0;
+let currentRadarSector = "Monaco GP Circuit";
+let currentRadarSightings = [];
+
+function switchCockpitView(view) {
+  const chatView = document.getElementById("cockpit-chat-view");
+  const radarView = document.getElementById("cockpit-radar-view");
+  const tabChat = document.getElementById("tab-btn-chat");
+  const tabRadar = document.getElementById("tab-btn-radar");
+
+  if (view === "radar") {
+    if (chatView) chatView.style.display = "none";
+    if (radarView) radarView.style.display = "flex";
+    if (tabChat) {
+      tabChat.classList.remove("active");
+      tabChat.setAttribute("aria-selected", "false");
+    }
+    if (tabRadar) {
+      tabRadar.classList.add("active");
+      tabRadar.setAttribute("aria-selected", "true");
+    }
+    setTimeout(() => {
+      initOrUpdateRadarMap();
+    }, 50);
+  } else {
+    if (radarView) radarView.style.display = "none";
+    if (chatView) chatView.style.display = "flex";
+    if (tabRadar) {
+      tabRadar.classList.remove("active");
+      tabRadar.setAttribute("aria-selected", "false");
+    }
+    if (tabChat) {
+      tabChat.classList.add("active");
+      tabChat.setAttribute("aria-selected", "true");
+    }
+  }
+}
+
+function initOrUpdateRadarMap() {
+  const mapContainer = document.getElementById("field-radar-map");
+  if (!mapContainer) return;
+
+  if (typeof L === "undefined") {
+    console.warn("Leaflet library not ready. Retrying in 200ms...");
+    setTimeout(initOrUpdateRadarMap, 200);
+    return;
+  }
+
+  if (!radarMap) {
+    radarMap = L.map("field-radar-map", {
+      zoomControl: true,
+      attributionControl: false,
+    }).setView([currentRadarLat, currentRadarLng], 14);
+
+    // CartoDB Dark Matter tile layer (styled to match dark cockpit theme)
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      maxZoom: 19,
+      subdomains: "abcd",
+    }).addTo(radarMap);
+
+    radarMarkersLayer = L.layerGroup().addTo(radarMap);
+  }
+
+  radarMap.invalidateSize();
+  loadRadarSightings(currentRadarLat, currentRadarLng, currentRadarRadius);
+}
+
+async function loadRadarSightings(lat, lng, radiusKm) {
+  const countBadge = document.getElementById("radar-count-num");
+  const sectorNameEl = document.getElementById("radar-sector-name");
+  const drawerList = document.getElementById("radar-drawer-list");
+
+  if (countBadge) countBadge.textContent = "…";
+  if (sectorNameEl) sectorNameEl.textContent = `SECTOR: ${currentRadarSector.toUpperCase()}`;
+
+  try {
+    const res = await fetch(`/api/radar?lat=${lat}&lng=${lng}&radius_km=${radiusKm}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const sightings = await res.json();
+    currentRadarSightings = sightings;
+
+    if (countBadge) countBadge.textContent = sightings.length;
+    renderRadarBlips(sightings, lat, lng);
+  } catch (err) {
+    console.error("Failed to load radar sightings:", err);
+    if (countBadge) countBadge.textContent = "0";
+    if (drawerList) {
+      drawerList.innerHTML = `<div style="padding: 1rem; text-align: center; color: #ef4444; font-size: 0.75rem;">Radar link error: ${err.message}</div>`;
+    }
+  }
+}
+
+function renderRadarBlips(sightings, centerLat, centerLng) {
+  if (!radarMap || !radarMarkersLayer) return;
+  radarMarkersLayer.clearLayers();
+
+  // Add User Center Ping Marker
+  const userIcon = L.divIcon({
+    className: "radar-user-icon-wrapper",
+    html: `
+      <div class="radar-user-wrapper" title="Scanner Telemetry Center">
+        <div class="radar-user-sweep"></div>
+        <div class="radar-user-dot"></div>
+      </div>
+    `,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+  L.marker([centerLat, centerLng], { icon: userIcon, zIndexOffset: 1000 }).addTo(radarMarkersLayer);
+
+  const drawerList = document.getElementById("radar-drawer-list");
+  if (drawerList) drawerList.innerHTML = "";
+
+  if (sightings.length === 0) {
+    if (drawerList) {
+      drawerList.innerHTML = `
+        <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.78rem;">
+          No sightings detected within ${currentRadarRadius}km. Try expanding scan radius or switching sectors.
+        </div>
+      `;
+    }
+    return;
+  }
+
+  sightings.forEach((s) => {
+    const tier = (s.rarity_tier || "Common").toLowerCase();
+    let rarityClass = "rarity-common";
+    if (tier.includes("mythic") || tier.includes("1-of-1")) rarityClass = "rarity-mythic";
+    else if (tier.includes("legendary")) rarityClass = "rarity-legendary";
+    else if (tier.includes("epic")) rarityClass = "rarity-epic";
+    else if (tier.includes("rare")) rarityClass = "rarity-rare";
+    else if (tier.includes("uncommon")) rarityClass = "rarity-uncommon";
+
+    const blipIcon = L.divIcon({
+      className: "radar-blip-container",
+      html: `
+        <div class="radar-blip-wrapper ${rarityClass}" title="${s.make_model}">
+          <div class="radar-blip-pulse"></div>
+          <div class="radar-blip-dot"></div>
+        </div>
+      `,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+      popupAnchor: [0, -14],
+    });
+
+    const marker = L.marker([s.lat, s.lng], { icon: blipIcon }).addTo(radarMarkersLayer);
+    const popupHtml = buildRadarPopupHtml(s, rarityClass);
+    marker.bindPopup(popupHtml, { maxWidth: 320, className: "radar-leaflet-popup" });
+
+    // Populate drawer list item
+    if (drawerList) {
+      const item = document.createElement("div");
+      item.className = "radar-drawer-item";
+      item.onclick = () => {
+        radarMap.flyTo([s.lat, s.lng], 16);
+        marker.openPopup();
+      };
+      item.innerHTML = `
+        ${s.image_url ? `<img src="${s.image_url}" class="radar-item-thumb" alt="${s.make_model}">` : `<div class="radar-item-fallback">🏎️</div>`}
+        <div class="radar-item-details">
+          <div class="radar-item-title">${s.make_model}</div>
+          <div class="radar-item-sub">
+            <span style="color: ${rarityClass.includes('gold') || rarityClass.includes('legendary') || rarityClass.includes('mythic') ? '#fbbf24' : rarityClass.includes('epic') ? '#c084fc' : '#38bdf8'}; font-weight: 800;">${s.rarity_tier}</span>
+            <span>~${s.distance_km != null ? s.distance_km : 0} km</span>
+          </div>
+        </div>
+      `;
+      drawerList.appendChild(item);
+    }
+  });
+}
+
+function buildRadarPopupHtml(s, rarityClass) {
+  const verifiedPaint = s.paint_code || s.paint_badge || s.colorway || "Factory OEM";
+  const finder = s.spotter || "spotter_1";
+  const age = s.age_hours != null ? `${s.age_hours}h ago` : "Recent";
+  const dist = s.distance_km != null ? `~${s.distance_km} km away` : "Nearby";
+  const pts = s.points_awarded != null ? `+${Number(s.points_awarded).toLocaleString()} PTS` : "+1,000 PTS";
+  const geohash = (s.geohash || "spv2bf").toUpperCase();
+
+  return `
+    <div class="radar-card-preview">
+      <div class="radar-card-img-box">
+        ${s.image_url ? `<img src="${s.image_url}" alt="${s.make_model}" class="radar-card-img" />` : `<div class="radar-card-fallback">🏎️</div>`}
+        <div class="radar-card-rarity-pill ${rarityClass}">${s.rarity_tier || "Exotic"}</div>
+        <div class="radar-card-age-pill">${age}</div>
+      </div>
+      <div class="radar-card-body">
+        <div class="radar-card-title">${s.make_model}</div>
+        <div class="radar-card-row">
+          <span class="radar-spec-label">🎨 VERIFIED PAINT:</span>
+          <span class="radar-spec-val">${verifiedPaint}</span>
+        </div>
+        <div class="radar-card-row">
+          <span class="radar-spec-label">👤 FINDER / SPOTTER:</span>
+          <span class="radar-spec-val finder-handle">@${finder}</span>
+        </div>
+        <div class="radar-card-row">
+          <span class="radar-spec-label">📍 SECTOR DISTANCE:</span>
+          <span class="radar-spec-val distance-val">${dist}</span>
+        </div>
+        <div class="radar-card-footer">
+          <span class="radar-card-points">${pts}</span>
+          <span class="radar-card-geohash">GEOHASH #${geohash}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setRadarRadius(radiusKm) {
+  currentRadarRadius = Number(radiusKm);
+  document.querySelectorAll(".radar-range-btn").forEach((btn) => {
+    btn.classList.toggle("active", Number(btn.getAttribute("data-radius")) === currentRadarRadius);
+  });
+  loadRadarSightings(currentRadarLat, currentRadarLng, currentRadarRadius);
+}
+
+function jumpToRadarHotspot(lat, lng, sectorName) {
+  currentRadarLat = lat;
+  currentRadarLng = lng;
+  currentRadarSector = sectorName;
+  if (radarMap) {
+    radarMap.flyTo([lat, lng], 14, { duration: 1.2 });
+  }
+  loadRadarSightings(currentRadarLat, currentRadarLng, currentRadarRadius);
+}
+
+function geolocateMeOnRadar() {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser.");
+    return;
+  }
+  const btn = document.getElementById("btn-radar-locate");
+  if (btn) btn.classList.add("locating");
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      if (btn) btn.classList.remove("locating");
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      window.currentGpsLocation = { latitude: lat, longitude: lng };
+      jumpToRadarHotspot(lat, lng, "My Live Sector");
+    },
+    (err) => {
+      if (btn) btn.classList.remove("locating");
+      console.warn("Geolocation permission error:", err);
+      alert("GPS position unavailable or permission denied. Centering on Monaco Supercar Sector.");
+      jumpToRadarHotspot(43.7384, 7.4246, "Monaco GP Circuit");
+    },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function toggleRadarDrawer() {
+  const drawer = document.getElementById("radar-drawer");
+  const toggleBtn = document.getElementById("radar-drawer-toggle-btn");
+  if (!drawer) return;
+  drawer.classList.toggle("collapsed");
+  if (toggleBtn) {
+    toggleBtn.textContent = drawer.classList.contains("collapsed") ? "▲" : "▼";
+  }
+}
+
+// Radar window exports
+window.switchCockpitView = switchCockpitView;
+window.setRadarRadius = setRadarRadius;
+window.jumpToRadarHotspot = jumpToRadarHotspot;
+window.geolocateMeOnRadar = geolocateMeOnRadar;
+window.toggleRadarDrawer = toggleRadarDrawer;
 
 // Run auth & quota initialization on load
 initAuth();

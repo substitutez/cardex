@@ -102,11 +102,14 @@ def record_car_spot(
     notes: str = "",
     user_id: str = "spotter_1",
     image_url: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
 ) -> dict[str, Any]:
     """Record a newly spotted car in public to the user's garage and update the global spot count.
 
     This awards points based on the vehicle's rarity tier, increments the Shazam-style global
     spotted count, and updates the spotter leaderboard.
+    Coordinates are quantized to ~500m geohash to protect privacy.
 
     Args:
         car_name_or_id: The car's name, make/model, or doc ID (e.g. 'Ferrari Daytona SP3').
@@ -115,6 +118,8 @@ def record_car_spot(
         notes: Personal observations or custom modifications noted.
         user_id: The ID of the spotter user (defaults to 'spotter_1').
         image_url: Optional public HTTPS URL of the spotted car image stored in Cloud Storage.
+        latitude: Optional GPS latitude (will be fuzz-quantized before persisting).
+        longitude: Optional GPS longitude (will be fuzz-quantized before persisting).
 
     Returns:
         A dictionary confirming the spot, points earned, new global spotted count, and spot ID.
@@ -126,6 +131,8 @@ def record_car_spot(
         location=location,
         notes=notes,
         image_url=image_url,
+        latitude=latitude,
+        longitude=longitude,
     )
 
 
@@ -476,6 +483,8 @@ def identify_and_spot_car(
     user_id: str = "spotter_1",
     notes: str = "",
     auto_log_spot: bool = True,
+    latitude: float | None = None,
+    longitude: float | None = None,
 ) -> dict[str, Any]:
     """Recognize a vehicle from an image using Gemini Multimodal Vision, with anti-cheat, colorimetry, and dynamic deflationary scoring.
 
@@ -664,6 +673,8 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
             phash=phash,
             points_breakdown=score_info["breakdown"],
             paint_badge=paint_match.get("badge_text"),
+            latitude=latitude,
+            longitude=longitude,
         )
 
     # 8. Commit quota deduction only on successful vehicle identification

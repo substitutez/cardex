@@ -15,8 +15,106 @@
 """Firestore database client and helper functions for CarDex."""
 
 import datetime
+import math
 from typing import Any
 from google.cloud import firestore
+
+# Geospatial Indexing & Privacy Quantization Constants
+_GEOHASH_BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz"
+_GEOHASH_DECODE_MAP = {c: i for i, c in enumerate(_GEOHASH_BASE32)}
+
+
+def encode_geohash(latitude: float, longitude: float, precision: int = 6) -> str:
+    """Encodes latitude and longitude into a standard 32-character base32 geohash."""
+    lat_interval = [-90.0, 90.0]
+    lng_interval = [-180.0, 180.0]
+    geohash = []
+    bits = [16, 8, 4, 2, 1]
+    bit = 0
+    ch = 0
+    even = True
+
+    while len(geohash) < precision:
+        if even:
+            mid = (lng_interval[0] + lng_interval[1]) / 2.0
+            if longitude > mid:
+                ch |= bits[bit]
+                lng_interval[0] = mid
+            else:
+                lng_interval[1] = mid
+        else:
+            mid = (lat_interval[0] + lat_interval[1]) / 2.0
+            if latitude > mid:
+                ch |= bits[bit]
+                lat_interval[0] = mid
+            else:
+                lat_interval[1] = mid
+        even = not even
+        if bit < 4:
+            bit += 1
+        else:
+            geohash.append(_GEOHASH_BASE32[ch])
+            bit = 0
+            ch = 0
+    return "".join(geohash)
+
+
+def decode_geohash(geohash: str) -> tuple[float, float]:
+    """Decodes a geohash string into its center (latitude, longitude)."""
+    lat_interval = [-90.0, 90.0]
+    lng_interval = [-180.0, 180.0]
+    even = True
+    for c in geohash.lower():
+        cd = _GEOHASH_DECODE_MAP.get(c, 0)
+        for mask in [16, 8, 4, 2, 1]:
+            if even:
+                mid = (lng_interval[0] + lng_interval[1]) / 2.0
+                if cd & mask:
+                    lng_interval[0] = mid
+                else:
+                    lng_interval[1] = mid
+            else:
+                mid = (lat_interval[0] + lat_interval[1]) / 2.0
+                if cd & mask:
+                    lat_interval[0] = mid
+                else:
+                    lat_interval[1] = mid
+            even = not even
+    center_lat = (lat_interval[0] + lat_interval[1]) / 2.0
+    center_lng = (lng_interval[0] + lng_interval[1]) / 2.0
+    return center_lat, center_lng
+
+
+def quantize_coordinates(
+    latitude: float, longitude: float, precision: int = 6
+) -> tuple[str, float, float]:
+    """Applies spatial quantization to protect spotter privacy (~500m radius).
+
+    Never stores raw high-precision GPS to prevent doxxing residential garages or private homes.
+    Returns (geohash, fuzzy_lat, fuzzy_lng).
+    """
+    gh = encode_geohash(latitude, longitude, precision=precision)
+    center_lat, center_lng = decode_geohash(gh)
+    fuzzy_lat = round(center_lat, 4)
+    fuzzy_lng = round(center_lng, 4)
+    return gh, fuzzy_lat, fuzzy_lng
+
+
+def haversine_distance_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Calculates great-circle distance between two points on Earth in kilometers."""
+    r = 6371.0  # Earth radius in kilometers
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    delta_phi = math.radians(lat2 - lat1)
+    delta_lambda = math.radians(lng2 - lng1)
+
+    a = (
+        math.sin(delta_phi / 2.0) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2.0) ** 2
+    )
+    c = 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
+    return r * c
+
 
 # IMPORTANT: Hardcode the GCP Project ID as a literal string.
 # On Agent Platform, google.auth.default() and GOOGLE_CLOUD_PROJECT return
@@ -105,11 +203,14 @@ def record_car_spot_entry(
     phash: str | None = None,
     points_breakdown: dict[str, Any] | None = None,
     paint_badge: str | None = None,
+    latitude: float | None = None,
+    longitude: float | None = None,
 ) -> dict[str, Any]:
     """Record a car spotting event in Firestore.
 
     Increments the car's global_spotted_count (Shazam-style count),
     writes a record to 'spots', and updates the user's leaderboard score.
+    Fuzzes GPS coordinates into a privacy-safe ~500m geohash to protect residences.
     """
     db = get_db()
 
@@ -130,12 +231,23 @@ def record_car_spot_entry(
         car_ref = db.collection("cars").document(car_doc_id)
         car_ref.update({"global_spotted_count": firestore.Increment(1)})
 
+    # Quantize coordinates for spotter privacy (~500m radius)
+    geohash_val = None
+    fuzzy_lat = None
+    fuzzy_lng = None
+    if latitude is not None and longitude is not None:
+        try:
+            geohash_val, fuzzy_lat, fuzzy_lng = quantize_coordinates(float(latitude), float(longitude), precision=6)
+        except Exception:
+            pass
+
     # Log to 'spots' collection
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
     spot_data = {
         "user_id": user_id,
         "car_id": car_doc_id,
         "car_name": car_name,
+        "make_model": car_name,
         "colorway": colorway,
         "rarity_tier": rarity,
         "points_awarded": points,
@@ -147,6 +259,10 @@ def record_car_spot_entry(
         "paint_badge": paint_badge,
         "status": "VERIFIED",
         "spotted_at": now,
+        "spot_timestamp": now,
+        "geohash": geohash_val,
+        "fuzzy_lat": fuzzy_lat,
+        "fuzzy_lng": fuzzy_lng,
     }
     _, spot_ref = db.collection("spots").add(spot_data)
     spot_data["spot_id"] = spot_ref.id
@@ -416,3 +532,98 @@ def cast_dispute_vote(
         "status": update_fields.get("status", review.get("status", "UNDER_REVIEW")),
         "bounty_awarded": bounty if (resolved and consensus_passed) else 0,
     }
+
+
+def query_radar_sightings(
+    lat: float,
+    lng: float,
+    radius_km: float = 10.0,
+    max_age_days: int = 7,
+) -> list[dict[str, Any]]:
+    """Query Firestore for vehicle sightings within radius_km logged in the trailing max_age_days.
+
+    Returns a list of sightings with fuzzy coordinates and age in hours.
+    Fuzzy coordinates guarantee that no residential garages or high-precision locations are exposed.
+    """
+    db = get_db()
+    clamped_radius = max(0.5, min(float(radius_km), 50.0))
+    now = datetime.datetime.now(datetime.timezone.utc)
+    cutoff = now - datetime.timedelta(days=max_age_days)
+    cutoff_iso = cutoff.isoformat()
+
+    sightings: list[dict[str, Any]] = []
+    docs: list[Any] = []
+    try:
+        from google.cloud.firestore_v1.base_query import FieldFilter
+        query = db.collection("spots").where(filter=FieldFilter("spotted_at", ">=", cutoff_iso))
+        docs = list(query.stream())
+    except Exception:
+        pass
+
+    # If recent stream returned no docs or error, stream all spots and filter in-memory
+    if not docs:
+        try:
+            docs = list(db.collection("spots").stream())
+        except Exception as e:
+            print("Radar query Firestore error:", e)
+            docs = []
+
+    for d in docs:
+        spot = d.to_dict()
+        spot_id = d.id
+        spot_lat = spot.get("fuzzy_lat")
+        spot_lng = spot.get("fuzzy_lng")
+
+        if spot_lat is None or spot_lng is None:
+            continue
+
+        try:
+            dist = haversine_distance_km(lat, lng, float(spot_lat), float(spot_lng))
+        except (ValueError, TypeError):
+            continue
+
+        if dist > clamped_radius:
+            continue
+
+        # Parse age
+        spotted_str = spot.get("spot_timestamp") or spot.get("spotted_at", "")
+        age_hours = 1.0
+        if spotted_str:
+            try:
+                cleaned_str = spotted_str.replace("Z", "+00:00")
+                spotted_dt = datetime.datetime.fromisoformat(cleaned_str)
+                if spotted_dt.tzinfo is None:
+                    spotted_dt = spotted_dt.replace(tzinfo=datetime.timezone.utc)
+                diff = (now - spotted_dt).total_seconds()
+                if diff > max_age_days * 86400:
+                    continue
+                age_hours = round(max(0.1, diff / 3600.0), 1)
+            except Exception:
+                pass
+
+        paint_code = None
+        breakdown = spot.get("points_breakdown")
+        if isinstance(breakdown, dict):
+            paint_code = breakdown.get("paint_code")
+
+        sightings.append({
+            "id": spot_id,
+            "make_model": spot.get("make_model") or spot.get("car_name", "Exotic Vehicle"),
+            "rarity_tier": spot.get("rarity_tier", "Rare"),
+            "lat": float(spot_lat),
+            "lng": float(spot_lng),
+            "geohash": spot.get("geohash", ""),
+            "age_hours": age_hours,
+            "distance_km": round(dist, 2),
+            "image_url": spot.get("image_url"),
+            "colorway": spot.get("colorway", "Standard"),
+            "paint_code": paint_code or spot.get("colorway", "OEM Spec"),
+            "paint_badge": spot.get("paint_badge"),
+            "spotter": spot.get("user_id", "Anonymous Spotter"),
+            "points_awarded": spot.get("points_awarded", 500),
+            "status": spot.get("status", "VERIFIED"),
+        })
+
+    # Sort closest first
+    sightings.sort(key=lambda s: s["distance_km"])
+    return sightings
