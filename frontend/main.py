@@ -26,6 +26,7 @@ Run:
 
 import json
 import os
+import time
 import uuid
 
 import google.auth
@@ -420,16 +421,61 @@ async def get_loudest_leaderboard_endpoint(req: Request):
 
 
 
+# In-memory sliding-window rate limiter for auth routes
+AUTH_RATE_LIMIT_WINDOW = 300.0  # 5 minutes in seconds
+AUTH_RATE_LIMIT_MAX_ATTEMPTS = 5
+_auth_attempt_history: dict[str, list[float]] = {}
+
+
+def _get_client_ip(req: Request) -> str:
+    """Extracts client IP address from request headers or transport connection."""
+    forwarded = req.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    if req.client and req.client.host:
+        return req.client.host
+    return "127.0.0.1"
+
+
+def check_auth_rate_limit(ip: str) -> bool:
+    """Enforces sliding-window rate limit: maximum 5 attempts per IP per 5-minute rolling window."""
+    now = time.time()
+    cutoff = now - AUTH_RATE_LIMIT_WINDOW
+    history = _auth_attempt_history.get(ip, [])
+    valid_history = [t for t in history if t > cutoff]
+    if len(valid_history) >= AUTH_RATE_LIMIT_MAX_ATTEMPTS:
+        _auth_attempt_history[ip] = valid_history
+        return False
+    valid_history.append(now)
+    _auth_attempt_history[ip] = valid_history
+    return True
+
+
+def reset_auth_rate_limits() -> None:
+    """Resets the auth sliding window rate limiter state."""
+    _auth_attempt_history.clear()
+
+
 @app.post("/api/auth/signup")
 @app.post("/api/auth/register")
 async def signup(req: Request):
     """Registers a new spotter and initializes their garage and points balance."""
+    ip = _get_client_ip(req)
+    if not check_auth_rate_limit(ip):
+        return JSONResponse(
+            {"detail": "Too many attempts. Locked out for 5 minutes.", "error": "Too many attempts. Locked out for 5 minutes.", "success": False},
+            status_code=429,
+        )
+
     try:
         body = await req.json()
         username = body.get("username") or body.get("spotter_handle") or ""
         email = body.get("email", "")
         password = body.get("password", "")
         result = auth_db.register_user(username=username, email=email, password=password)
+        quota = quota_limiter.get_user_quota(result["user"]["user_id"])
+        result["quota"] = quota
+        result["user"]["quota"] = quota
         return JSONResponse({"success": True, **result})
     except ValueError as ve:
         return JSONResponse({"success": False, "error": str(ve), "detail": str(ve)}, status_code=400)
@@ -441,6 +487,13 @@ async def signup(req: Request):
 @app.post("/api/auth/login")
 async def signin(req: Request):
     """Authenticates a spotter with username/email and password."""
+    ip = _get_client_ip(req)
+    if not check_auth_rate_limit(ip):
+        return JSONResponse(
+            {"detail": "Too many attempts. Locked out for 5 minutes.", "error": "Too many attempts. Locked out for 5 minutes.", "success": False},
+            status_code=429,
+        )
+
     try:
         body = await req.json()
         username_or_email = body.get("username_or_email") or body.get("username") or body.get("email") or ""
@@ -448,6 +501,9 @@ async def signin(req: Request):
         if not username_or_email or not password:
             return JSONResponse({"success": False, "error": "Username/email and password are required.", "detail": "Username/email and password are required."}, status_code=400)
         result = auth_db.authenticate_user(username_or_email=username_or_email, password=password)
+        quota = quota_limiter.get_user_quota(result["user"]["user_id"])
+        result["quota"] = quota
+        result["user"]["quota"] = quota
         return JSONResponse({"success": True, **result})
     except ValueError as ve:
         return JSONResponse({"success": False, "error": str(ve), "detail": str(ve)}, status_code=401)
@@ -487,6 +543,31 @@ async def signout(req: Request):
     if token:
         auth_db.revoke_session(token)
     return JSONResponse({"success": True})
+
+
+@app.post("/api/auth/delete-account")
+async def delete_account_endpoint(req: Request):
+    """Permanently deletes the authenticated user's account and all associated data for Apple 5.1.1(v) compliance."""
+    auth_header = req.headers.get("Authorization", "")
+    token = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        try:
+            body = await req.json()
+            token = body.get("token")
+        except Exception:
+            pass
+
+    user_id = auth_db.validate_session(token) if token else None
+    if not user_id:
+        return JSONResponse(
+            {"detail": "Unauthorized. Valid session token required.", "error": "Unauthorized", "success": False},
+            status_code=401,
+        )
+
+    result = auth_db.delete_user_account(user_id)
+    return JSONResponse(result)
 
 
 @app.get("/api/user/submissions")

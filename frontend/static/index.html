@@ -5500,6 +5500,16 @@
         <span>Loading your garage spots from Firestore…</span>
       </div>
     </div>
+
+    <!-- Account Actions & Apple 5.1.1(v) Compliance -->
+    <div class="submissions-footer" style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+      <button type="button" class="btn-secondary" onclick="signOut()" style="padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+        Sign Out
+      </button>
+      <button type="button" id="btn-delete-account" class="btn-danger-delete" onclick="handleDeleteAccount()" style="padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600; background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.35); cursor: pointer; transition: all 0.2s ease;">
+        🗑️ Delete Account
+      </button>
+    </div>
   </div>
 </div>
 
@@ -6989,6 +6999,50 @@ async function signOut() {
     } catch (e) {}
   }
   updateSpotterState(null, null);
+  closeSubmissionsModal();
+}
+
+// Apple Guideline 5.1.1(v) Mandatory Account Deletion Handler
+async function handleDeleteAccount() {
+  if (!currentSpotter || !currentToken) {
+    alert("Please sign in first to manage your account.");
+    return;
+  }
+
+  const confirmed = window.confirm("Are you sure? This permanently deletes your garage, score, and rank.");
+  if (!confirmed) return;
+
+  const deleteBtn = document.getElementById("btn-delete-account");
+  if (deleteBtn) {
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = "Deleting Account…";
+  }
+
+  try {
+    const res = await fetch("/api/auth/delete-account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${currentToken}`
+      },
+      body: JSON.stringify({ user_id: currentSpotter.user_id, token: currentToken })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      alert("Your account and all associated sightings have been permanently deleted.");
+      closeSubmissionsModal();
+      updateSpotterState(null, null);
+    } else {
+      alert("Failed to delete account: " + (data.detail || data.error || "Unknown error"));
+    }
+  } catch (err) {
+    alert("Network error deleting account: " + err.message);
+  } finally {
+    if (deleteBtn) {
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = "🗑️ Delete Account";
+    }
+  }
 }
 
 function handleSidebarAuthClick() {
