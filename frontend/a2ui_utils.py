@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Make an ADK agent's A2UI output render in the ADK dev UI (`adk web`).
 
 `adk web` has a built-in A2UI renderer, but it only fires when a response part is
@@ -27,14 +25,13 @@ Robustness notes (why this file is more than a one-liner):
 import json
 import re
 
+from google.genai import types
 try:
-    from google.genai import types
     from google.adk.agents.callback_context import CallbackContext
     from google.adk.models.llm_response import LlmResponse
-except ImportError:
-    types = None
-    CallbackContext = None
-    LlmResponse = None
+except ModuleNotFoundError:
+    CallbackContext = object
+    LlmResponse = object
 
 # A2UI message kinds this renderer understands (v0.8).
 _A2UI_KEYS = ("beginRendering", "surfaceUpdate", "dataModelUpdate", "deleteSurface")
@@ -304,6 +301,8 @@ def build_point_breakdown_card(
     first_spotter_bonus: float = 1.0,
     decay_factor: float = 1.0,
     rarity_tier: str = "Rare",
+    acoustic_bonus: float = 1.0,
+    acoustic_engine: str | None = None,
 ) -> dict:
     """Creates a Dynamic Point Breakdown A2UI card payload."""
     return {
@@ -317,8 +316,31 @@ def build_point_breakdown_card(
         "decay_factor": round(decay_factor, 2),
         "paint_multiplier": paint_multiplier,
         "first_spotter_bonus": first_spotter_bonus,
+        "acoustic_bonus": acoustic_bonus,
+        "acoustic_engine": acoustic_engine,
         "final_points": final_points,
         "rarity_tier": rarity_tier,
+    }
+
+
+def build_acoustic_verification_card(
+    engine_config: str,
+    confidence: float,
+    loudness_dbfs: float,
+    signature: str,
+    rev_limiter: bool,
+    bonus_multiplier: float = 1.25,
+) -> dict:
+    """Creates an Acoustic Engine Note Verification A2UI card payload."""
+    return {
+        "type": "acoustic_verification",
+        "engine_config": engine_config,
+        "confidence": round(confidence, 2),
+        "loudness_dbfs": round(loudness_dbfs, 1),
+        "signature": signature,
+        "rev_limiter": rev_limiter,
+        "bonus_multiplier": bonus_multiplier,
+        "badge_text": f"🔊 +25% ACOUSTIC MATCH // {engine_config.upper()}",
     }
 
 

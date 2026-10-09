@@ -524,10 +524,12 @@ async def get_radar_sightings_endpoint(req: Request):
 
 @app.post("/chat")
 @app.post("/api/spots/upload")
+@app.post("/api/spot")
 async def chat(req: Request):
     body = await req.json()
     message = body.get("message", "")
     image_input = body.get("image")
+    audio_input = body.get("audio")
 
     # Resolve authenticated spotter identity
     auth_header = req.headers.get("Authorization", "")
@@ -605,21 +607,53 @@ async def chat(req: Request):
             except Exception as e:
                 print("Failed to upload image to GCS:", e)
 
-    # Build agent prompt with explicit spotter identity and location context
+    # 2.5 Acoustic Classification Pre-Check for audio exhaust recording
+    audio_analysis = None
+    if audio_input:
+        try:
+            import audio_classifier
+            mime_type = "audio/wav"
+            raw_audio = str(audio_input).strip()
+            decoded_audio = None
+            if raw_audio.startswith("data:") and ";base64," in raw_audio:
+                hdr, b64 = raw_audio.split(";base64,", 1)
+                if "webm" in hdr: mime_type = "audio/webm"
+                elif "mp3" in hdr: mime_type = "audio/mp3"
+                elif "aac" in hdr: mime_type = "audio/aac"
+                elif "ogg" in hdr: mime_type = "audio/ogg"
+                elif "wav" in hdr: mime_type = "audio/wav"
+                decoded_audio = base64.b64decode(b64)
+            else:
+                decoded_audio = base64.b64decode(raw_audio)
+
+            if decoded_audio:
+                audio_analysis = audio_classifier.classify_engine_note(
+                    decoded_audio,
+                    claimed_model=message or "",
+                    mime_type=mime_type,
+                )
+        except Exception as e:
+            print("Frontend audio analysis warning:", e)
+
+    # Build agent prompt with explicit spotter identity, location context, and audio analysis
     req_lat = body.get("latitude") or body.get("lat")
     req_lng = body.get("longitude") or body.get("lng")
     loc_ctx = f", lat={req_lat}, lng={req_lng}" if req_lat and req_lng else ""
-    spotter_tag = f"[Spotter Context: user_id='{user_id}', username='{username}'{loc_ctx}]"
+    acoustic_ctx = ""
+    if audio_analysis:
+        acoustic_ctx = f", exhaust_engine='{audio_analysis.get('engine_config')}', exhaust_loudness={audio_analysis.get('peak_loudness_dbfs')}dBFS, acoustic_match={audio_analysis.get('acoustic_match')}"
+    spotter_tag = f"[Spotter Context: user_id='{user_id}', username='{username}'{loc_ctx}{acoustic_ctx}]"
     if uploaded_image_url:
         loc_phrase = f" at coordinates ({req_lat}, {req_lng})" if req_lat and req_lng else ""
+        sound_phrase = f" with verified {audio_analysis.get('engine_config')} exhaust sound note (+25% acoustic verification bonus)" if (audio_analysis and audio_analysis.get("acoustic_match")) else ""
         if message.strip():
             agent_text = (
-                f"{spotter_tag} I spotted this car{loc_phrase} and took this photo: {uploaded_image_url}. {message.strip()} "
+                f"{spotter_tag} I spotted this car{loc_phrase}{sound_phrase} and took this photo: {uploaded_image_url}. {message.strip()} "
                 f"Please identify the car, award rarity points, and record the spot in my garage (user_id='{user_id}')."
             )
         else:
             agent_text = (
-                f"{spotter_tag} Please identify the car in this photo I spotted{loc_phrase} and record the spot in my garage (user_id='{user_id}'): {uploaded_image_url}"
+                f"{spotter_tag} Please identify the car in this photo I spotted{loc_phrase}{sound_phrase} and record the spot in my garage (user_id='{user_id}'): {uploaded_image_url}"
             )
     else:
         lower_msg = message.lower()
@@ -710,6 +744,18 @@ async def chat(req: Request):
         except Exception:
             pass
 
+    # Inject acoustic verification card if matched
+    if audio_analysis and audio_analysis.get("acoustic_match"):
+        acoustic_card = a2ui_utils.build_acoustic_verification_card(
+            engine_config=audio_analysis.get("engine_config", "Unknown"),
+            confidence=audio_analysis.get("confidence", 0.9),
+            loudness_dbfs=audio_analysis.get("peak_loudness_dbfs", -12.0),
+            signature=audio_analysis.get("acoustic_signature", ""),
+            rev_limiter=audio_analysis.get("rev_limiter_detected", False),
+            bonus_multiplier=1.25,
+        )
+        parts.append({"kind": "a2ui", "data": acoustic_card})
+
     # Deduct quota scan credit on successful spotting scan
     latest_quota = None
     if image_input:
@@ -722,6 +768,7 @@ async def chat(req: Request):
     return JSONResponse({
         "parts": parts,
         "image_url": uploaded_image_url,
+        "acoustic_analysis": audio_analysis,
         "user": updated_profile,
         "quota": latest_quota,
     })

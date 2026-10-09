@@ -466,7 +466,7 @@ Capabilities & Tools:
 
 4. **AI Multimodal Vision Identification & Spotting (Gemini in Global Region)**:
    - When a user sends an image, photo link, or base64 image data of a car spotted out in public, call `identify_and_spot_car`.
-   - It automatically uploads the image to the public Cloud Storage bucket in memory (never writes local files), analyzes it using Gemini multimodal vision in the global region to determine make, model, trim, colorway, and special edition status, cross-references CarDex, and logs the spot to award points.
+   - It automatically uploads the image to the public Cloud Storage bucket in memory (never writes local files), analyzes it using Gemini multimodal vision in the global region to determine make, model, trim, colorway, and special edition status, cross-references CarDex, verifies optional audio exhaust notes via acoustic classification for a +25% point bonus, and logs the spot to award points.
    - Always return the public HTTPS URL from Cloud Storage in your response so the user can see their uploaded spot photo embedded.
 
 5. **Spotter Leaderboards**:

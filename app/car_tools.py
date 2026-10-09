@@ -37,7 +37,13 @@ from .anti_cheat import verify_image_integrity
 from .paint_matcher import match_oem_paint_color
 from .quota_limiter import check_and_reserve_scan, commit_scan_deduction
 from .scoring_engine import compute_dynamic_spot_score
-from .a2ui_utils import build_paint_match_card, build_point_breakdown_card, build_paywall_card
+from .a2ui_utils import (
+    build_paint_match_card,
+    build_point_breakdown_card,
+    build_paywall_card,
+    build_acoustic_verification_card,
+)
+from .audio_classifier import classify_engine_note
 
 CLOUD_STORAGE_BUCKET = "cardex-spots-qwiklabs-gcp-04-6f324b699fdd"
 VERTEX_PROJECT_ID = "qwiklabs-gcp-04-6f324b699fdd"
@@ -485,6 +491,7 @@ def identify_and_spot_car(
     auto_log_spot: bool = True,
     latitude: float | None = None,
     longitude: float | None = None,
+    audio_input: str | bytes | None = None,
 ) -> dict[str, Any]:
     """Recognize a vehicle from an image using Gemini Multimodal Vision, with anti-cheat, colorimetry, and dynamic deflationary scoring.
 
@@ -492,8 +499,9 @@ def identify_and_spot_car(
     2. Runs 2D FFT Moiré screen detection and 64-bit DCT pHash duplicate detection.
     3. Multimodal vision recognition via Gemini 2.5 Flash in global region.
     4. Spectrometric CIEDE2000 color matching against factory OEM Paint to Sample (PTS) database.
-    5. Calculates dynamic deflationary score based on production run N_prod, 30d encounter decay D_30, paint finish M_paint, and first-finder bonus B_first.
-    6. Logs the spot in Firestore and commits quota deduction only upon success.
+    5. Acoustic engine note classification and verification (+25% point bonus upon matching cylinder cadence).
+    6. Calculates dynamic deflationary score based on production run N_prod, 30d encounter decay D_30, paint finish M_paint, and first-finder bonus B_first.
+    7. Logs the spot in Firestore and commits quota deduction only upon success.
     """
     # 0. Quota check before invoking AI models
     allowed, reason, quota_info = check_and_reserve_scan(user_id)
@@ -642,6 +650,45 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
     else:
         resolved_colorway = vision_data.get("observed_colorway", "Standard")
 
+    # 5.5 Multimodal Acoustic Engine Note Classification
+    audio_analysis = None
+    acoustic_multiplier = 1.0
+    if audio_input:
+        try:
+            audio_bytes = None
+            audio_mime = "audio/wav"
+            if isinstance(audio_input, str):
+                raw_audio = audio_input.strip()
+                if "," in raw_audio and "base64" in raw_audio:
+                    header, b64_str = raw_audio.split(",", 1)
+                    if "webm" in header:
+                        audio_mime = "audio/webm"
+                    elif "mp3" in header:
+                        audio_mime = "audio/mp3"
+                    elif "aac" in header:
+                        audio_mime = "audio/aac"
+                    elif "ogg" in header:
+                        audio_mime = "audio/ogg"
+                    elif "wav" in header:
+                        audio_mime = "audio/wav"
+                    audio_bytes = base64.b64decode(b64_str)
+                else:
+                    try:
+                        audio_bytes = base64.b64decode(raw_audio)
+                    except Exception:
+                        pass
+            elif isinstance(audio_input, bytes):
+                audio_bytes = audio_input
+
+            if audio_bytes:
+                audio_analysis = classify_engine_note(
+                    audio_bytes=audio_bytes,
+                    claimed_model=query_name,
+                    mime_type=audio_mime,
+                )
+        except Exception as e:
+            logger.warning("Acoustic analysis failed in identify_and_spot_car: %s", e)
+
     # 6. Dynamic Rarity & Deflationary Scoring Engine
     car_slug = query_name.lower().replace(" ", "-")
     score_info = compute_dynamic_spot_score(
@@ -656,17 +703,37 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
     final_points = score_info["final_points"]
     rarity_tier = score_info["rarity_tier"]
 
+    # Apply Acoustic Verification bonus (+25% point bonus) if acoustic_match is True
+    if audio_analysis and audio_analysis.get("acoustic_match"):
+        acoustic_multiplier = 1.25
+        final_points = int(round(final_points * 1.25))
+        score_info["final_points"] = final_points
+        score_info["breakdown"]["acoustic_verification"] = {
+            "applied": True,
+            "multiplier": 1.25,
+            "engine_config": audio_analysis.get("engine_config"),
+            "confidence": audio_analysis.get("confidence"),
+            "peak_loudness_dbfs": audio_analysis.get("peak_loudness_dbfs"),
+            "rev_limiter": audio_analysis.get("rev_limiter_detected"),
+            "firing_frequency_hz": audio_analysis.get("firing_frequency_hz"),
+            "signature": audio_analysis.get("acoustic_signature"),
+            "bonus_points": int(round(final_points - (final_points / 1.25))),
+        }
+
     # 7. Optionally record spot in Firestore
     spot_info = None
     if auto_log_spot:
         catalog_entry = get_car_by_id_or_name(query_name)
         car_identifier = catalog_entry.get("id") if catalog_entry else car_slug
+        spot_notes = notes or f"Spotted via AI Vision: {', '.join(vision_data.get('key_identifying_features', [])[:2])}"
+        if audio_analysis and audio_analysis.get("acoustic_match"):
+            spot_notes += f" [Acoustic Verified: {audio_analysis.get('engine_config')} ({audio_analysis.get('peak_loudness_dbfs')} dBFS) +25% Bonus]"
         spot_info = record_car_spot_entry(
             car_id=car_identifier,
             colorway=resolved_colorway,
             user_id=user_id,
             location=location,
-            notes=notes or f"Spotted via AI Vision: {', '.join(vision_data.get('key_identifying_features', [])[:2])}",
+            notes=spot_notes,
             image_url=public_image_url,
             points_override=final_points,
             rarity_override=rarity_tier,
@@ -696,6 +763,17 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         )
         a2ui_cards.append(paint_card)
 
+    if audio_analysis and audio_analysis.get("acoustic_match"):
+        acoustic_card = build_acoustic_verification_card(
+            engine_config=audio_analysis.get("engine_config", "Unknown"),
+            confidence=audio_analysis.get("confidence", 0.9),
+            loudness_dbfs=audio_analysis.get("peak_loudness_dbfs", -12.0),
+            signature=audio_analysis.get("acoustic_signature", ""),
+            rev_limiter=audio_analysis.get("rev_limiter_detected", False),
+            bonus_multiplier=1.25,
+        )
+        a2ui_cards.append(acoustic_card)
+
     breakdown_card = build_point_breakdown_card(
         car_name=query_name,
         base_points=score_info["base_points"],
@@ -706,6 +784,8 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         first_spotter_bonus=score_info.get("first_spotter_bonus", 1.0),
         decay_factor=score_info.get("decay_factor", 1.0),
         rarity_tier=rarity_tier,
+        acoustic_bonus=acoustic_multiplier,
+        acoustic_engine=audio_analysis.get("engine_config") if audio_analysis else None,
     )
     a2ui_cards.append(breakdown_card)
 
@@ -714,6 +794,7 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         "image_public_url": public_image_url,
         "vision_identification": vision_data,
         "color_analysis": paint_match,
+        "acoustic_analysis": audio_analysis,
         "dynamic_scoring": score_info,
         "rarity_tier": rarity_tier,
         "points_awarded": final_points,

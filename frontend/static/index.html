@@ -1623,6 +1623,109 @@
     text-align: center;
   }
 
+  /* --- Camera Exhaust Audio Recording Bar --- */
+  .camera-exhaust-strip {
+    background: rgba(13, 18, 29, 0.95);
+    border-top: 1px solid rgba(255, 107, 0, 0.25);
+    padding: 0.65rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+  }
+  .exhaust-strip-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.74rem;
+    color: #94a3b8;
+  }
+  .exhaust-strip-icon {
+    font-size: 0.95rem;
+  }
+  .exhaust-recording-meter {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 340px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fca5a5;
+  }
+  .exhaust-pulse-live {
+    width: 9px;
+    height: 9px;
+    background: #ef4444;
+    border-radius: 50%;
+    animation: blinker 0.8s infinite alternate;
+  }
+  .exhaust-progress-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .exhaust-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b00, #ef4444);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+  .camera-audio-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 107, 0, 0.4);
+    border-radius: 999px;
+    color: #ff9800;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    transition: all 0.2s ease;
+  }
+  .camera-audio-btn:hover {
+    background: rgba(255, 107, 0, 0.15);
+    border-color: #ff9800;
+  }
+  .camera-audio-btn.recording {
+    background: rgba(220, 38, 38, 0.35);
+    border-color: #ef4444;
+    color: #fca5a5;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  }
+  .audio-preview-box {
+    background: rgba(255, 107, 0, 0.08) !important;
+    border: 1px solid rgba(255, 107, 0, 0.35) !important;
+  }
+  .audio-preview-icon {
+    font-size: 1.25rem;
+    padding: 0.2rem 0.5rem;
+  }
+  .preview-play-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    margin-right: 0.4rem;
+    transition: all 0.2s ease;
+  }
+  .preview-play-btn:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
   /* Responsive Rules */
   @media (max-width: 960px) {
     .sidebar {
@@ -2285,6 +2388,102 @@
   .bd-val.total-pts {
     color: #10b981;
     font-size: 1.05rem;
+  }
+
+  /* --- Acoustic Verification Card --- */
+  .acoustic-verification-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(24, 20, 36, 0.95));
+    border: 1px solid rgba(255, 107, 0, 0.45);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    margin-top: 0.75rem;
+    box-shadow: 0 4px 25px rgba(255, 107, 0, 0.15), 0 0 1px rgba(255, 107, 0, 0.4);
+  }
+  .acoustic-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+  .acoustic-badge-pulse {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 107, 0, 0.15);
+    border: 1px solid rgba(255, 107, 0, 0.4);
+    border-radius: 8px;
+  }
+  .acoustic-card-header h4 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #ff9800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .acoustic-engine-title {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .acoustic-bonus-pill {
+    margin-left: auto;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.25), rgba(5, 150, 105, 0.35));
+    border: 1px solid #10b981;
+    color: #6ee7b7;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+  }
+  .acoustic-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.55rem;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .acoustic-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .acoustic-stat .stat-label {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .acoustic-stat .stat-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .acoustic-stat .stat-value.highlight {
+    color: #10b981;
+  }
+  .acoustic-signature-bar {
+    margin-top: 0.65rem;
+    font-size: 0.72rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    border-left: 3px solid #ff9800;
+    display: flex;
+    gap: 0.4rem;
+  }
+  .acoustic-signature-bar em {
+    color: #cbd5e1;
+    font-style: normal;
   }
 
   /* --- Out of Fuel Paywall Card Styling --- */
@@ -3233,6 +3432,17 @@
         </div>
       </div>
 
+      <div id="audio-preview-wrapper" class="preview-wrapper" style="display: none;">
+        <div class="preview-box audio-preview-box">
+          <div class="audio-preview-icon">🎙️</div>
+          <div class="preview-info">
+            <span id="audio-preview-filename"><span>🔊 Exhaust Note Captured</span> · +25% Bonus</span>
+          </div>
+          <button type="button" id="audio-preview-play" class="preview-play-btn" title="Play recording" onclick="playCurrentAudioPreview()">▶</button>
+          <button type="button" id="audio-preview-remove" class="preview-remove" title="Remove audio" onclick="clearPendingAudio()">✕</button>
+        </div>
+      </div>
+
       <form id="form">
         <!-- Native camera capture input: bypasses photo library / file selection on mobile per HTML Media Capture spec -->
         <input type="file" id="camera-capture-input" accept="image/*" capture="environment" style="display:none">
@@ -3337,11 +3547,28 @@
       </div>
     </div>
 
+    <!-- Acoustic Engine Note Capture Bar -->
+    <div class="camera-exhaust-strip" id="camera-exhaust-strip">
+      <div class="exhaust-strip-info" id="exhaust-strip-info">
+        <span class="exhaust-strip-icon">🎙️</span>
+        <span id="exhaust-strip-label">Optional Exhaust Audio: Record 5–10s for +25% Acoustic Match Bonus</span>
+      </div>
+      <div class="exhaust-recording-meter" id="exhaust-recording-meter" style="display: none;">
+        <span class="exhaust-pulse-live"></span>
+        <span id="exhaust-time-display">00:00 / 00:10</span>
+        <div class="exhaust-progress-track"><div class="exhaust-progress-bar" id="exhaust-progress-bar"></div></div>
+      </div>
+    </div>
+
     <!-- Camera Error / Permission Fallback Container -->
     <div id="camera-error-box" class="camera-error-msg" style="display: none;"></div>
 
     <!-- Action Controls -->
     <div class="camera-controls-bar">
+      <button type="button" id="camera-audio-btn" class="camera-audio-btn" onclick="toggleExhaustAudioRecording(event)" title="Record engine exhaust note for +25% score bonus">
+        <span class="audio-btn-icon">🎙️</span>
+        <span id="camera-audio-btn-label">Record Exhaust</span>
+      </button>
       <button type="button" id="camera-shutter-btn" class="camera-shutter-btn" onclick="snapCameraPhoto()">
         <span>📸</span>
         <span>SNAP CAR SPOT</span>
@@ -3781,6 +4008,11 @@ function renderReply(b, parts) {
               <span class="bd-label">Paint Finish Multiplier</span>
               <span class="bd-val highlight">+${Math.round((part.data.paint_multiplier - 1.0)*100)}% PTS Bonus</span>
             </div>` : ''}
+            ${part.data.acoustic_bonus && part.data.acoustic_bonus > 1.0 ? `
+            <div class="bd-row">
+              <span class="bd-label">Acoustic Verification Bonus</span>
+              <span class="bd-val highlight">+25% PTS Bonus (${escapeHtml(part.data.acoustic_engine || 'Engine Note')})</span>
+            </div>` : ''}
             <div class="bd-row bd-total">
               <span class="bd-label">Total Net Score Awarded</span>
               <span class="bd-val total-pts">+${finalPts} PTS</span>
@@ -3788,6 +4020,43 @@ function renderReply(b, parts) {
           </div>
         `;
         b.appendChild(bd);
+      } else if (part.data.type === "acoustic_verification") {
+        const ac = el("div", "acoustic-verification-card");
+        const confPct = Math.round((part.data.confidence || 0.9) * 100);
+        ac.innerHTML = `
+          <div class="acoustic-card-header">
+            <span class="acoustic-badge-pulse">🔊</span>
+            <div>
+              <h4>Acoustic Engine Verification</h4>
+              <p class="acoustic-engine-title">${escapeHtml(part.data.engine_config || 'Engine Cadence Match')}</p>
+            </div>
+            <span class="acoustic-bonus-pill">+25% PTS BONUS</span>
+          </div>
+          <div class="acoustic-stats-grid">
+            <div class="acoustic-stat">
+              <span class="stat-label">Firing Cadence</span>
+              <span class="stat-value">${escapeHtml(part.data.engine_config || 'Matched')}</span>
+            </div>
+            <div class="acoustic-stat">
+              <span class="stat-label">Confidence</span>
+              <span class="stat-value highlight">${confPct}% Match</span>
+            </div>
+            <div class="acoustic-stat">
+              <span class="stat-label">Peak Decibels</span>
+              <span class="stat-value">${escapeHtml(String(part.data.loudness_dbfs || '-12.0'))} dBFS</span>
+            </div>
+            <div class="acoustic-stat">
+              <span class="stat-label">Rev Limiter</span>
+              <span class="stat-value">${part.data.rev_limiter ? "🔥 Hard Cut Detected" : "Standard Sweep"}</span>
+            </div>
+          </div>
+          ${part.data.signature ? `
+          <div class="acoustic-signature-bar">
+            <span>Signature:</span>
+            <em>${escapeHtml(part.data.signature)}</em>
+          </div>` : ''}
+        `;
+        b.appendChild(ac);
       } else if (part.data.type === "paywall_card") {
         const pw = el("div", "paywall-chat-card");
         const progressPct = part.data.progress_pct || 100;
@@ -3932,6 +4201,145 @@ function closeCameraModal() {
     currentCameraStream.getTracks().forEach(t => t.stop());
     currentCameraStream = null;
   }
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    stopExhaustAudioRecording();
+  }
+}
+
+// --- Web Audio MediaRecorder Exhaust Note Capture ---
+let mediaRecorder = null;
+let audioChunks = [];
+let audioRecordingTimer = null;
+let audioRecordingSeconds = 0;
+let exhaustAudioBlob = null;
+window.pendingAudioData = null;
+let exhaustAudioPlayer = null;
+
+async function toggleExhaustAudioRecording(event) {
+  if (event) event.preventDefault();
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    stopExhaustAudioRecording();
+  } else {
+    await startExhaustAudioRecording();
+  }
+}
+
+async function startExhaustAudioRecording() {
+  const btn = document.getElementById("camera-audio-btn");
+  const label = document.getElementById("camera-audio-btn-label");
+  const meter = document.getElementById("exhaust-recording-meter");
+  const info = document.getElementById("exhaust-strip-info");
+  const progressBar = document.getElementById("exhaust-progress-bar");
+  const timeDisplay = document.getElementById("exhaust-time-display");
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+
+    let mimeType = 'audio/webm';
+    if (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+      mimeType = 'audio/webm;codecs=opus';
+    } else if (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/mp4')) {
+      mimeType = 'audio/mp4';
+    } else if (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/ogg')) {
+      mimeType = 'audio/ogg';
+    } else if (window.MediaRecorder && MediaRecorder.isTypeSupported('audio/wav')) {
+      mimeType = 'audio/wav';
+    }
+
+    mediaRecorder = new MediaRecorder(stream, { mimeType });
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      const audioBlob = new Blob(audioChunks, { type: mimeType });
+      exhaustAudioBlob = audioBlob;
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        window.pendingAudioData = reader.result;
+        updateAudioPreviewDisplay();
+      };
+      reader.readAsDataURL(audioBlob);
+    };
+
+    mediaRecorder.start(200);
+    audioRecordingSeconds = 0;
+    if (btn) btn.classList.add("recording");
+    if (label) label.textContent = "Stop Recording";
+    if (meter) meter.style.display = "flex";
+    if (info) info.style.display = "none";
+
+    audioRecordingTimer = setInterval(() => {
+      audioRecordingSeconds++;
+      if (timeDisplay) {
+        timeDisplay.textContent = `00:${audioRecordingSeconds.toString().padStart(2, '0')} / 00:10`;
+      }
+      if (progressBar) {
+        progressBar.style.width = `${Math.min(100, (audioRecordingSeconds / 10) * 100)}%`;
+      }
+      if (audioRecordingSeconds >= 10) {
+        stopExhaustAudioRecording();
+      }
+    }, 1000);
+  } catch (err) {
+    console.warn("Microphone access error:", err);
+    alert("Microphone permission was not granted. You can still spot cars with photos!");
+  }
+}
+
+function stopExhaustAudioRecording() {
+  if (audioRecordingTimer) {
+    clearInterval(audioRecordingTimer);
+    audioRecordingTimer = null;
+  }
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+  }
+  const btn = document.getElementById("camera-audio-btn");
+  const label = document.getElementById("camera-audio-btn-label");
+  const meter = document.getElementById("exhaust-recording-meter");
+  const info = document.getElementById("exhaust-strip-info");
+  const stripLabel = document.getElementById("exhaust-strip-label");
+
+  if (btn) btn.classList.remove("recording");
+  if (label) label.textContent = "Re-record Exhaust";
+  if (meter) meter.style.display = "none";
+  if (info) info.style.display = "flex";
+  if (stripLabel) stripLabel.innerHTML = `<span>✅ Exhaust Note Captured (${audioRecordingSeconds}s) · +25% Bonus Armed!</span>`;
+}
+
+function updateAudioPreviewDisplay() {
+  const wrap = document.getElementById("audio-preview-wrapper");
+  const fname = document.getElementById("audio-preview-filename");
+  if (!wrap) return;
+  if (window.pendingAudioData) {
+    wrap.style.display = "block";
+    if (fname) fname.innerHTML = `<span>🔊 Exhaust Note (${audioRecordingSeconds || 6}s)</span> · +25% Bonus Armed`;
+  } else {
+    wrap.style.display = "none";
+  }
+}
+
+function clearPendingAudio() {
+  window.pendingAudioData = null;
+  exhaustAudioBlob = null;
+  updateAudioPreviewDisplay();
+  const stripLabel = document.getElementById("exhaust-strip-label");
+  const label = document.getElementById("camera-audio-btn-label");
+  if (stripLabel) stripLabel.textContent = "Optional Exhaust Audio: Record 5–10s for +25% Acoustic Match Bonus";
+  if (label) label.textContent = "Record Exhaust";
+}
+
+function playCurrentAudioPreview() {
+  if (!window.pendingAudioData) return;
+  if (exhaustAudioPlayer) {
+    exhaustAudioPlayer.pause();
+    exhaustAudioPlayer = null;
+  }
+  exhaustAudioPlayer = new Audio(window.pendingAudioData);
+  exhaustAudioPlayer.play();
 }
 
 function snapCameraPhoto() {
@@ -3939,6 +4347,10 @@ function snapCameraPhoto() {
   if (!video || !video.videoWidth) {
     openNativeCameraFallback();
     return;
+  }
+
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    stopExhaustAudioRecording();
   }
 
   const canvas = document.getElementById("camera-canvas") || document.createElement("canvas");
@@ -3951,6 +4363,7 @@ function snapCameraPhoto() {
     if (blob) {
       setPendingImage(blob, `live_camera_spot_${Date.now().toString().slice(-4)}.jpg`);
       closeCameraModal();
+      updateAudioPreviewDisplay();
     }
   }, "image/jpeg", 0.92);
 }
@@ -4039,6 +4452,7 @@ async function sendMessage(text, imgData = null) {
       username: currentSpotter ? currentSpotter.username : "Guest",
     };
     if (imgData) payload.image = imgData;
+    if (window.pendingAudioData) payload.audio = window.pendingAudioData;
     if (window.currentGpsLocation) {
       payload.latitude = window.currentGpsLocation.latitude;
       payload.longitude = window.currentGpsLocation.longitude;
@@ -4049,7 +4463,8 @@ async function sendMessage(text, imgData = null) {
       headers["Authorization"] = `Bearer ${currentToken}`;
     }
 
-    const res = await fetch("/chat", {
+    const endpoint = imgData ? "/api/spot" : "/chat";
+    const res = await fetch(endpoint, {
       method: "POST",
       headers,
       body: JSON.stringify(payload)
@@ -4082,11 +4497,13 @@ form.addEventListener("submit", async (ev) => {
   ev.preventDefault();
   const text = input.value.trim();
   const img = pendingImageData;
-  if (!text && !img) return;
+  const aud = window.pendingAudioData;
+  if (!text && !img && !aud) return;
 
   input.value = "";
   clearPendingImage();
   await sendMessage(text, img);
+  clearPendingAudio();
 });
 
 // Clickable Example Prompts
@@ -4096,6 +4513,7 @@ document.querySelectorAll(".prompt-btn").forEach(btn => {
     if (promptText) {
       input.value = "";
       clearPendingImage();
+      clearPendingAudio();
       sendMessage(promptText);
     }
   });
@@ -4927,6 +5345,9 @@ window.snapCameraPhoto = snapCameraPhoto;
 window.flipCamera = flipCamera;
 window.openNativeCameraFallback = openNativeCameraFallback;
 window.clearPendingImage = clearPendingImage;
+window.toggleExhaustAudioRecording = toggleExhaustAudioRecording;
+window.clearPendingAudio = clearPendingAudio;
+window.playCurrentAudioPreview = playCurrentAudioPreview;
 window.openQuotaModal = openQuotaModal;
 window.closeQuotaModal = closeQuotaModal;
 window.handleRefillPurchase = handleRefillPurchase;
