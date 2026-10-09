@@ -33,6 +33,10 @@ from .firestore_db import (
     submit_dispute_review,
 )
 from .vehicle_db import search_local_vehicle_database
+from .anti_cheat import verify_image_integrity
+from .paint_matcher import match_oem_paint_color
+from .quota_limiter import check_and_reserve_scan, commit_scan_deduction
+from .scoring_engine import compute_dynamic_spot_score
 
 CLOUD_STORAGE_BUCKET = "cardex-spots-qwiklabs-gcp-04-6f324b699fdd"
 VERTEX_PROJECT_ID = "qwiklabs-gcp-04-6f324b699fdd"
@@ -153,16 +157,29 @@ def submit_car_review(
     issue_description: str,
     proposed_correction: str,
     user_id: str = "spotter_1",
+    spot_id: str | None = None,
+    image_url: str | None = None,
+    proposed_make: str | None = None,
+    proposed_model: str | None = None,
+    proposed_trim: str | None = None,
+    proposed_color: str | None = None,
 ) -> dict[str, Any]:
     """Submit a vehicle identification review or dispute when the AI or database has an error.
 
     Allows spotters to dispute an incorrect trim, wrong colorway, or report unlisted 1-of-1 builds.
+    Routes to the Master Spotter adjudication queue for community consensus voting.
 
     Args:
         car_name: The name or model of the vehicle in question.
         issue_description: What went wrong or was misidentified.
         proposed_correction: The correct information or provenance.
         user_id: The user submitting the review (defaults to 'spotter_1').
+        spot_id: Optional ID of the specific spot being contested.
+        image_url: Optional image of the car being disputed.
+        proposed_make: Correct manufacturer if misclassified.
+        proposed_model: Correct model if misclassified.
+        proposed_trim: Correct trim or special edition package.
+        proposed_color: Correct paint color or OEM finish.
 
     Returns:
         A dictionary with the submission status and review ID.
@@ -172,6 +189,12 @@ def submit_car_review(
         issue_description=issue_description,
         proposed_correction=proposed_correction,
         user_id=user_id,
+        spot_id=spot_id,
+        image_url=image_url,
+        proposed_make=proposed_make,
+        proposed_model=proposed_model,
+        proposed_trim=proposed_trim,
+        proposed_color=proposed_color,
     )
 
 
@@ -450,23 +473,25 @@ def identify_and_spot_car(
     notes: str = "",
     auto_log_spot: bool = True,
 ) -> dict[str, Any]:
-    """Recognize a vehicle from an image using Gemini Multimodal Vision in the global region and upload it to Cloud Storage.
+    """Recognize a vehicle from an image using Gemini Multimodal Vision, with anti-cheat, colorimetry, and dynamic deflationary scoring.
 
-    Accepts an image via HTTPS URL, GCS URI (gs://...), or Base64 data string.
-    Uploads the image directly from memory into the public Cloud Storage bucket without writing to a local file,
-    extracts the vehicle's make, model, trim, colorway, and special edition status via Gemini multimodal vision in the global region,
-    cross-references the CarDex Firestore collectible catalog, and optionally logs the spot to award spotter points.
-
-    Args:
-        image_input: Public HTTPS image URL, GCS URI (gs://...), or Base64 encoded image string.
-        location: Real-world spotting location (e.g. 'Monaco Casino Square', 'Circuit Paul Ricard').
-        user_id: The ID of the spotter user (defaults to 'spotter_1').
-        notes: Spotter's personal remarks or sighting context.
-        auto_log_spot: Whether to automatically log the spot in the user's Firestore garage and award points (default True).
-
-    Returns:
-        A dictionary containing the public GCS image URL, AI vision identification, catalog match, and Firestore spot details.
+    1. Enforces daily quota (5 scans/day on free tier, consumable refills, Pro tier).
+    2. Runs 2D FFT Moiré screen detection and 64-bit DCT pHash duplicate detection.
+    3. Multimodal vision recognition via Gemini 2.5 Flash in global region.
+    4. Spectrometric CIEDE2000 color matching against factory OEM Paint to Sample (PTS) database.
+    5. Calculates dynamic deflationary score based on production run N_prod, 30d encounter decay D_30, paint finish M_paint, and first-finder bonus B_first.
+    6. Logs the spot in Firestore and commits quota deduction only upon success.
     """
+    # 0. Quota check before invoking AI models
+    allowed, reason, quota_info = check_and_reserve_scan(user_id)
+    if not allowed:
+        return {
+            "success": False,
+            "quota_exceeded": True,
+            "error": reason,
+            "quota": quota_info,
+        }
+
     raw_input = image_input.strip()
     image_bytes: bytes | None = None
     mime_type = "image/jpeg"
@@ -516,7 +541,20 @@ def identify_and_spot_car(
     if not image_bytes:
         return {"success": False, "error": "Empty or invalid image data provided."}
 
-    # 2. Upload in-memory to Google Cloud Storage (no local file!)
+    # 2. Anti-Cheat & Forensic Verification (Moiré screen detection + pHash duplicate check)
+    integrity = verify_image_integrity(image_bytes)
+    if not integrity["passed"]:
+        return {
+            "success": False,
+            "anti_cheat_triggered": True,
+            "error": integrity["message"],
+            "flag": integrity["flag"],
+            "phash": integrity.get("phash"),
+            "forensics": integrity.get("forensics"),
+        }
+    phash = integrity.get("phash")
+
+    # 3. Upload in-memory to Google Cloud Storage
     ext = "png" if "png" in mime_type else ("webp" if "webp" in mime_type else "jpg")
     blob_name = f"spots/{uuid.uuid4().hex[:16]}.{ext}"
 
@@ -532,7 +570,7 @@ def identify_and_spot_car(
             "error": f"Failed to upload image to Cloud Storage bucket '{CLOUD_STORAGE_BUCKET}': {str(e)}",
         }
 
-    # 3. Multimodal vision recognition using Gemini in global region
+    # 4. Multimodal vision recognition using Gemini in global region
     try:
         genai_client = genai.Client(enterprise=True, project=VERTEX_PROJECT_ID, location=VERTEX_LOCATION)
         prompt = """You are CarDex's expert automotive spotter AI. Analyze this vehicle image in thorough detail.
@@ -547,7 +585,7 @@ Return a valid JSON object with the following fields:
 - confidence (string: 'High', 'Medium', or 'Low')
 - key_identifying_features (list of strings highlighting aero, headlights, exhausts, badging)
 - estimated_rarity_tier (string: 'Common', 'Rare', 'Epic', 'Legendary', 'Mythic 1-of-1')
-- estimated_points (integer: 500 for Common, 2000 for Rare, 8000 for Epic, 20000 for Legendary, 35000-50000 for Mythic)
+- estimated_points (integer)
 
 Return ONLY the raw JSON object, without markdown formatting or code fences."""
 
@@ -576,38 +614,69 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
             "error": f"Gemini multimodal vision analysis failed: {str(e)}",
         }
 
-    # 4. Cross-reference CarDex Catalog
     detected_make = vision_data.get("make", "").strip()
     detected_model = vision_data.get("model", "").strip()
+    detected_trim = vision_data.get("trim", "").strip()
     query_name = f"{detected_make} {detected_model}".strip()
 
-    catalog_entry = get_car_by_id_or_name(query_name)
-    rarity_tier = catalog_entry.get("rarity_tier") if catalog_entry else vision_data.get("estimated_rarity_tier", "Rare")
-    points = catalog_entry.get("points") if catalog_entry else vision_data.get("estimated_points", 2500)
-    colorway = vision_data.get("observed_colorway", "Standard")
+    # 5. Spectrometric Colorway & CIEDE2000 Paint Matcher
+    paint_match = match_oem_paint_color(image_bytes, make_hint=detected_make)
+    is_pts = paint_match.get("is_pts", False)
+    is_carbon = "carbon" in vision_data.get("observed_colorway", "").lower()
 
-    # 5. Optionally record spot in Firestore
+    if paint_match.get("matched"):
+        resolved_colorway = f"{paint_match['oem_brand']} {paint_match['paint_name']}"
+    else:
+        resolved_colorway = vision_data.get("observed_colorway", "Standard")
+
+    # 6. Dynamic Rarity & Deflationary Scoring Engine
+    car_slug = query_name.lower().replace(" ", "-")
+    score_info = compute_dynamic_spot_score(
+        make=detected_make,
+        model=detected_model,
+        trim=detected_trim,
+        car_identifier=car_slug,
+        is_pts=is_pts,
+        is_bespoke_or_carbon=is_carbon,
+        location=location,
+    )
+    final_points = score_info["final_points"]
+    rarity_tier = score_info["rarity_tier"]
+
+    # 7. Optionally record spot in Firestore
     spot_info = None
     if auto_log_spot:
-        car_identifier = catalog_entry.get("id") if catalog_entry else query_name
+        catalog_entry = get_car_by_id_or_name(query_name)
+        car_identifier = catalog_entry.get("id") if catalog_entry else car_slug
         spot_info = record_car_spot_entry(
             car_id=car_identifier,
-            colorway=colorway,
+            colorway=resolved_colorway,
             user_id=user_id,
             location=location,
             notes=notes or f"Spotted via AI Vision: {', '.join(vision_data.get('key_identifying_features', [])[:2])}",
             image_url=public_image_url,
+            points_override=final_points,
+            rarity_override=rarity_tier,
+            phash=phash,
+            points_breakdown=score_info["breakdown"],
+            paint_badge=paint_match.get("badge_text"),
         )
+
+    # 8. Commit quota deduction only on successful vehicle identification
+    updated_quota = commit_scan_deduction(user_id)
 
     return {
         "success": True,
         "image_public_url": public_image_url,
         "vision_identification": vision_data,
-        "catalog_verified": bool(catalog_entry),
+        "color_analysis": paint_match,
+        "dynamic_scoring": score_info,
         "rarity_tier": rarity_tier,
-        "points_awarded": points,
+        "points_awarded": final_points,
         "spot_logged": bool(spot_info),
         "spot_details": spot_info,
+        "quota": updated_quota,
+        "phash": phash,
     }
 
 

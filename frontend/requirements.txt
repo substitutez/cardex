@@ -5,4 +5,7 @@ httpx
 google-auth
 google-cloud-storage
 google-cloud-firestore
+numpy
+pillow
+scipy
 

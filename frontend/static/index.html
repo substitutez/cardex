@@ -1782,6 +1782,345 @@
       padding: 0.45rem 0.65rem;
     }
   }
+
+  /* --- Quota Pill Header Styling --- */
+  .btn-quota-pill {
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.15), rgba(255, 215, 0, 0.15));
+    border: 1px solid rgba(255, 107, 0, 0.45);
+    color: #ff9800;
+    font-size: 0.78rem;
+    font-weight: 800;
+    border-radius: 9999px;
+    padding: 0.35rem 0.8rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.2s ease;
+  }
+  .btn-quota-pill:hover {
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.3), rgba(255, 215, 0, 0.3));
+    border-color: #ff9800;
+    box-shadow: 0 0 16px rgba(255, 152, 0, 0.35);
+    transform: translateY(-1px);
+  }
+  .btn-quota-pill.pro {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2));
+    border-color: #a855f7;
+    color: #c084fc;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.25);
+  }
+
+  /* --- Quota & Paywall Modal Styling --- */
+  .quota-modal-window {
+    max-width: 640px;
+    width: 95%;
+  }
+  .quota-hero-banner {
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.18), rgba(255, 215, 0, 0.08));
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .quota-status-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .quota-status-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .quota-pips-row {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+  }
+  .quota-pip {
+    width: 22px;
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    transition: all 0.3s ease;
+  }
+  .quota-pip.active {
+    background: linear-gradient(90deg, #ff6b00, #ffb300);
+    box-shadow: 0 0 8px rgba(255, 107, 0, 0.7);
+  }
+  .quota-pip.used {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .quota-plans-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+  }
+  @media (max-width: 580px) {
+    .quota-plans-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .quota-plan-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.85rem;
+    transition: all 0.2s ease;
+  }
+  .quota-plan-card:hover {
+    border-color: rgba(255, 107, 0, 0.5);
+    transform: translateY(-2px);
+  }
+  .quota-plan-card.pro-card {
+    border-color: rgba(168, 85, 247, 0.5);
+    background: linear-gradient(180deg, rgba(168, 85, 247, 0.08), rgba(15, 23, 42, 0.8));
+    position: relative;
+    overflow: hidden;
+  }
+  .quota-plan-card.pro-card::before {
+    content: "MOST POPULAR";
+    position: absolute;
+    top: 8px;
+    right: -28px;
+    background: linear-gradient(90deg, #a855f7, #ec4899);
+    color: #fff;
+    font-size: 0.58rem;
+    font-weight: 800;
+    padding: 2px 28px;
+    transform: rotate(45deg);
+    letter-spacing: 0.5px;
+  }
+  .plan-card-header h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .plan-card-price {
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #ffd700;
+    margin-top: 0.25rem;
+  }
+  .plan-card-features {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .plan-card-features li::before {
+    content: "✓ ";
+    color: #4ade80;
+    font-weight: 800;
+  }
+  .btn-plan-action {
+    width: 100%;
+    padding: 0.65rem;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  .btn-plan-refill {
+    background: linear-gradient(90deg, #ff6b00, #ff8c00);
+    color: #fff;
+  }
+  .btn-plan-pro {
+    background: linear-gradient(90deg, #a855f7, #ec4899);
+    color: #fff;
+  }
+  .btn-plan-action:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+  }
+
+  /* --- Disputes Modal Styling --- */
+  .disputes-modal-window {
+    max-width: 740px;
+    width: 95%;
+  }
+  .disputes-list {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .disputes-list::-webkit-scrollbar {
+    display: none;
+  }
+  .dispute-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    transition: all 0.2s ease;
+  }
+  .dispute-card:hover {
+    border-color: rgba(255, 107, 0, 0.4);
+  }
+  .dispute-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .dispute-car-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .dispute-bounty-badge {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 9999px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+  .dispute-body-grid {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1rem;
+    align-items: center;
+  }
+  .dispute-img-thumb {
+    width: 80px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .dispute-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+  }
+  .dispute-prop-row {
+    color: var(--text-primary);
+  }
+  .dispute-prop-row span.label {
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .dispute-actions-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 0.75rem;
+  }
+  .btn-dispute-vote {
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  .btn-vote-agree {
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+  }
+  .btn-vote-agree:hover {
+    background: #4ade80;
+    color: #000;
+  }
+  .btn-vote-reject {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .btn-vote-reject:hover {
+    background: #ef4444;
+    color: #fff;
+  }
+
+  /* --- Paywall In-Chat Card --- */
+  .paywall-chat-card {
+    background: linear-gradient(135deg, rgba(255, 107, 0, 0.15), rgba(168, 85, 247, 0.12));
+    border: 1px solid rgba(255, 107, 0, 0.4);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .paywall-chat-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .paywall-chat-header .pw-icon {
+    font-size: 1.5rem;
+  }
+  .paywall-chat-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #ff9800;
+  }
+  .paywall-chat-header p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+  .paywall-chat-desc {
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    line-height: 1.4;
+    margin: 0;
+  }
+  .paywall-chat-actions {
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .paywall-chat-actions button {
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  .btn-pw-refill {
+    background: linear-gradient(90deg, #ff6b00, #ff8c00);
+    color: #fff;
+  }
+  .btn-pw-pro {
+    background: linear-gradient(90deg, #a855f7, #ec4899);
+    color: #fff;
+  }
 </style>
 </head>
 <body>
@@ -1802,6 +2141,11 @@
       <span class="pulse-dot"></span>
       <span>Connected to Agent Engine</span>
     </div>
+    <!-- Quota Indicator Pill -->
+    <button type="button" id="btn-quota-pill" class="btn-quota-pill" title="Daily Scan Quota & Refills" onclick="openQuotaModal()">
+      <span class="quota-bolt">⚡</span>
+      <span id="quota-text-header">5/5 Scans</span>
+    </button>
     <div class="header-auth-section" id="header-auth-section">
       <!-- Guest state button -->
       <button id="btn-auth-open" class="btn-auth-trigger" type="button" title="Sign In or Create Account" onclick="openAuthModal('signin')">
@@ -1966,6 +2310,20 @@
           <div class="nav-text">
             <span class="nav-label">Submit Spot Dispute</span>
             <span class="nav-desc">Request expert trim review</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item action-disputes" id="nav-btn-disputes" onclick="openDisputesModal()">
+          <span class="nav-icon">⚖️</span>
+          <div class="nav-text">
+            <span class="nav-label">Master Spotter Review Queue</span>
+            <span class="nav-desc">Consensus review & +500 PTS bounty</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item action-quota" id="nav-btn-quota" onclick="openQuotaModal()">
+          <span class="nav-icon">⚡</span>
+          <div class="nav-text">
+            <span class="nav-label">Daily Scans & Pro Pass</span>
+            <span class="nav-desc">Refill credits & unlimited scans</span>
           </div>
         </button>
       </div>
@@ -2217,6 +2575,95 @@
   </div>
 </div>
 
+<!-- Quota & Pro Pass Modal -->
+<div class="modal-backdrop" id="quota-modal-backdrop">
+  <div class="modal-window quota-modal-window" id="quota-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>⚡</span> Daily Scan Quota & CarDex Pro</h3>
+        <p class="modal-subtitle">5 Free Scans / Day · Atomic Rolling 24h Quota · Instant Refills</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="quota-modal-close" onclick="closeQuotaModal()" aria-label="Close modal">✕</button>
+    </div>
+
+    <!-- Live Quota Status Banner -->
+    <div class="quota-hero-banner">
+      <div class="quota-status-group">
+        <span class="stat-pill-label">CURRENT ALLOWANCE</span>
+        <div class="quota-status-title" id="quota-modal-status-text">5 of 5 Free Scans Available</div>
+        <div class="quota-pips-row" id="quota-pips-row">
+          <div class="quota-pip active"></div>
+          <div class="quota-pip active"></div>
+          <div class="quota-pip active"></div>
+          <div class="quota-pip active"></div>
+          <div class="quota-pip active"></div>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <span class="stat-pill-label">ACTIVE TIER</span>
+        <div style="font-size: 1rem; font-weight: 800; color: #ff9800;" id="quota-modal-tier-badge">FREE SPOTTER</div>
+        <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;" id="quota-modal-reset-timer">Resets in 24h 00m</div>
+      </div>
+    </div>
+
+    <!-- Monetization Options Grid -->
+    <div class="quota-plans-grid">
+      <!-- Refill Pack -->
+      <div class="quota-plan-card">
+        <div class="plan-card-header">
+          <span style="font-size: 1.5rem;">⚡</span>
+          <h4>Instant Refill Pack</h4>
+          <div class="plan-card-price">$1.99 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/ 5 Scans</span></div>
+        </div>
+        <ul class="plan-card-features">
+          <li>+5 High-Resolution Vehicle Scans</li>
+          <li>Never Expires (Carried Across Days)</li>
+          <li>Full Access to CIEDE2000 Paint Matcher</li>
+          <li>Instant Activation via Firestore</li>
+        </ul>
+        <button type="button" class="btn-plan-action btn-plan-refill" onclick="handleRefillPurchase(1)">⚡ Refill +5 Scans ($1.99)</button>
+      </div>
+
+      <!-- Pro Tier -->
+      <div class="quota-plan-card pro-card">
+        <div class="plan-card-header">
+          <span style="font-size: 1.5rem;">👑</span>
+          <h4>CarDex Pro Member</h4>
+          <div class="plan-card-price">$9.99 <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">/ month</span></div>
+        </div>
+        <ul class="plan-card-features">
+          <li><strong>Unlimited</strong> Daily Vehicle Scans</li>
+          <li>Full Spectrometric OEM Paint Matcher</li>
+          <li>Master Spotter Review Voting (+500 PTS)</li>
+          <li>Deflationary 1-of-1 Discovery Multiplier</li>
+          <li>Exclusive Discord Master Spotter Role</li>
+        </ul>
+        <button type="button" class="btn-plan-action btn-plan-pro" onclick="handleUpgradePro('pro')">👑 Upgrade to Pro ($9.99/mo)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Master Spotter Disputes Adjudication Modal -->
+<div class="modal-backdrop" id="disputes-modal-backdrop">
+  <div class="modal-window disputes-modal-window" id="disputes-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>⚖️</span> Master Spotter Review Queue</h3>
+        <p class="modal-subtitle">Adjudicate contested sightings · Consensus (&gt;66%) awards +500 PTS bounty</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="disputes-modal-close" onclick="closeDisputesModal()" aria-label="Close modal">✕</button>
+    </div>
+
+    <!-- Active Disputes List -->
+    <div class="disputes-list" id="disputes-list">
+      <div class="submissions-empty">
+        <span>Loading pending dispute cases from Firestore…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const log = document.getElementById("log");
 const form = document.getElementById("form");
@@ -2401,12 +2848,31 @@ function renderReply(b, parts) {
       enhanceTextNodes(textDiv);
       b.appendChild(textDiv);
     } else if (part.kind === "a2ui" && part.data) {
-      const cardDiv = el("div", "agent-card-container");
-      if (!renderSurface([part.data], cardDiv)) {
-        const fallback = flattenText([part.data]);
-        if (fallback) cardDiv.appendChild(el("div", null, fallback));
+      if (part.data.type === "paywall_card") {
+        const pw = el("div", "paywall-chat-card");
+        pw.innerHTML = `
+          <div class="paywall-chat-header">
+            <span class="pw-icon">⚡</span>
+            <div>
+              <h4>${escapeHtml(part.data.title || "Daily Scan Limit Reached")}</h4>
+              <p>${escapeHtml(part.data.subtitle || "5/5 Free Scans Used Today")}</p>
+            </div>
+          </div>
+          <p class="paywall-chat-desc">${escapeHtml(part.data.message || "")}</p>
+          <div class="paywall-chat-actions">
+            <button type="button" class="btn-pw-refill" onclick="openQuotaModal()">⚡ Refill +5 Scans ($1.99)</button>
+            <button type="button" class="btn-pw-pro" onclick="openQuotaModal()">👑 Upgrade to Pro ($9.99/mo)</button>
+          </div>
+        `;
+        b.appendChild(pw);
+      } else {
+        const cardDiv = el("div", "agent-card-container");
+        if (!renderSurface([part.data], cardDiv)) {
+          const fallback = flattenText([part.data]);
+          if (fallback) cardDiv.appendChild(el("div", null, fallback));
+        }
+        b.appendChild(cardDiv);
       }
-      b.appendChild(cardDiv);
     }
   }
 
@@ -2634,6 +3100,11 @@ async function sendMessage(text, imgData = null) {
     try { data = JSON.parse(raw); }
     catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
     renderReply(b, data.parts || []);
+
+    // Sync quota status if returned by server
+    if (data.quota) {
+      updateQuotaDisplay(data.quota);
+    }
 
     // If server returned updated user profile stats from Firestore, sync UI
     if (data.user && currentSpotter && data.user.user_id === currentSpotter.user_id) {
@@ -2911,6 +3382,7 @@ function updateSpotterState(user, token) {
       sidebarAuthBtn.onclick = () => openAuthModal("signin");
     }
   }
+  fetchUserQuota();
 }
 
 async function initAuth() {
@@ -3172,6 +3644,225 @@ function closeSubmissionsModal() {
   if (submissionsModalBackdrop) submissionsModalBackdrop.classList.remove("active");
 }
 
+/* --- Quota Management & Monetization Logic --- */
+let currentQuota = null;
+
+async function fetchUserQuota() {
+  const userId = currentSpotter ? currentSpotter.user_id : "spotter_1";
+  try {
+    const headers = {};
+    if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
+    const res = await fetch(`/api/user/quota?user_id=${encodeURIComponent(userId)}`, { headers });
+    if (res.ok) {
+      const q = await res.json();
+      updateQuotaDisplay(q);
+    }
+  } catch (e) {
+    console.warn("Failed to fetch user quota:", e);
+  }
+}
+
+function updateQuotaDisplay(q) {
+  if (!q) return;
+  currentQuota = q;
+  const pill = document.getElementById("btn-quota-pill");
+  const text = document.getElementById("quota-text-header");
+  const modalText = document.getElementById("quota-modal-status-text");
+  const tierBadge = document.getElementById("quota-modal-tier-badge");
+  const pipsContainer = document.getElementById("quota-pips-row");
+  const timer = document.getElementById("quota-modal-reset-timer");
+
+  const isPro = (q.tier === "pro");
+  if (pill) {
+    if (isPro) {
+      pill.classList.add("pro");
+      if (text) text.innerHTML = "👑 Pro Unlimited";
+    } else {
+      pill.classList.remove("pro");
+      const rem = q.remaining_scans != null ? q.remaining_scans : 5;
+      if (text) text.innerHTML = `⚡ ${rem}/5 Scans`;
+    }
+  }
+
+  if (modalText) {
+    if (isPro) {
+      modalText.innerHTML = "👑 Unlimited Daily Scans Active";
+    } else {
+      const refills = q.refill_credits > 0 ? ` (+${q.refill_credits} Refills)` : "";
+      modalText.innerHTML = `${q.remaining_free} of ${q.daily_limit} Free Scans Left Today${refills}`;
+    }
+  }
+
+  if (tierBadge) {
+    tierBadge.innerHTML = isPro ? "👑 CAR DEX PRO" : "FREE SPOTTER";
+    tierBadge.style.color = isPro ? "#c084fc" : "#ff9800";
+  }
+
+  if (pipsContainer) {
+    pipsContainer.innerHTML = "";
+    if (isPro) {
+      for (let i = 0; i < 5; i++) {
+        const p = el("div", "quota-pip active");
+        p.style.background = "linear-gradient(90deg, #a855f7, #ec4899)";
+        pipsContainer.appendChild(p);
+      }
+    } else {
+      const totalPips = 5;
+      const activePips = Math.max(0, Math.min(5, q.remaining_free != null ? q.remaining_free : 5));
+      for (let i = 0; i < totalPips; i++) {
+        const p = el("div", "quota-pip " + (i < activePips ? "active" : "used"));
+        pipsContainer.appendChild(p);
+      }
+    }
+  }
+
+  if (timer && q.next_reset_seconds) {
+    const hrs = Math.floor(q.next_reset_seconds / 3600);
+    const mins = Math.floor((q.next_reset_seconds % 3600) / 60);
+    timer.textContent = `Resets in ${hrs}h ${mins}m`;
+  }
+}
+
+function openQuotaModal() {
+  const modal = document.getElementById("quota-modal-backdrop");
+  if (modal) {
+    modal.classList.add("active");
+    fetchUserQuota();
+  }
+}
+
+function closeQuotaModal() {
+  const modal = document.getElementById("quota-modal-backdrop");
+  if (modal) modal.classList.remove("active");
+}
+
+async function handleRefillPurchase(packs = 1) {
+  const userId = currentSpotter ? currentSpotter.user_id : "spotter_1";
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
+    const res = await fetch("/api/user/refill", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ user_id: userId, packs })
+    });
+    const data = await res.json();
+    if (data.quota) updateQuotaDisplay(data.quota);
+    alert(`⚡ Successfully added ${packs * 5} Scan Refills to your account!`);
+  } catch (e) {
+    alert("Refill failed: " + e.message);
+  }
+}
+
+async function handleUpgradePro(tier = "pro") {
+  const userId = currentSpotter ? currentSpotter.user_id : "spotter_1";
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
+    const res = await fetch("/api/user/upgrade-pro", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ user_id: userId, tier })
+    });
+    const data = await res.json();
+    if (data.quota) updateQuotaDisplay(data.quota);
+    alert("👑 Welcome to CarDex Pro! Unlimited daily scans and PTS paint verification unlocked.");
+  } catch (e) {
+    alert("Pro upgrade failed: " + e.message);
+  }
+}
+
+/* --- Master Spotter Review Queue & Consensus Adjudication --- */
+async function openDisputesModal() {
+  const modal = document.getElementById("disputes-modal-backdrop");
+  if (modal) {
+    modal.classList.add("active");
+    await loadPendingDisputes();
+  }
+}
+
+function closeDisputesModal() {
+  const modal = document.getElementById("disputes-modal-backdrop");
+  if (modal) modal.classList.remove("active");
+}
+
+async function loadPendingDisputes() {
+  const list = document.getElementById("disputes-list");
+  if (!list) return;
+  list.innerHTML = `<div class="submissions-empty"><span>Querying Firestore for contested sightings…</span></div>`;
+
+  try {
+    const res = await fetch("/api/reviews/pending");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const disputes = await res.json();
+    if (!disputes || !disputes.length) {
+      list.innerHTML = `
+        <div class="submissions-empty">
+          <span style="font-size: 2.2rem;">🏆</span>
+          <p style="margin-top: 0.5rem; font-weight: 700; color: #4ade80;">No Pending Disputes!</p>
+          <p style="font-size: 0.8rem; color: var(--text-muted);">All supercar spot classifications are verified by community consensus.</p>
+        </div>
+      `;
+      return;
+    }
+
+    list.innerHTML = "";
+    disputes.forEach(d => {
+      const card = el("div", "dispute-card");
+      const revId = d.review_id || "";
+      const votesCount = (d.votes && Array.isArray(d.votes)) ? d.votes.length : 0;
+      card.innerHTML = `
+        <div class="dispute-card-header">
+          <div class="dispute-car-title">🏎️ ${escapeHtml(d.car_name || "Contested Vehicle")}</div>
+          <div class="dispute-bounty-badge">💰 +500 PTS Bounty (${votesCount}/3 Votes)</div>
+        </div>
+        <div class="dispute-body-grid">
+          ${d.image_url ? `<img src="${d.image_url}" class="dispute-img-thumb" alt="Vehicle Photo" />` : `<div class="submission-img-fallback">📸</div>`}
+          <div class="dispute-fields">
+            <div class="dispute-prop-row"><span class="label">Issue:</span> ${escapeHtml(d.issue_description || "Trim classification contested")}</div>
+            <div class="dispute-prop-row"><span class="label">Proposed Correction:</span> <strong>${escapeHtml(d.proposed_correction || (d.proposed_make + " " + d.proposed_model + " " + (d.proposed_trim || "")))}</strong></div>
+            <div class="dispute-prop-row"><span class="label">Reported By:</span> @${escapeHtml(d.user_id || "spotter")} · <span style="font-size: 0.72rem; color: var(--text-muted);">${d.submitted_at ? new Date(d.submitted_at).toLocaleDateString() : "Recent"}</span></div>
+          </div>
+        </div>
+        <div class="dispute-actions-row">
+          <span style="font-size: 0.75rem; color: var(--text-muted); margin-right: auto;">Cast Blind Adjudication Vote:</span>
+          <button type="button" class="btn-dispute-vote btn-vote-agree" onclick="handleCastDisputeVote('${revId}', true)">✅ Agree & Rescore</button>
+          <button type="button" class="btn-dispute-vote btn-vote-reject" onclick="handleCastDisputeVote('${revId}', false)">❌ Disagree / Reject</button>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+  } catch (err) {
+    list.innerHTML = `<div class="submissions-empty" style="color: #ff6b6b;">Error loading disputes: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function handleCastDisputeVote(reviewId, agree) {
+  const userId = currentSpotter ? currentSpotter.user_id : "spotter_1";
+  try {
+    const res = await fetch("/api/reviews/vote", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        review_id: reviewId,
+        user_id: userId,
+        vote_agree: agree,
+        reviewer_rank: currentSpotter ? (currentSpotter.prestige_tier || "Master Spotter") : "Master Spotter",
+        comment: agree ? "Verified correction matches factory visual characteristics." : "Original classification correct."
+      })
+    });
+    const result = await res.json();
+    if (result.consensus_reached) {
+      alert(`🗳️ Consensus Reached (${Math.round((result.agreement_ratio || 1) * 100)}% agreement)!\nVehicle record dynamically rescaled. +500 PTS Review Bounty awarded to adjudicators!`);
+    } else {
+      alert(`🗳️ Blind Vote Recorded! (${result.total_votes}/${result.votes_required || 3} votes towards consensus)`);
+    }
+    await loadPendingDisputes();
+  } catch (e) {
+    alert("Voting failed: " + e.message);
+  }
+}
+
 // Modal open/close listeners
 if (btnAuthOpen) btnAuthOpen.addEventListener("click", () => openAuthModal("signin"));
 if (sidebarAuthBtn) sidebarAuthBtn.addEventListener("click", handleSidebarAuthClick);
@@ -3194,7 +3885,9 @@ if (btnSignout) btnSignout.addEventListener("click", signOut);
 
 // Backdrop close handlers
 const cameraModalBackdrop = document.getElementById("camera-modal-backdrop");
-[authModalBackdrop, submissionsModalBackdrop, cameraModalBackdrop].forEach(backdrop => {
+const quotaModalBackdrop = document.getElementById("quota-modal-backdrop");
+const disputesModalBackdrop = document.getElementById("disputes-modal-backdrop");
+[authModalBackdrop, submissionsModalBackdrop, cameraModalBackdrop, quotaModalBackdrop, disputesModalBackdrop].forEach(backdrop => {
   if (backdrop) {
     backdrop.addEventListener("click", (e) => {
       if (e.target === backdrop) {
@@ -3211,6 +3904,8 @@ window.addEventListener("keydown", (e) => {
     closeAuthModal();
     closeSubmissionsModal();
     closeCameraModal();
+    closeQuotaModal();
+    closeDisputesModal();
   }
 });
 
@@ -3232,9 +3927,17 @@ window.snapCameraPhoto = snapCameraPhoto;
 window.flipCamera = flipCamera;
 window.openNativeCameraFallback = openNativeCameraFallback;
 window.clearPendingImage = clearPendingImage;
+window.openQuotaModal = openQuotaModal;
+window.closeQuotaModal = closeQuotaModal;
+window.handleRefillPurchase = handleRefillPurchase;
+window.handleUpgradePro = handleUpgradePro;
+window.openDisputesModal = openDisputesModal;
+window.closeDisputesModal = closeDisputesModal;
+window.handleCastDisputeVote = handleCastDisputeVote;
 
-// Run auth initialization on load
+// Run auth & quota initialization on load
 initAuth();
+fetchUserQuota();
 </script>
 </body>
 </html>

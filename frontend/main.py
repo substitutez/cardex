@@ -46,7 +46,11 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+import base64
 import auth_db
+import quota_limiter
+import anti_cheat
+import firestore_db
 
 try:
     from dotenv import load_dotenv
@@ -336,6 +340,110 @@ async def user_stats(req: Request):
     return JSONResponse(stats)
 
 
+@app.get("/api/user/quota")
+async def get_user_quota_endpoint(req: Request):
+    """Retrieves user's rolling 24h scan quota, remaining scans, and tier."""
+    user_id = req.query_params.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    user_id = user_id or "spotter_1"
+    quota = quota_limiter.get_user_quota(user_id)
+    return JSONResponse(quota)
+
+
+@app.post("/api/user/refill")
+async def refill_user_quota_endpoint(req: Request):
+    """Purchases or grants consumable refill scan packs."""
+    body = await req.json()
+    user_id = body.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    user_id = user_id or "spotter_1"
+    packs = int(body.get("packs", 1))
+    added = packs * 5
+    res = quota_limiter.add_refill_credits(user_id, added)
+    return JSONResponse(res)
+
+
+@app.post("/api/user/upgrade-pro")
+async def upgrade_user_pro_endpoint(req: Request):
+    """Toggles or sets the user's tier (free vs. pro)."""
+    body = await req.json()
+    user_id = body.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    user_id = user_id or "spotter_1"
+    tier = body.get("tier", "pro")
+    res = quota_limiter.set_user_tier(user_id, tier)
+    return JSONResponse(res)
+
+
+@app.get("/api/reviews/pending")
+async def pending_disputes_endpoint(req: Request):
+    """Retrieves disputes waiting for Master Spotter consensus review."""
+    disputes = firestore_db.get_pending_disputes(limit=25)
+    return JSONResponse(disputes)
+
+
+@app.post("/api/reviews/vote")
+async def vote_dispute_endpoint(req: Request):
+    """Casts a blind vote on a pending dispute."""
+    body = await req.json()
+    review_id = body.get("review_id")
+    if not review_id:
+        return JSONResponse({"error": "review_id required"}, status_code=400)
+    user_id = body.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    user_id = user_id or "spotter_1"
+    vote_agree = bool(body.get("vote_agree", True))
+    reviewer_rank = body.get("reviewer_rank", "Master Spotter")
+    comment = body.get("comment", "")
+    res = firestore_db.cast_dispute_vote(review_id, user_id, vote_agree, reviewer_rank, comment)
+    return JSONResponse(res)
+
+
+@app.post("/api/reviews/dispute")
+async def submit_dispute_endpoint(req: Request):
+    """Submits a car spotting classification dispute to the review queue."""
+    body = await req.json()
+    car_name = body.get("car_name", "Contested Sighting")
+    issue_desc = body.get("issue_description", "")
+    prop_corr = body.get("proposed_correction", "")
+    user_id = body.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    user_id = user_id or "spotter_1"
+    res = firestore_db.submit_dispute_review(
+        car_name=car_name,
+        issue_description=issue_desc,
+        proposed_correction=prop_corr,
+        user_id=user_id,
+        spot_id=body.get("spot_id"),
+        image_url=body.get("image_url"),
+        proposed_make=body.get("proposed_make"),
+        proposed_model=body.get("proposed_model"),
+        proposed_trim=body.get("proposed_trim"),
+        proposed_color=body.get("proposed_color"),
+    )
+    return JSONResponse(res)
+
+
 @app.post("/chat")
 async def chat(req: Request):
     body = await req.json()
@@ -353,10 +461,65 @@ async def chat(req: Request):
     user_profile = auth_db.get_user_profile(user_id)
     username = user_profile.get("username") or body.get("username") or user_id
 
+    # 1. Quota Pre-Check if scanning an image
+    if image_input:
+        allowed, reason, quota_info = quota_limiter.check_and_reserve_scan(user_id)
+        if not allowed:
+            return JSONResponse({
+                "parts": [
+                    {
+                        "kind": "text",
+                        "text": f"⚠️ **Daily Scan Limit Reached (5/5 Scans)**\n{reason}\n\nTo preserve platform economics and prevent server abuse, free accounts are limited to 5 scans per rolling 24 hours. Unlock unlimited scans with CarDex Pro or grab an instant 5-scan refill pack!",
+                    },
+                    {
+                        "kind": "a2ui",
+                        "data": {
+                            "type": "paywall_card",
+                            "title": "Daily Quota Limit Reached",
+                            "subtitle": "5 of 5 Free Scans Used Today",
+                            "message": "Upgrade to CarDex Pro or grab an instant scan refill pack.",
+                            "quota": quota_info,
+                        },
+                    },
+                ],
+                "quota_exceeded": True,
+                "quota": quota_info,
+                "user": user_profile,
+            })
+
     parts: list[dict] = []
 
+    # 2. Decode and Anti-Cheat Pre-Check for images
     uploaded_image_url = None
     if image_input:
+        # Pre-screen for screen-captures (Moiré) and duplicate hashes
+        try:
+            raw_data = image_input.strip()
+            decoded_bytes = None
+            if raw_data.startswith("data:") and ";base64," in raw_data:
+                _, b64 = raw_data.split(";base64,", 1)
+                decoded_bytes = base64.b64decode(b64)
+            elif not raw_data.startswith("http"):
+                decoded_bytes = base64.b64decode(raw_data)
+
+            if decoded_bytes:
+                integrity = anti_cheat.verify_image_integrity(decoded_bytes)
+                if not integrity["passed"]:
+                    return JSONResponse({
+                        "parts": [
+                            {
+                                "kind": "text",
+                                "text": f"🛡️ **Anti-Cheat Integrity Alert**\n{integrity['message']}\n\n*Forensic Status:* `{integrity.get('flag')}`\n*Note:* CarDex requires genuine live sightings. Photos taken off monitors, screens, or duplicate submissions are flagged by our computer-vision integrity filters.",
+                            }
+                        ],
+                        "anti_cheat_triggered": True,
+                        "error": integrity["message"],
+                        "flag": integrity.get("flag"),
+                        "user": user_profile,
+                    })
+        except Exception as e:
+            print("Anti-cheat pre-screening warning:", e)
+
         if image_input.startswith("http://") or image_input.startswith("https://"):
             uploaded_image_url = image_input
         else:
@@ -443,12 +606,20 @@ async def chat(req: Request):
     if not parts:
         parts = [{"kind": "text", "text": "(The agent didn't return a reply.)"}]
 
+    # Deduct quota scan credit on successful spotting scan
+    latest_quota = None
+    if image_input:
+        latest_quota = quota_limiter.commit_scan_deduction(user_id)
+    else:
+        latest_quota = quota_limiter.get_user_quota(user_id)
+
     # Refresh user stats from Firestore to return live updated score
     updated_profile = auth_db.get_user_profile(user_id)
     return JSONResponse({
         "parts": parts,
         "image_url": uploaded_image_url,
         "user": updated_profile,
+        "quota": latest_quota,
     })
 
 
