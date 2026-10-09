@@ -137,7 +137,7 @@ def record_car_spot(
     Returns:
         A dictionary confirming the spot, points earned, new global spotted count, and spot ID.
     """
-    return record_car_spot_entry(
+    res = record_car_spot_entry(
         car_id=car_name_or_id,
         colorway=colorway,
         user_id=user_id,
@@ -147,6 +147,23 @@ def record_car_spot(
         latitude=latitude,
         longitude=longitude,
     )
+    if latitude and longitude:
+        try:
+            from .cluster_beacon import record_spot_cluster_check
+            meet = record_spot_cluster_check({
+                "id": res.get("spot_id"),
+                "user_id": user_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "car_name": car_name_or_id,
+                "spot_timestamp": res.get("spotted_at"),
+            })
+            if meet:
+                res["car_meet_detected"] = True
+                res["meet_cluster_id"] = meet.get("id")
+        except Exception as e:
+            logger.debug("Cluster meet check error: %s", e)
+    return res
 
 
 def view_my_garage(user_id: str = "spotter_1") -> list[dict[str, Any]]:

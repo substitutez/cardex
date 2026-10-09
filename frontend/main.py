@@ -74,6 +74,13 @@ import a2ui_utils
 import paint_matcher
 
 try:
+    import battle_engine
+    import cluster_beacon
+except ImportError:
+    from app import battle_engine
+    from app import cluster_beacon
+
+try:
     from cache import (
         get_cached_leaderboard,
         set_cached_leaderboard,
@@ -200,10 +207,17 @@ async def _get_card(client: httpx.AsyncClient) -> AgentCard:
     if _card is None:
         resp = await client.get(A2A_CARD_URL)
         resp.raise_for_status()
-        card = AgentCard(**resp.json())
-        # Agent Runtime does not serve a public card URL, so point the client at
-        # the passthrough base for message sends.
-        card.url = A2A_BASE
+        data = resp.json()
+        if hasattr(AgentCard, "DESCRIPTOR"):
+            from google.protobuf.json_format import ParseDict
+            card = ParseDict(data, AgentCard(), ignore_unknown_fields=True)
+            try:
+                card.url = A2A_BASE
+            except AttributeError:
+                pass
+        else:
+            card = AgentCard(**data)
+            card.url = A2A_BASE
         _card = card
     return _card
 
@@ -740,6 +754,107 @@ async def get_radar_sightings_endpoint(req: Request):
     return JSONResponse(sightings)
 
 
+@app.get("/api/radar/meets")
+async def get_radar_meets_endpoint(req: Request):
+    """Retrieves active spontaneous car meet clusters within radius_km (default 25km)."""
+    try:
+        lat_str = req.query_params.get("lat")
+        lng_str = req.query_params.get("lng")
+        lat = float(lat_str) if lat_str else 43.7384
+        lng = float(lng_str) if lng_str else 7.4246
+        radius_km = float(req.query_params.get("radius_km", 25.0))
+        radius_km = max(0.5, min(radius_km, 100.0))
+    except (ValueError, TypeError):
+        lat, lng, radius_km = 43.7384, 7.4246, 25.0
+
+    meets = cluster_beacon.get_active_meets_near(lat=lat, lng=lng, radius_km=radius_km)
+    return JSONResponse(meets)
+
+
+@app.post("/api/battle/challenge")
+async def battle_challenge_endpoint(req: Request):
+    """Executes a 1v1 PvP card battle wager duel against an asynchronous opponent."""
+    try:
+        body = await req.json()
+    except Exception:
+        body = {}
+
+    spot_id = body.get("spot_id", "")
+    attribute = body.get("attribute", "horsepower")
+    wager = body.get("wager", 100)
+
+    # Resolve spotter identity
+    auth_header = req.headers.get("Authorization", "")
+    token = auth_header.split(" ", 1)[1].strip() if auth_header.startswith("Bearer ") else None
+    user_id = (auth_db.validate_session(token) if token else None) or body.get("user_id") or "spotter_1"
+
+    try:
+        result = battle_engine.execute_battle_challenge(
+            user_id=user_id,
+            spot_id=spot_id,
+            attribute=attribute,
+            wager=wager,
+        )
+        return JSONResponse(result)
+    except Exception as e:
+        logger.warning("Battle challenge failed: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=400)
+
+
+@app.get("/api/battle/garage")
+async def battle_garage_endpoint(req: Request):
+    """Retrieves current user's spotted cars with computed stats for all 5 battle attributes."""
+    auth_header = req.headers.get("Authorization", "")
+    token = auth_header.split(" ", 1)[1].strip() if auth_header.startswith("Bearer ") else None
+    user_id = (auth_db.validate_session(token) if token else None) or req.query_params.get("user_id") or "spotter_1"
+
+    spots = firestore_db.get_user_garage_spots(user_id=user_id)
+    if not spots:
+        # Provide default cars if user has no spots yet so they can immediately duel
+        spots = [
+            {
+                "id": "starter_porsche",
+                "car_name": "Porsche 911 GT3 RS",
+                "make_model": "Porsche 911 GT3 RS",
+                "rarity_tier": "legendary",
+                "power_hp": 525.0,
+                "zero_to_100_s": 3.2,
+                "top_speed_kmh": 296.0,
+                "colorway": "Viola Metallic (PTS)",
+                "paint_multiplier": 1.35,
+                "acoustic_telemetry": {"peak_dba": 103.8},
+                "image_url": "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?w=800",
+            },
+            {
+                "id": "starter_ferrari",
+                "car_name": "Ferrari SF90 Stradale",
+                "make_model": "Ferrari SF90 Stradale",
+                "rarity_tier": "mythic",
+                "power_hp": 986.0,
+                "zero_to_100_s": 2.5,
+                "top_speed_kmh": 340.0,
+                "colorway": "Rosso Corsa",
+                "paint_multiplier": 1.20,
+                "acoustic_telemetry": {"peak_dba": 101.5},
+                "image_url": "https://images.unsplash.com/photo-1592198084033-aade902d1aae?w=800",
+            },
+        ]
+
+    # Augment each spot with pre-calculated battle power across all 5 attributes
+    enriched = []
+    for s in spots:
+        s_copy = dict(s)
+        battle_stats = {
+            attr: battle_engine.calculate_battle_power(s, attr)
+            for attr in battle_engine.SUPPORTED_ATTRIBUTES
+        }
+        s_copy["battle_stats"] = battle_stats
+        s_copy["battle_powers"] = battle_stats
+        enriched.append(s_copy)
+
+    return JSONResponse({"spots": enriched, "garage": enriched, "count": len(enriched)})
+
+
 @app.post("/chat")
 @app.post("/api/spots/upload")
 @app.post("/api/spot")
@@ -893,21 +1008,29 @@ async def chat(req: Request):
 
     async with httpx.AsyncClient(headers=_auth_headers(), timeout=120) as client:
         card = await _get_card(client)
-        factory = ClientFactory(
-            ClientConfig(
+        try:
+            client_config = ClientConfig(
                 supported_transports=[
                     TransportProtocol.jsonrpc,
                     TransportProtocol.http_json,
                 ],
                 httpx_client=client,
             )
-        )
+        except TypeError:
+            client_config = ClientConfig(httpx_client=client)
+        factory = ClientFactory(client_config)
         a2a_client = factory.create(card)
+
+        user_role = getattr(Role, "user", getattr(Role, "ROLE_USER", 1))
+        try:
+            part = Part(root=TextPart(text=agent_text))
+        except Exception:
+            part = Part(text=agent_text)
 
         msg = Message(
             message_id=str(uuid.uuid4()),
-            role=Role.user,
-            parts=[Part(root=TextPart(text=agent_text))],
+            role=user_role,
+            parts=[part],
             context_id=_contexts.get(user_id),
         )
 
@@ -1042,12 +1165,29 @@ async def chat(req: Request):
 
     # Refresh user stats from Firestore to return live updated score
     updated_profile = auth_db.get_user_profile(user_id)
+
+    # 4. Spontaneous Car Meet DBSCAN Ingestion Hook
+    detected_meet = None
+    if req_lat and req_lng:
+        try:
+            detected_meet = cluster_beacon.record_spot_cluster_check({
+                "id": str(uuid.uuid4()),
+                "user_id": user_id,
+                "latitude": float(req_lat),
+                "longitude": float(req_lng),
+                "car_name": message or "Supercar",
+                "spot_timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            })
+        except Exception as e:
+            logger.debug("Cluster meet check warning: %s", e)
+
     return JSONResponse({
         "parts": parts,
         "image_url": uploaded_image_url,
         "acoustic_analysis": audio_analysis,
         "acoustic_telemetry": acoustic_telemetry,
         "chassis_markings": chassis_markings,
+        "detected_meet": detected_meet,
         "user": updated_profile,
         "quota": latest_quota,
     })

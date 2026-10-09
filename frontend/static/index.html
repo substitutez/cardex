@@ -20,6 +20,10 @@
 <script src="/js/offline_sync.js"></script>
 <!-- CarDex Holographic Sighting Card Exporter & 3D Tilt -->
 <script src="/js/card_exporter.js"></script>
+<!-- CarDex Battle Arena: Asynchronous Garage PvP Stat Duels -->
+<script src="/js/battle.js"></script>
+<!-- CarDex WebGL2 Night-Boost & Tactical Reticle HUD Shader -->
+<script src="/js/viewfinder_shader.js"></script>
 <style>
   :root {
     --accent: #ff6b00;
@@ -4079,13 +4083,492 @@
     color: #0f172a;
   }
 
-  @keyframes syncPulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.85); }
+  /* --- Car Meet Alert Banner Styles --- */
+  .car-meet-alert-banner {
+    display: none;
+    width: 100%;
+    background: linear-gradient(90deg, #b45309 0%, #f59e0b 50%, #d97706 100%);
+    color: #ffffff;
+    padding: 8px 16px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    z-index: 100;
+    transition: all 0.2s ease;
   }
-  @keyframes fadeInBanner {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+  .car-meet-alert-banner:hover {
+    filter: brightness(1.1);
+  }
+  .pulse-beacon-flame {
+    display: inline-block;
+    animation: flamePulse 1s infinite alternate;
+  }
+  @keyframes flamePulse {
+    from { transform: scale(1); filter: drop-shadow(0 0 2px #fff); }
+    to { transform: scale(1.3); filter: drop-shadow(0 0 8px #ffeb3b); }
+  }
+  .car-meet-view-link {
+    background: rgba(15, 23, 42, 0.4);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-left: 8px;
+  }
+
+  /* --- CarDex Battle Arena Styles --- */
+  #cockpit-battle-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: radial-gradient(circle at top center, #1e1b4b 0%, #0b0f19 80%);
+  }
+  .battle-arena-header {
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .battle-arena-title {
+    font-size: 1.6rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .battle-arena-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    margin-top: 4px;
+  }
+  .battle-pot-badge {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1.5px solid #f59e0b;
+    border-radius: 10px;
+    padding: 8px 16px;
+    color: #fbbf24;
+    font-weight: 900;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+  }
+  .battle-setup-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 900px) {
+    .battle-setup-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .battle-panel {
+    background: rgba(18, 24, 38, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    backdrop-filter: blur(12px);
+  }
+  .battle-panel-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #e2e8f0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .battle-garage-selector {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  .battle-car-chip {
+    flex: 0 0 160px;
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .battle-car-chip:hover {
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+  }
+  .battle-car-chip.selected {
+    border-color: #f59e0b;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    background: rgba(245, 158, 11, 0.1);
+  }
+  .battle-chip-thumb {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .battle-chip-name {
+    display: block;
+    font-weight: 700;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff;
+  }
+  .battle-chip-tier {
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+  }
+  .tier-mythic { background: #8b5cf6; color: #fff; }
+  .tier-legendary { background: #f59e0b; color: #fff; }
+  .tier-epic { background: #3b82f6; color: #fff; }
+  .tier-rare { background: #10b981; color: #fff; }
+  .tier-uncommon { background: #64748b; color: #fff; }
+  .tier-common { background: #475569; color: #fff; }
+
+  .battle-attributes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 8px;
+    margin-bottom: 1.25rem;
+  }
+  .battle-attr-btn {
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    border-radius: 10px;
+    padding: 10px;
+    color: #e2e8f0;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+  }
+  .battle-attr-btn:hover {
+    border-color: #38bdf8;
+  }
+  .battle-attr-btn.active {
+    border-color: #38bdf8;
+    background: rgba(56, 189, 248, 0.15);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+  }
+  .battle-attr-icon {
+    font-size: 1.2rem;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .battle-attr-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .wager-chips-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .wager-chip {
+    flex: 1;
+    background: var(--card-bg);
+    border: 1.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px;
+    text-align: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .wager-chip:hover {
+    border-color: #f59e0b;
+  }
+  .wager-chip.active {
+    border-color: #f59e0b;
+    background: #f59e0b;
+    color: #0f172a;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+  }
+
+  .battle-clash-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #ef4444 0%, #f59e0b 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.4);
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .battle-clash-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(239, 68, 68, 0.6);
+  }
+  .battle-clash-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  /* 1v1 Arena Display & Holographic Cards */
+  .arena-duel-stage {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 1.5rem;
+    min-height: 380px;
+  }
+  @media (max-width: 768px) {
+    .arena-duel-stage {
+      flex-direction: column;
+    }
+  }
+  .arena-card-wrap {
+    flex: 1;
+    max-width: 320px;
+    min-width: 260px;
+  }
+  .arena-card-inner {
+    background: #111827;
+    border: 2px solid #374151;
+    border-radius: 16px;
+    padding: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  .arena-card-inner.player-holo {
+    border-color: #38bdf8;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+  }
+  .arena-card-inner.rival-holo {
+    border-color: #ef4444;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.2);
+  }
+  .arena-card-badge {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #fff;
+    z-index: 2;
+  }
+  .arena-card-img-wrap {
+    width: 100%;
+    height: 160px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .arena-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .arena-card-header {
+    margin-bottom: 12px;
+  }
+  .arena-card-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #fff;
+  }
+  .arena-card-subtitle {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+  }
+  .arena-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .arena-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .arena-stat-row.highlight-stat {
+    background: rgba(56, 189, 248, 0.15);
+    border: 1px solid #38bdf8;
+    color: #38bdf8;
+    font-weight: 800;
+  }
+  .arena-stat-icon { margin-right: 6px; }
+  .arena-stat-label { flex: 1; }
+  .arena-stat-val { font-weight: 700; color: #fff; }
+
+  .arena-vs-divider {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .arena-vs-circle {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ef4444, #f59e0b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 1.2rem;
+    color: #fff;
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7);
+  }
+
+  /* 3-Second Clash Overlay */
+  .arena-clash-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .arena-countdown-display {
+    font-size: 6rem;
+    font-weight: 900;
+    color: #f59e0b;
+    text-shadow: 0 0 40px rgba(245, 158, 11, 0.9);
+    animation: countdownPunch 0.85s infinite;
+  }
+  @keyframes countdownPunch {
+    0% { transform: scale(1.4); opacity: 0; }
+    50% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+  }
+
+  /* Battle Result Modal */
+  .battle-result-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .battle-result-modal.active {
+    display: flex;
+  }
+  .battle-result-window {
+    background: #111827;
+    border: 2px solid #374151;
+    border-radius: 20px;
+    padding: 2rem;
+    max-width: 520px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    animation: modalIn 0.3s ease;
+  }
+  .battle-result-title {
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+  }
+  .battle-result-commentary {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 1rem 0;
+  }
+  .arena-duel-stat-clash {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    padding: 12px;
+    margin: 1rem 0;
+  }
+  .clash-stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+  }
+  .clash-vs-badge {
+    font-weight: 900;
+    color: #f59e0b;
+    font-size: 1rem;
+  }
+
+  /* Camera Night Boost Button */
+  .camera-nightboost-btn {
+    background: rgba(15, 23, 42, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    color: #f1f5f9;
+    padding: 5px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    backdrop-filter: blur(8px);
+    transition: all 0.2s ease;
+  }
+  .camera-nightboost-btn:hover {
+    border-color: #10b981;
+  }
+  .camera-nightboost-btn.active {
+    background: #10b981;
+    color: #0f172a;
+    border-color: #10b981;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
   }
 </style>
 
@@ -4115,6 +4598,10 @@
     <button type="button" class="cockpit-tab-pill" id="tab-btn-dyno" role="tab" aria-selected="false" onclick="switchCockpitView('dyno')">
       <span>🔊</span> <span>Acoustic Dyno</span>
       <span class="dyno-iec-badge" style="margin-left: 4px;">IEC 61672</span>
+    </button>
+    <button type="button" class="cockpit-tab-pill" id="tab-btn-battle" role="tab" aria-selected="false" onclick="switchCockpitView('battle')">
+      <span>⚔️</span> <span>Battle Arena</span>
+      <span class="arena-pvp-badge" style="margin-left: 4px; background:linear-gradient(135deg, #ef4444, #f59e0b); color:#fff; font-size:0.65rem; padding:2px 6px; border-radius:4px; font-weight:800;">1v1 PVP</span>
     </button>
   </div>
   <div class="header-right-group">
@@ -4150,6 +4637,13 @@
     </div>
   </div>
 </header>
+
+<!-- Spontaneous Car Meet Radar Alert Banner -->
+<div id="car-meet-banner" class="car-meet-alert-banner" onclick="switchCockpitView('radar')" title="View live gather location on Field Radar">
+  <span class="pulse-beacon-flame">🔥</span>
+  <span id="car-meet-banner-text" class="car-meet-banner-text">Active Car Meet Detected Nearby (~1.2 km away) — 4 Supercars Spotted!</span>
+  <span class="car-meet-view-link">Track on Radar ➔</span>
+</div>
 
 <div class="layout-container">
   <!-- Sidebar with Project Categories -->
@@ -4193,6 +4687,13 @@
           <div class="nav-text">
             <span class="nav-label">Acoustic Dyno HUD</span>
             <span class="nav-desc">Exhaust decibels, RTA & tachometer</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item action-battle" id="sidebar-nav-battle" onclick="switchCockpitView('battle')">
+          <span class="nav-icon">⚔️</span>
+          <div class="nav-text">
+            <span class="nav-label">Battle Arena</span>
+            <span class="nav-desc">Garage 1v1 PvP stat duels</span>
           </div>
         </button>
         <button type="button" class="nav-item" data-prompt="I just spotted a rare supercar! How do I log it into my garage?">
@@ -4662,7 +5163,131 @@
         </div>
       </div>
     </div>
+
+    <!-- View 4: CarDex Battle Arena (Garage 1v1 PvP Stat Clash) -->
+    <div id="cockpit-battle-view" class="cockpit-view-pane" style="display: none;">
+      <div class="battle-arena-header">
+        <div>
+          <div class="battle-arena-title">
+            <span>⚔️</span> CarDex Battle Arena
+            <span class="arena-pvp-badge" style="background: linear-gradient(135deg, #ef4444, #f59e0b); color: #fff; font-size: 0.72rem; padding: 3px 8px; border-radius: 6px;">TOP TRUMPS 1v1</span>
+          </div>
+          <div class="battle-arena-subtitle">Wager points in asynchronous garage card duels across 5 verified telemetry attributes</div>
+        </div>
+        <div class="battle-pot-badge">
+          <span>🏆 POT:</span>
+          <span id="battle-pot-display">200 PTS</span>
+        </div>
+      </div>
+
+      <!-- Battle Setup Grid -->
+      <div class="battle-setup-grid">
+        <!-- Panel 1: Vehicle & Attribute Selector -->
+        <div class="battle-panel">
+          <div class="battle-panel-title">
+            <span>🏎️</span> 1. Select Challenger From Your Garage
+          </div>
+          <div class="battle-garage-selector" id="battle-garage-selector">
+            <div class="arena-empty-msg" style="color: #64748b; font-size: 0.85rem; padding: 1rem;">Loading your garage vehicles…</div>
+          </div>
+
+          <div class="battle-panel-title" style="margin-top: 1.25rem;">
+            <span>⚡</span> 2. Choose Duel Attribute
+          </div>
+          <div class="battle-attributes-grid">
+            <button type="button" class="battle-attr-btn active" data-attr="horsepower" onclick="CarDexBattleArena.selectAttribute('horsepower')">
+              <span class="battle-attr-icon">⚡</span>
+              <span class="battle-attr-label">Horsepower</span>
+              <small style="color: #64748b;">Engine Output (HP)</small>
+            </button>
+            <button type="button" class="battle-attr-btn" data-attr="acceleration" onclick="CarDexBattleArena.selectAttribute('acceleration')">
+              <span class="battle-attr-icon">⏱️</span>
+              <span class="battle-attr-label">Acceleration</span>
+              <small style="color: #64748b;">0–100 km/h (100/s)</small>
+            </button>
+            <button type="button" class="battle-attr-btn" data-attr="top_speed" onclick="CarDexBattleArena.selectAttribute('top_speed')">
+              <span class="battle-attr-icon">🚀</span>
+              <span class="battle-attr-label">Top Speed</span>
+              <small style="color: #64748b;">Max Velocity (km/h)</small>
+            </button>
+            <button type="button" class="battle-attr-btn" data-attr="exhaust_decibels" onclick="CarDexBattleArena.selectAttribute('exhaust_decibels')">
+              <span class="battle-attr-icon">🔊</span>
+              <span class="battle-attr-label">Exhaust dBA</span>
+              <small style="color: #64748b;">Peak Sound Telemetry</small>
+            </button>
+            <button type="button" class="battle-attr-btn" data-attr="rarity_tier" onclick="CarDexBattleArena.selectAttribute('rarity_tier')">
+              <span class="battle-attr-icon">💎</span>
+              <span class="battle-attr-label">Rarity Tier</span>
+              <small style="color: #64748b;">Scarcity & PTS Multiplier</small>
+            </button>
+          </div>
+
+          <div class="battle-panel-title" style="margin-top: 1.25rem;">
+            <span>💰</span> 3. Select Point Wager
+          </div>
+          <div class="wager-chips-row">
+            <div class="wager-chip" data-wager="50" onclick="CarDexBattleArena.setWager(50)">50 PTS</div>
+            <div class="wager-chip active" data-wager="100" onclick="CarDexBattleArena.setWager(100)">100 PTS</div>
+            <div class="wager-chip" data-wager="250" onclick="CarDexBattleArena.setWager(250)">250 PTS</div>
+            <div class="wager-chip" data-wager="500" onclick="CarDexBattleArena.setWager(500)">500 PTS</div>
+          </div>
+
+          <button type="button" id="battle-clash-btn" class="battle-clash-btn" onclick="CarDexBattleArena.initiateDuel()">
+            <span>⚔️</span> <span>START BATTLE CLASH</span>
+          </button>
+        </div>
+
+        <!-- Panel 2: Live 1v1 Arena Clash Stage -->
+        <div class="battle-panel">
+          <div class="battle-panel-title">
+            <span>🛡️</span> Live Arena Stage
+          </div>
+          <div class="arena-duel-stage">
+            <!-- Player Card -->
+            <div class="arena-card-wrap" id="battle-player-card"></div>
+
+            <!-- VS Divider -->
+            <div class="arena-vs-divider">
+              <div class="arena-vs-circle">VS</div>
+              <span style="font-size: 0.75rem; color: #f59e0b; margin-top: 6px; font-weight: 800;">STAT CLASH</span>
+            </div>
+
+            <!-- Opponent Mystery Card -->
+            <div class="arena-card-wrap" id="battle-stage-rival">
+              <div class="arena-card-inner rival-holo" style="text-align: center; padding: 2.5rem 1rem;">
+                <div style="font-size: 3.5rem; margin-bottom: 0.8rem; animation: pulse 1.5s infinite;">❓</div>
+                <h4 style="color: #fff; margin-bottom: 0.4rem;">RIVAL GARAGE</h4>
+                <p style="color: #94a3b8; font-size: 0.82rem; line-height: 1.4;">
+                  Matched asynchronously against spotters on the CarDex global leaderboards.<br/>
+                  Reveal triggered on Clash!
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
+</div>
+
+<!-- 3-Second Arena Clash Overlay -->
+<div id="arena-clash-overlay" class="arena-clash-overlay">
+  <div style="font-size: 1.2rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem;">Telemetry Duel in Progress</div>
+  <div id="arena-countdown-display" class="arena-countdown-display">3</div>
+  <div style="color: #f1f5f9; font-weight: 700; margin-top: 1rem; font-size: 1rem;">Analyzing Dyno Curves & Spec Tables…</div>
+</div>
+
+<!-- Battle Arena Result Modal -->
+<div id="battle-result-modal" class="battle-result-modal">
+  <div class="battle-result-window">
+    <div id="battle-result-title" class="battle-result-title">🏆 VICTORY!</div>
+    <div id="battle-result-delta" style="margin: 0.5rem 0;">+100 PTS (Pot: 200 PTS)</div>
+    <div id="battle-result-commentary" class="battle-result-commentary">Commentary</div>
+    <div id="battle-opponent-card" style="margin: 1.25rem 0;"></div>
+    <button type="button" class="battle-clash-btn" style="width: auto; padding: 10px 24px; margin: 0 auto;" onclick="CarDexBattleArena.closeResultModal()">
+      <span>✅</span> <span>COLLECT REWARD & RETURN</span>
+    </button>
+  </div>
 </div>
 
 <!-- Camera Viewfinder HUD Modal -->
@@ -4677,12 +5302,19 @@
     </div>
 
     <!-- Live Viewport Container -->
-    <div class="camera-viewport" id="camera-viewport">
-      <video id="camera-video" autoplay playsinline muted></video>
-      <div class="camera-reticle-overlay">
+    <div class="camera-viewport" id="camera-viewport" style="position: relative; overflow: hidden;">
+      <video id="camera-video" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+      <canvas id="camera-gl-canvas" style="display: none; position: absolute; top:0; left:0; width:100%; height:100%; object-fit: cover; z-index: 1;"></canvas>
+      <canvas id="camera-reticle-canvas" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 2;"></canvas>
+      <div class="camera-reticle-overlay" style="z-index: 3;">
         <div class="camera-hud-top">
           <span class="camera-live-badge"><span class="blink-dot"></span> LIVE CAMERA</span>
-          <button type="button" class="camera-flip-btn" id="camera-flip-btn" onclick="flipCamera()" title="Switch camera front/rear">🔄 Flip</button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="camera-nightboost-btn" id="camera-nightboost-btn" onclick="toggleNightBoost()" title="WebGL Night Vision & Shadow Tone Mapping">
+              <span>🌙</span> <span>Night Boost (ISO+)</span>
+            </button>
+            <button type="button" class="camera-flip-btn" id="camera-flip-btn" onclick="flipCamera()" title="Switch camera front/rear">🔄 Flip</button>
+          </div>
         </div>
         <div class="camera-reticle-box">
           <div class="camera-reticle-crosshair"></div>
@@ -5508,6 +6140,9 @@ async function openCameraModal() {
     currentCameraStream = await navigator.mediaDevices.getUserMedia(constraints);
     video.srcObject = currentCameraStream;
     await video.play();
+    if (window.CarDexViewfinderShader) {
+      CarDexViewfinderShader.init("camera-video", "camera-gl-canvas", "camera-reticle-canvas");
+    }
   } catch (err) {
     console.warn("Camera access error:", err);
     if (viewport) viewport.style.display = "none";
@@ -5531,12 +6166,29 @@ async function openCameraModal() {
 function closeCameraModal() {
   const modal = document.getElementById("camera-modal-backdrop");
   if (modal) modal.classList.remove("active");
+  if (window.CarDexViewfinderShader) {
+    CarDexViewfinderShader.destroy();
+  }
   if (currentCameraStream) {
     currentCameraStream.getTracks().forEach(t => t.stop());
     currentCameraStream = null;
   }
   if (mediaRecorder && mediaRecorder.state === "recording") {
     stopExhaustAudioRecording();
+  }
+}
+
+function toggleNightBoost() {
+  if (window.CarDexViewfinderShader) {
+    const active = CarDexViewfinderShader.toggleNightBoost();
+    const btn = document.getElementById("camera-nightboost-btn");
+    const glCanvas = document.getElementById("camera-gl-canvas");
+    const video = document.getElementById("camera-video");
+    if (btn) btn.classList.toggle("active", active);
+    if (glCanvas && video) {
+      glCanvas.style.display = active ? "block" : "none";
+      video.style.opacity = active ? "0" : "1";
+    }
   }
 }
 
@@ -5691,7 +6343,16 @@ function snapCameraPhoto() {
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  // WebGL Night-Vision & Contrast Booster Interceptor
+  const glCapture = (window.CarDexViewfinderShader && window.CarDexViewfinderShader.isNightBoostEnabled()) 
+    ? window.CarDexViewfinderShader.getCaptureCanvas() 
+    : null;
+  if (glCapture && glCapture.width > 0) {
+    ctx.drawImage(glCapture, 0, 0, canvas.width, canvas.height);
+  } else {
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  }
 
   canvas.toBlob((blob) => {
     if (blob) {
@@ -6875,20 +7536,35 @@ function switchCockpitView(view) {
   const chatView = document.getElementById("cockpit-chat-view");
   const radarView = document.getElementById("cockpit-radar-view");
   const dynoView = document.getElementById("cockpit-dyno-view");
+  const battleView = document.getElementById("cockpit-battle-view");
   const tabChat = document.getElementById("tab-btn-chat");
   const tabRadar = document.getElementById("tab-btn-radar");
   const tabDyno = document.getElementById("tab-btn-dyno");
+  const tabBattle = document.getElementById("tab-btn-battle");
 
-  [tabChat, tabRadar, tabDyno].forEach(t => {
+  [tabChat, tabRadar, tabDyno, tabBattle].forEach(t => {
     if (t) {
       t.classList.remove("active");
       t.setAttribute("aria-selected", "false");
     }
   });
 
-  if (view === "dyno") {
+  if (view === "battle") {
     if (chatView) chatView.style.display = "none";
     if (radarView) radarView.style.display = "none";
+    if (dynoView) dynoView.style.display = "none";
+    if (battleView) battleView.style.display = "flex";
+    if (tabBattle) {
+      tabBattle.classList.add("active");
+      tabBattle.setAttribute("aria-selected", "true");
+    }
+    if (window.CarDexBattleArena) {
+      CarDexBattleArena.init();
+    }
+  } else if (view === "dyno") {
+    if (chatView) chatView.style.display = "none";
+    if (radarView) radarView.style.display = "none";
+    if (battleView) battleView.style.display = "none";
     if (dynoView) dynoView.style.display = "flex";
     if (tabDyno) {
       tabDyno.classList.add("active");
@@ -6898,6 +7574,7 @@ function switchCockpitView(view) {
   } else if (view === "radar") {
     if (chatView) chatView.style.display = "none";
     if (dynoView) dynoView.style.display = "none";
+    if (battleView) battleView.style.display = "none";
     if (radarView) radarView.style.display = "flex";
     if (tabRadar) {
       tabRadar.classList.add("active");
@@ -6909,6 +7586,7 @@ function switchCockpitView(view) {
   } else {
     if (radarView) radarView.style.display = "none";
     if (dynoView) dynoView.style.display = "none";
+    if (battleView) battleView.style.display = "none";
     if (chatView) chatView.style.display = "flex";
     if (tabChat) {
       tabChat.classList.add("active");
@@ -7280,13 +7958,23 @@ async function loadRadarSightings(lat, lng, radiusKm) {
   if (sectorNameEl) sectorNameEl.textContent = `SECTOR: ${currentRadarSector.toUpperCase()}`;
 
   try {
-    const res = await fetch(`/api/radar?lat=${lat}&lng=${lng}&radius_km=${radiusKm}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const sightings = await res.json();
+    const [resSightings, resMeets] = await Promise.all([
+      fetch(`/api/radar?lat=${lat}&lng=${lng}&radius_km=${radiusKm}`),
+      fetch(`/api/radar/meets?lat=${lat}&lng=${lng}&radius_km=25.0`).catch(() => null)
+    ]);
+
+    if (!resSightings.ok) throw new Error(`HTTP ${resSightings.status}`);
+    const sightings = await resSightings.json();
     currentRadarSightings = sightings;
 
+    let meets = [];
+    if (resMeets && resMeets.ok) {
+      meets = await resMeets.json();
+    }
+    updateCarMeetAlert(meets);
+
     if (countBadge) countBadge.textContent = sightings.length;
-    renderRadarBlips(sightings, lat, lng);
+    renderRadarBlips(sightings, lat, lng, meets);
   } catch (err) {
     console.error("Failed to load radar sightings:", err);
     if (countBadge) countBadge.textContent = "0";
@@ -7296,9 +7984,55 @@ async function loadRadarSightings(lat, lng, radiusKm) {
   }
 }
 
-function renderRadarBlips(sightings, centerLat, centerLng) {
+function updateCarMeetAlert(meets) {
+  const banner = document.getElementById("car-meet-banner");
+  const bannerText = document.getElementById("car-meet-banner-text");
+  if (!banner || !bannerText) return;
+
+  if (meets && meets.length > 0) {
+    const meet = meets[0];
+    const distStr = meet.distance_km ? `${meet.distance_km.toFixed(1)} km` : "Nearby";
+    const carCount = meet.car_count || 3;
+    bannerText.innerHTML = `🔥 Active Car Meet Detected Nearby (~${distStr} away) — ${carCount} Supercars Spotted!`;
+    banner.style.display = "flex";
+  } else {
+    banner.style.display = "none";
+  }
+}
+
+function renderRadarBlips(sightings, centerLat, centerLng, meets) {
   if (!radarMap || !radarMarkersLayer) return;
   radarMarkersLayer.clearLayers();
+
+  // Render Spontaneous Car Meet clusters if detected
+  if (meets && meets.length > 0) {
+    meets.forEach(m => {
+      const meetCircle = L.circle([m.center_lat, m.center_lng], {
+        radius: m.radius_meters || 300,
+        color: '#f59e0b',
+        fillColor: '#f59e0b',
+        fillOpacity: 0.25,
+        weight: 3,
+        dashArray: '6, 8',
+      }).addTo(radarMarkersLayer);
+
+      const meetIcon = L.divIcon({
+        className: 'radar-meet-marker',
+        html: `<div style="background:#f59e0b; color:#0f172a; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:16px; box-shadow:0 0 15px #f59e0b; font-weight:900;">🔥</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      const marker = L.marker([m.center_lat, m.center_lng], { icon: meetIcon }).addTo(radarMarkersLayer);
+      marker.bindPopup(`
+        <div style="font-family: monospace; padding: 4px; color:#0f172a;">
+          <strong style="color: #d97706; font-size:1rem;">🔥 ACTIVE CAR MEET DETECTED</strong><br/>
+          <strong>${m.car_count} Supercars Gathered</strong><br/>
+          <small style="color:#475569;">Radius: ${Math.round(m.radius_meters || 300)}m · DBSCAN Verified</small><br/>
+          <small style="color:#0369a1;">Vehicles: ${(m.verified_exotics || []).slice(0, 3).join(', ')}</small>
+        </div>
+      `);
+    });
+  }
 
   // Add User Center Ping Marker
   const userIcon = L.divIcon({

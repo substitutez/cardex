@@ -259,6 +259,7 @@ def match_cielab_coordinates(
             "code": code,
             "category": category,
             "delta_e00": round(best_match["delta_e00"], 2),
+            "delta_e": round(best_match["delta_e00"], 2),
             "multiplier": multiplier,
             "badge_text": badge,
             "sample_lab": sample_lab_tuple,
