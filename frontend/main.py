@@ -975,6 +975,7 @@ async def chat(req: Request):
 
 # Serve the chat UI (keep this mount last so /chat wins).
 _static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=_static_dir), name="static_prefix")
 app.mount("/", StaticFiles(directory=_static_dir, html=True), name="static")
 
 
