@@ -281,6 +281,7 @@ def get_user_profile(user_id: str) -> dict[str, Any]:
         username = user_data.get("username", user_id)
 
     rank = calculate_rank(points)
+    badges = list(set(user_data.get("badges", []) + (lb_info.get("badges", []) if lb_doc.exists else [])))
     return {
         "user_id": user_id,
         "username": username,
@@ -290,6 +291,7 @@ def get_user_profile(user_id: str) -> dict[str, Any]:
         "total_spots": spots,
         "rarest_spot": rarest,
         "rank": rank,
+        "badges": badges,
         "created_at": user_data.get("created_at"),
     }
 

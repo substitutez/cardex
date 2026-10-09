@@ -627,3 +627,56 @@ def query_radar_sightings(
     # Sort closest first
     sightings.sort(key=lambda s: s["distance_km"])
     return sightings
+
+
+def award_user_badge(user_id: str, badge_name: str) -> list[str]:
+    """Award a permanent badge to a user in Firestore 'users' and 'leaderboard' collections."""
+    db = get_db()
+    try:
+        from google.cloud import firestore
+        for col_name in ["users", "leaderboard"]:
+            doc_ref = db.collection(col_name).document(user_id)
+            doc = doc_ref.get()
+            if doc.exists:
+                doc_ref.set({"badges": firestore.ArrayUnion([badge_name])}, merge=True)
+            else:
+                doc_ref.set({"user_id": user_id, "badges": [badge_name]}, merge=True)
+        return [badge_name]
+    except Exception as e:
+        logger.warning("Failed to award badge '%s' to user %s: %s", badge_name, user_id, e)
+        return []
+
+
+def record_chassis_registry_entry(
+    make_model_edition: str,
+    unit_number: str,
+    user_id: str,
+    extra_data: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Records a verified numbered edition chassis plaque into chassis_registry/{make_model_edition}.
+
+    Record format: {"unit_number": unit_number, "first_spotted_by": user_id, "verified_at": timestamp}
+    """
+    db = get_db()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    record = {
+        "unit_number": unit_number,
+        "first_spotted_by": user_id,
+        "verified_at": now_iso,
+    }
+    if extra_data:
+        record.update(extra_data)
+
+    # Document ID format in collection chassis_registry: make_model_edition
+    doc_id = re.sub(r"[^a-zA-Z0-9_\-\. ]+", "_", make_model_edition).strip()
+    doc_ref = db.collection("chassis_registry").document(doc_id)
+    doc_ref.set(record, merge=True)
+    return record
+
+
+def get_chassis_registry_entry(make_model_edition: str) -> dict[str, Any] | None:
+    """Retrieve chassis registry information for a specific edition from chassis_registry."""
+    db = get_db()
+    doc_id = re.sub(r"[^a-zA-Z0-9_\-\. ]+", "_", make_model_edition).strip()
+    doc = db.collection("chassis_registry").document(doc_id).get()
+    return doc.to_dict() if doc.exists else None

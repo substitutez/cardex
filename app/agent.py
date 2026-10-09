@@ -48,6 +48,7 @@ from .car_tools import (
     fetch_carapi_live_specs,
     fetch_car_image_and_provenance,
     identify_and_spot_car,
+    extract_chassis_markings,
 )
 from .config import config
 
@@ -548,6 +549,7 @@ cardex_agent = LlmAgent(
         search_vehicle_specs_database,
         fetch_carapi_live_specs,
         fetch_car_image_and_provenance,
+        extract_chassis_markings,
         AgentTool(plan_generator),
     ],
 )

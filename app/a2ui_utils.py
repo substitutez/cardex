@@ -365,3 +365,39 @@ def build_paywall_card(quota_info: dict) -> dict:
         "quota": quota_info,
     }
 
+
+def build_chassis_verification_card(
+    make_model_edition: str,
+    unit_number: str | None = None,
+    vin: str | None = None,
+    edition: str | None = None,
+    vin_decoded: dict | None = None,
+    badge_awarded: str | None = "Chassis Archivist",
+    first_finder_multiplier: float = 2.5,
+) -> dict:
+    """Creates a Chassis Marking & VIN Verification A2UI card payload."""
+    engine_details = ""
+    plant_country = ""
+    if vin_decoded and vin_decoded.get("valid"):
+        eng_hp = vin_decoded.get("horsepower")
+        eng_disp = vin_decoded.get("displacement_l")
+        if eng_hp:
+            engine_details = f"{eng_hp} hp"
+        if eng_disp:
+            engine_details = f"{eng_disp}L {engine_details}".strip()
+        plant_country = vin_decoded.get("plant_country", "")
+
+    return {
+        "type": "chassis_verification",
+        "make_model_edition": make_model_edition,
+        "unit_number": unit_number,
+        "vin": vin,
+        "edition": edition,
+        "vin_decoded": vin_decoded,
+        "engine_details": engine_details,
+        "plant_country": plant_country,
+        "badge_awarded": badge_awarded,
+        "first_finder_multiplier": first_finder_multiplier,
+        "badge_text": f"🏷️ {badge_awarded.upper()}: {unit_number or vin}" if (badge_awarded and (unit_number or vin)) else "Chassis Verified",
+    }
+

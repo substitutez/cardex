@@ -210,6 +210,8 @@ def compute_dynamic_spot_score(
     is_bespoke_or_carbon: bool = False,
     location: str = "Public Road",
     production_run_override: int | None = None,
+    first_finder_override: float | None = None,
+    first_finder_label_override: str | None = None,
 ) -> dict[str, Any]:
     """Execute the complete dynamic deflationary scoring equation.
 
@@ -223,7 +225,11 @@ def compute_dynamic_spot_score(
     d_30 = calculate_encounter_decay(encounters_30d)
 
     m_paint = get_paint_multiplier(is_pts=is_pts, is_bespoke_or_carbon=is_bespoke_or_carbon)
-    b_first, first_finder_label = check_first_finder_status(car_id, location)
+    if first_finder_override is not None:
+        b_first = float(first_finder_override)
+        first_finder_label = first_finder_label_override or f"Chassis Archivist First-Finder ({b_first}x Multiplier)"
+    else:
+        b_first, first_finder_label = check_first_finder_status(car_id, location)
 
     raw_points = base_points * d_30 * m_paint * b_first
     final_points = int(round(raw_points))

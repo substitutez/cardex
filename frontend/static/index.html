@@ -2486,6 +2486,124 @@
     font-style: normal;
   }
 
+  /* --- Chassis & Badge Verification Card --- */
+  .chassis-verification-card {
+    background: linear-gradient(135deg, rgba(20, 24, 33, 0.96), rgba(30, 24, 18, 0.96));
+    border: 1px solid rgba(245, 158, 11, 0.55);
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    margin-top: 0.75rem;
+    box-shadow: 0 4px 25px rgba(245, 158, 11, 0.2), 0 0 1px rgba(245, 158, 11, 0.5);
+  }
+  .chassis-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+  .chassis-badge-icon {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 8px;
+  }
+  .chassis-card-header h4 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #fbbf24;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chassis-car-title {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .chassis-archivist-pill {
+    margin-left: auto;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35));
+    border: 1px solid #f59e0b;
+    color: #fde68a;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+  }
+  .chassis-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.55rem;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .chassis-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .chassis-stat .stat-label {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .chassis-stat .stat-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #fff;
+  }
+  .chassis-stat .stat-value.gold {
+    color: #fbbf24;
+    font-size: 1rem;
+    font-weight: 900;
+  }
+  .chassis-stat .stat-value.mono {
+    font-family: var(--font-mono, monospace);
+    letter-spacing: 1px;
+    color: #38bdf8;
+  }
+  .chassis-stat .stat-value.highlight {
+    color: #10b981;
+  }
+  .chassis-vin-dossier {
+    margin-top: 0.65rem;
+    font-size: 0.74rem;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    border-left: 3px solid #38bdf8;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .chassis-vin-dossier .dossier-row {
+    display: flex;
+    justify-content: space-between;
+  }
+  .chassis-vin-dossier .dossier-row strong {
+    color: #f1f5f9;
+  }
+  .chassis-registry-footer {
+    margin-top: 0.55rem;
+    font-size: 0.7rem;
+    color: #6ee7b7;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
   /* --- Out of Fuel Paywall Card Styling --- */
   .paywall-progress-container {
     background: rgba(0, 0, 0, 0.3);
@@ -4057,6 +4175,67 @@ function renderReply(b, parts) {
           </div>` : ''}
         `;
         b.appendChild(ac);
+      } else if (part.data.type === "chassis_verification") {
+        const cv = el("div", "chassis-verification-card");
+        const unit = part.data.unit_number;
+        const vin = part.data.vin;
+        const edition = part.data.edition;
+        const badge = part.data.badge_awarded;
+        const mult = part.data.first_finder_multiplier || 2.5;
+        const vinDec = part.data.vin_decoded || {};
+        cv.innerHTML = `
+          <div class="chassis-card-header">
+            <span class="chassis-badge-icon">🏷️</span>
+            <div>
+              <h4>Chassis & Badge Verification</h4>
+              <p class="chassis-car-title">${escapeHtml(part.data.make_model_edition || "Special Edition Vehicle")}</p>
+            </div>
+            ${badge ? `<span class="chassis-archivist-pill">🏅 ${escapeHtml(badge)}</span>` : ''}
+          </div>
+          <div class="chassis-stats-grid">
+            ${unit ? `
+            <div class="chassis-stat highlight-stat">
+              <span class="stat-label">Production Plaque</span>
+              <span class="stat-value gold">${escapeHtml(unit)}</span>
+            </div>` : ''}
+            ${edition ? `
+            <div class="chassis-stat">
+              <span class="stat-label">Heritage Edition</span>
+              <span class="stat-value">${escapeHtml(edition)}</span>
+            </div>` : ''}
+            ${vin ? `
+            <div class="chassis-stat vin-stat">
+              <span class="stat-label">VIN Placard</span>
+              <span class="stat-value mono">${escapeHtml(vin)}</span>
+            </div>` : ''}
+            ${unit ? `
+            <div class="chassis-stat">
+              <span class="stat-label">Discovery Multiplier</span>
+              <span class="stat-value highlight">${escapeHtml(String(mult))}x First-Finder</span>
+            </div>` : ''}
+          </div>
+          ${vinDec && vinDec.valid ? `
+          <div class="chassis-vin-dossier">
+            <div class="dossier-row">
+              <span>NHTSA Specs:</span>
+              <strong>${escapeHtml(String(vinDec.year || ''))} ${escapeHtml(vinDec.make || '')} ${escapeHtml(vinDec.model || '')} ${escapeHtml(vinDec.trim || '')}</strong>
+            </div>
+            ${part.data.engine_details ? `
+            <div class="dossier-row">
+              <span>Powertrain:</span>
+              <span>${escapeHtml(part.data.engine_details)}</span>
+            </div>` : ''}
+            ${part.data.plant_country ? `
+            <div class="dossier-row">
+              <span>Assembly Plant:</span>
+              <span>${escapeHtml(part.data.plant_country)}</span>
+            </div>` : ''}
+          </div>` : ''}
+          <div class="chassis-registry-footer">
+            <span class="reg-check">✓ Verified & Registered in chassis_registry</span>
+          </div>
+        `;
+        b.appendChild(cv);
       } else if (part.data.type === "paywall_card") {
         const pw = el("div", "paywall-chat-card");
         const progressPct = part.data.progress_pct || 100;

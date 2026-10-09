@@ -16,7 +16,9 @@
 
 import base64
 import json
+import logging
 import os
+import re
 import urllib.parse
 import urllib.request
 import uuid
@@ -31,6 +33,8 @@ from .firestore_db import (
     list_catalog_cars,
     record_car_spot_entry,
     submit_dispute_review,
+    record_chassis_registry_entry,
+    award_user_badge,
 )
 from .vehicle_db import search_local_vehicle_database
 from .anti_cheat import verify_image_integrity
@@ -42,8 +46,11 @@ from .a2ui_utils import (
     build_point_breakdown_card,
     build_paywall_card,
     build_acoustic_verification_card,
+    build_chassis_verification_card,
 )
 from .audio_classifier import classify_engine_note
+
+logger = logging.getLogger("cardex.car_tools")
 
 CLOUD_STORAGE_BUCKET = "cardex-spots-qwiklabs-gcp-04-6f324b699fdd"
 VERTEX_PROJECT_ID = "qwiklabs-gcp-04-6f324b699fdd"
@@ -275,6 +282,204 @@ def decode_vin_specifications(vin: str) -> dict[str, Any]:
             }
     except Exception as e:
         return {"valid": False, "vin": vin_clean, "error": f"NHTSA API request failed: {str(e)}"}
+
+
+# Regex patterns for macro badge, special edition, and VIN extraction
+PRODUCTION_NUMBER_REGEX = re.compile(r"(\d{1,4}\s*(?:of|\/)\s*\d{1,4})", re.IGNORECASE)
+SPECIAL_EDITION_REGEX = re.compile(
+    r"\b(Weissach|Touring|Black\s+Series|GTO|Sonderwunsch|Tailor\s+Made)\b",
+    re.IGNORECASE,
+)
+VIN_PATTERN_REGEX = re.compile(r"\b([A-HJ-NPR-Z0-9]{17})\b")
+
+SPECIAL_EDITION_CANONICAL = {
+    "weissach": "Weissach",
+    "touring": "Touring",
+    "black series": "Black Series",
+    "gto": "GTO",
+    "sonderwunsch": "Sonderwunsch",
+    "tailor made": "Tailor Made",
+}
+
+
+def extract_chassis_markings(
+    image_bytes: bytes | str,
+    user_id: str = "spotter_1",
+    vehicle_hint: str = "",
+) -> dict[str, Any]:
+    r"""Inspect an automotive image for macro badges, limited edition plaques, and VIN placards.
+
+    1. Macro Badge Cropping & OCR:
+       - Instructs Gemini Vision to run a localized high-resolution crop on visible badges,
+         steering wheel center consoles, kickplates, or lower-windshield VIN placards.
+       - Extracts text strings matching regex patterns:
+         - Production numbers: r"(\d{1,4}\s*(?:of|\/)\s*\d{1,4})" (e.g. '1 of 500', '042/600')
+         - Heritage/Special editions: 'Weissach', 'Touring', 'Black Series', 'GTO', 'Sonderwunsch', 'Tailor Made'
+         - Standard 17-character VIN patterns: r"[A-HJ-NPR-Z0-9]{17}"
+    2. Chassis Verification Lookup:
+       - If a VIN is extracted, calls decode_vin_specifications directly to verify manufacturer registry data.
+       - If a numbered edition plaque is found, writes it to a new Firestore collection chassis_registry/{make_model_edition}:
+         - Record: {"unit_number": "042/600", "first_spotted_by": userId, "verified_at": timestamp}
+         - Awards user permanent "Chassis Archivist" badge and applies 2.5x First-Finder discovery multiplier.
+
+    Args:
+        image_bytes: Raw JPEG/PNG image bytes, base64 data URI string, or base64 string.
+        user_id: Identifier of the spotter discovering the vehicle.
+        vehicle_hint: Optional vehicle make/model name for contextual registry key construction.
+
+    Returns:
+        A dictionary with extracted markings, VIN specifications, chassis registry status,
+        awarded badges, and score multiplier.
+    """
+    raw_bytes = None
+    if isinstance(image_bytes, str):
+        cleaned = image_bytes.strip()
+        if "," in cleaned and "base64" in cleaned:
+            cleaned = cleaned.split(",", 1)[1]
+        try:
+            raw_bytes = base64.b64decode(cleaned)
+        except Exception:
+            raw_bytes = image_bytes.encode("utf-8")
+    elif isinstance(image_bytes, bytes):
+        raw_bytes = image_bytes
+    else:
+        raw_bytes = b""
+
+    extracted_text = ""
+    detected_markings: list[str] = []
+    gemini_data: dict[str, Any] = {}
+    raw_response_text = ""
+
+    # 1. Query Gemini Vision with localized macro cropping & OCR prompt
+    try:
+        genai_client = genai.Client(enterprise=True, project=VERTEX_PROJECT_ID, location=VERTEX_LOCATION)
+        prompt = (
+            "You are CarDex's macro badge, VIN, and chassis marking OCR specialist.\n"
+            "Instructed task: Run localized high-resolution inspection and OCR on any visible badges, "
+            "steering wheel center consoles, door sill kickplates, glovebox plaques, or lower-windshield VIN placards.\n"
+            "Extract all visible inscriptions, limited edition plaques, special edition badges, or 17-character VIN placards.\n"
+            "Return a valid JSON object matching:\n"
+            "{\n"
+            '  "extracted_text": "all raw text strings visible on badges, plaques, kickplates, or VIN placards",\n'
+            '  "production_number": "any limited edition numbered string (e.g. \'042/600\', \'1 of 500\'), or null",\n'
+            '  "edition": "heritage/special edition name (\'Weissach\', \'Touring\', \'Black Series\', \'GTO\', \'Sonderwunsch\', \'Tailor Made\'), or null",\n'
+            '  "vin": "any 17-character VIN string found, or null",\n'
+            '  "location_observed": "where the markings were detected (e.g. \'Center console plaque\', \'Kickplate\', \'Lower windshield\')",\n'
+            '  "make_model_hint": "make and model from badge if visible"\n'
+            "}\n"
+            "Return ONLY raw JSON, with no markdown backticks."
+        )
+
+        resp = genai_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                types.Part.from_bytes(data=raw_bytes, mime_type="image/jpeg"),
+                prompt,
+            ],
+        )
+        if resp and resp.text:
+            raw_response_text = resp.text.strip()
+            clean_json = raw_response_text
+            if clean_json.startswith("```"):
+                lines = clean_json.split("\n")
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                clean_json = "\n".join(lines).strip()
+            try:
+                gemini_data = json.loads(clean_json)
+                extracted_text = gemini_data.get("extracted_text", "")
+            except Exception:
+                extracted_text = raw_response_text
+    except Exception as e:
+        logger.warning("Gemini Vision chassis OCR inspection error: %s", e)
+
+    # 2. Comprehensive Regex Extraction
+    search_corpus = f"{extracted_text} {gemini_data.get('production_number', '')} {gemini_data.get('edition', '')} {gemini_data.get('vin', '')} {raw_response_text}"
+
+    # 2a. Production numbers: r"(\d{1,4}\s*(?:of|\/)\s*\d{1,4})" (e.g. '1 of 500', '042/600')
+    production_number = None
+    prod_match = PRODUCTION_NUMBER_REGEX.search(search_corpus)
+    if prod_match:
+        production_number = prod_match.group(1).strip()
+        detected_markings.append(f"Production Plaque: {production_number}")
+
+    # 2b. Heritage/Special editions: "Weissach", "Touring", "Black Series", "GTO", "Sonderwunsch", "Tailor Made"
+    edition = None
+    edition_match = SPECIAL_EDITION_REGEX.search(search_corpus)
+    if edition_match:
+        matched_str = edition_match.group(1).strip()
+        norm_key = re.sub(r"\s+", " ", matched_str.lower())
+        edition = SPECIAL_EDITION_CANONICAL.get(norm_key, matched_str)
+        detected_markings.append(f"Special Edition: {edition}")
+
+    # 2c. Standard 17-character VIN patterns: r"[A-HJ-NPR-Z0-9]{17}"
+    vin = None
+    vin_match = VIN_PATTERN_REGEX.search(search_corpus)
+    if vin_match:
+        vin = vin_match.group(1).strip().upper()
+        detected_markings.append(f"VIN: {vin}")
+
+    # 3. Chassis Verification Lookup:
+    # 3a. If a VIN is extracted, call decode_vin_specifications directly to verify manufacturer registry data
+    vin_decoded = None
+    if vin:
+        vin_decoded = decode_vin_specifications(vin)
+
+    # 3b. Determine make_model_edition
+    make_model_edition = ""
+    if vehicle_hint:
+        if edition and edition.lower() not in vehicle_hint.lower():
+            make_model_edition = f"{vehicle_hint} {edition}".strip()
+        else:
+            make_model_edition = vehicle_hint.strip()
+    elif vin_decoded and vin_decoded.get("valid"):
+        vm = f"{vin_decoded.get('make', '')} {vin_decoded.get('model', '')}".strip()
+        make_model_edition = f"{vm} {edition or ''}".strip()
+    elif edition:
+        make_model_edition = f"Special Edition {edition}".strip()
+    elif production_number:
+        make_model_edition = f"Numbered Edition {production_number}".strip()
+    else:
+        make_model_edition = "Unverified Chassis"
+
+    # 3c. If a numbered edition plaque is found, write it to a new Firestore collection chassis_registry/{make_model_edition}:
+    # Record: {"unit_number": "042/600", "first_spotted_by": userId, "verified_at": timestamp}
+    # Award the user a permanent "Chassis Archivist" badge and apply the 2.5x First-Finder discovery multiplier
+    registry_entry = None
+    badge_awarded = None
+    first_finder_multiplier = 1.0
+
+    if production_number:
+        registry_entry = record_chassis_registry_entry(
+            make_model_edition=make_model_edition,
+            unit_number=production_number,
+            user_id=user_id,
+            extra_data={
+                "edition": edition,
+                "vin": vin,
+                "location_observed": gemini_data.get("location_observed"),
+            } if (edition or vin or gemini_data.get("location_observed")) else None,
+        )
+        award_user_badge(user_id, "Chassis Archivist")
+        badge_awarded = "Chassis Archivist"
+        first_finder_multiplier = 2.5
+
+    return {
+        "success": True,
+        "vin": vin,
+        "vin_decoded": vin_decoded,
+        "production_number": production_number,
+        "edition": edition,
+        "make_model_edition": make_model_edition,
+        "raw_text": extracted_text,
+        "detected_markings": detected_markings,
+        "chassis_verified": bool(vin or production_number),
+        "badge_awarded": badge_awarded,
+        "first_finder_multiplier": first_finder_multiplier,
+        "registry_entry": registry_entry,
+    }
 
 
 def search_vehicle_specs_database(
@@ -689,8 +894,27 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         except Exception as e:
             logger.warning("Acoustic analysis failed in identify_and_spot_car: %s", e)
 
+    # 5.6 Macro Badge, Limited Edition Plaque & VIN Extraction
+    chassis_markings = None
+    try:
+        chassis_markings = extract_chassis_markings(
+            image_bytes=image_bytes,
+            user_id=user_id,
+            vehicle_hint=query_name,
+        )
+    except Exception as e:
+        logger.warning("Chassis marking extraction failed in identify_and_spot_car: %s", e)
+
     # 6. Dynamic Rarity & Deflationary Scoring Engine
     car_slug = query_name.lower().replace(" ", "-")
+    first_finder_override = None
+    first_finder_label_override = None
+    if chassis_markings and chassis_markings.get("production_number"):
+        first_finder_override = 2.5
+        first_finder_label_override = (
+            f"Chassis Archivist Discovery ({chassis_markings['production_number']}) (2.5x Multiplier)"
+        )
+
     score_info = compute_dynamic_spot_score(
         make=detected_make,
         model=detected_model,
@@ -699,9 +923,20 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         is_pts=is_pts,
         is_bespoke_or_carbon=is_carbon,
         location=location,
+        first_finder_override=first_finder_override,
+        first_finder_label_override=first_finder_label_override,
     )
     final_points = score_info["final_points"]
     rarity_tier = score_info["rarity_tier"]
+
+    if chassis_markings and chassis_markings.get("production_number"):
+        score_info["breakdown"]["chassis_archivist"] = {
+            "applied": True,
+            "badge": "Chassis Archivist",
+            "unit_number": chassis_markings.get("production_number"),
+            "edition": chassis_markings.get("edition"),
+            "multiplier": 2.5,
+        }
 
     # Apply Acoustic Verification bonus (+25% point bonus) if acoustic_match is True
     if audio_analysis and audio_analysis.get("acoustic_match"):
@@ -728,6 +963,11 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         spot_notes = notes or f"Spotted via AI Vision: {', '.join(vision_data.get('key_identifying_features', [])[:2])}"
         if audio_analysis and audio_analysis.get("acoustic_match"):
             spot_notes += f" [Acoustic Verified: {audio_analysis.get('engine_config')} ({audio_analysis.get('peak_loudness_dbfs')} dBFS) +25% Bonus]"
+        if chassis_markings and chassis_markings.get("production_number"):
+            spot_notes += f" [Chassis #{chassis_markings.get('production_number')} Verified - Chassis Archivist]"
+        if chassis_markings and chassis_markings.get("vin"):
+            spot_notes += f" [VIN: {chassis_markings.get('vin')}]"
+
         spot_info = record_car_spot_entry(
             car_id=car_identifier,
             colorway=resolved_colorway,
@@ -774,6 +1014,18 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         )
         a2ui_cards.append(acoustic_card)
 
+    if chassis_markings and (chassis_markings.get("production_number") or chassis_markings.get("vin")):
+        chassis_card = build_chassis_verification_card(
+            make_model_edition=chassis_markings.get("make_model_edition") or query_name,
+            unit_number=chassis_markings.get("production_number"),
+            vin=chassis_markings.get("vin"),
+            edition=chassis_markings.get("edition"),
+            vin_decoded=chassis_markings.get("vin_decoded"),
+            badge_awarded=chassis_markings.get("badge_awarded"),
+            first_finder_multiplier=chassis_markings.get("first_finder_multiplier", 1.0),
+        )
+        a2ui_cards.append(chassis_card)
+
     breakdown_card = build_point_breakdown_card(
         car_name=query_name,
         base_points=score_info["base_points"],
@@ -795,6 +1047,7 @@ Return ONLY the raw JSON object, without markdown formatting or code fences."""
         "vision_identification": vision_data,
         "color_analysis": paint_match,
         "acoustic_analysis": audio_analysis,
+        "chassis_markings": chassis_markings,
         "dynamic_scoring": score_info,
         "rarity_tier": rarity_tier,
         "points_awarded": final_points,

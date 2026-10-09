@@ -756,6 +756,31 @@ async def chat(req: Request):
         )
         parts.append({"kind": "a2ui", "data": acoustic_card})
 
+    # Inject chassis verification card if markings or VIN detected
+    chassis_markings = None
+    if decoded_bytes:
+        try:
+            from app.car_tools import extract_chassis_markings
+            has_chassis_card = any(
+                p.get("kind") == "a2ui" and p.get("data", {}).get("type") == "chassis_verification"
+                for p in parts
+            )
+            if not has_chassis_card:
+                chassis_markings = extract_chassis_markings(decoded_bytes, user_id=user_id)
+                if chassis_markings and (chassis_markings.get("production_number") or chassis_markings.get("vin")):
+                    chassis_card = a2ui_utils.build_chassis_verification_card(
+                        make_model_edition=chassis_markings.get("make_model_edition") or "Verified Chassis",
+                        unit_number=chassis_markings.get("production_number"),
+                        vin=chassis_markings.get("vin"),
+                        edition=chassis_markings.get("edition"),
+                        vin_decoded=chassis_markings.get("vin_decoded"),
+                        badge_awarded=chassis_markings.get("badge_awarded"),
+                        first_finder_multiplier=chassis_markings.get("first_finder_multiplier", 1.0),
+                    )
+                    parts.append({"kind": "a2ui", "data": chassis_card})
+        except Exception as e:
+            logger.warning("Chassis marking extraction in frontend error: %s", e)
+
     # Deduct quota scan credit on successful spotting scan
     latest_quota = None
     if image_input:
@@ -769,6 +794,7 @@ async def chat(req: Request):
         "parts": parts,
         "image_url": uploaded_image_url,
         "acoustic_analysis": audio_analysis,
+        "chassis_markings": chassis_markings,
         "user": updated_profile,
         "quota": latest_quota,
     })
