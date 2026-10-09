@@ -987,6 +987,459 @@
     display: block;
   }
 
+  /* Header Auth & User Controls */
+  .header-right-group {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .header-auth-section {
+    display: flex;
+    align-items: center;
+  }
+  .btn-auth-trigger {
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+    border-radius: 9999px;
+    padding: 0.42rem 0.95rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(255, 107, 0, 0.35);
+    white-space: nowrap;
+  }
+  .btn-auth-trigger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255, 107, 0, 0.5);
+  }
+  .user-pill-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-submissions-pill {
+    background: rgba(255, 107, 0, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(255, 107, 0, 0.3);
+    border-radius: 9999px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn-submissions-pill:hover {
+    background: rgba(255, 107, 0, 0.22);
+    border-color: var(--accent);
+  }
+  .submissions-count-badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 9999px;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+  .user-profile-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.65rem;
+    border-radius: 9999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .user-avatar-tiny {
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  .user-name-display {
+    color: var(--text-primary);
+    max-width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .user-points-badge {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 9999px;
+    padding: 0.15rem 0.45rem;
+    font-weight: 800;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  .btn-signout-chip {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn-signout-chip:hover {
+    color: #ff4d4d;
+    border-color: rgba(255, 77, 77, 0.4);
+    background: rgba(255, 77, 77, 0.08);
+  }
+
+  /* Spotter Card Enhancements */
+  .spotter-points-sub {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: #ffd700;
+    margin-top: 0.1rem;
+  }
+  .spotter-action-btn {
+    background: rgba(255, 107, 0, 0.15);
+    border: 1px solid rgba(255, 107, 0, 0.35);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .spotter-action-btn:hover {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* Modals Overlay & Styling */
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(11, 15, 25, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+  .modal-backdrop.active {
+    display: flex;
+    opacity: 1;
+  }
+  .modal-window {
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 107, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    scrollbar-width: none;
+  }
+  .modal-window::-webkit-scrollbar {
+    display: none;
+  }
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+  }
+  .modal-subtitle {
+    margin: 0.3rem 0 0 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.25rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    line-height: 1;
+    border-radius: 6px;
+    transition: color 0.15s ease;
+  }
+  .modal-close-btn:hover {
+    color: var(--text-primary);
+  }
+
+  /* Auth Tabs */
+  .auth-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.25);
+  }
+  .auth-tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 0.85rem;
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .auth-tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(255, 107, 0, 0.05);
+  }
+
+  /* Auth Forms */
+  .auth-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .auth-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .auth-form-group label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .auth-input {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .auth-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.2);
+  }
+  .auth-submit-btn {
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.5rem;
+    box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+  }
+  .auth-submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 107, 0, 0.45);
+  }
+  .auth-demo-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin: 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .auth-demo-divider::before, .auth-demo-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .auth-demo-btn {
+    background: rgba(74, 222, 128, 0.1);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.25);
+    border-radius: 8px;
+    padding: 0.65rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+  .auth-demo-btn:hover {
+    background: rgba(74, 222, 128, 0.2);
+    border-color: #4ade80;
+  }
+  .auth-alert {
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    display: none;
+  }
+  .auth-alert.error {
+    background: rgba(255, 77, 77, 0.12);
+    border: 1px solid rgba(255, 77, 77, 0.3);
+    color: #ff6b6b;
+    display: block;
+  }
+  .auth-alert.success {
+    background: rgba(74, 222, 128, 0.12);
+    border: 1px solid rgba(74, 222, 128, 0.3);
+    color: #4ade80;
+    display: block;
+  }
+
+  /* Submissions Modal Styling */
+  .submissions-modal-window {
+    max-width: 720px;
+  }
+  .submissions-summary-bar {
+    display: flex;
+    gap: 1.25rem;
+    padding: 0.85rem 1.5rem;
+    background: rgba(0, 0, 0, 0.35);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat-pill-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .stat-pill-val {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .stat-pill-val.gold {
+    color: #ffd700;
+  }
+  .submissions-list {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-height: 55vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .submissions-list::-webkit-scrollbar {
+    display: none;
+  }
+  .submission-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    transition: all 0.2s ease;
+  }
+  .submission-card:hover {
+    border-color: rgba(255, 107, 0, 0.4);
+    transform: translateY(-1px);
+  }
+  .submission-img-thumb {
+    width: 74px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #000;
+    flex-shrink: 0;
+  }
+  .submission-img-fallback {
+    width: 74px;
+    height: 54px;
+    border-radius: 8px;
+    background: rgba(255, 107, 0, 0.1);
+    border: 1px solid rgba(255, 107, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+  .submission-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+  .submission-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .submission-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .submission-points-badge {
+    background: rgba(255, 215, 0, 0.15);
+    color: #ffd700;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 9999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .submissions-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
   /* Responsive Rules */
   @media (max-width: 960px) {
     .sidebar {
@@ -1026,6 +1479,28 @@
     }
     .header-status {
       padding: 0.35rem 0.5rem;
+    }
+    .header-right-group {
+      gap: 0.4rem;
+    }
+    .btn-auth-trigger {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.75rem;
+    }
+    .btn-submissions-pill {
+      padding: 0.3rem 0.55rem;
+      font-size: 0.72rem;
+    }
+    .user-profile-chip {
+      padding: 0.25rem 0.45rem;
+      font-size: 0.72rem;
+    }
+    .user-name-display {
+      max-width: 75px;
+    }
+    .btn-signout-chip {
+      padding: 0.25rem 0.45rem;
+      font-size: 0.68rem;
     }
     .header-logo {
       font-size: 1.35rem;
@@ -1139,9 +1614,32 @@
       <span class="header-subtitle">Supercar & Exotic Vehicle SpotterDex</span>
     </div>
   </div>
-  <div class="header-status">
-    <span class="pulse-dot"></span>
-    <span>Connected to Agent Engine</span>
+  <div class="header-right-group">
+    <div class="header-status">
+      <span class="pulse-dot"></span>
+      <span>Connected to Agent Engine</span>
+    </div>
+    <div class="header-auth-section" id="header-auth-section">
+      <!-- Guest state button -->
+      <button id="btn-auth-open" class="btn-auth-trigger" type="button" title="Sign In or Create Account">
+        <span>🔑</span>
+        <span>Sign In / Sign Up</span>
+      </button>
+      <!-- Logged-in state pill -->
+      <div class="user-pill-container" id="user-pill-container" style="display: none;">
+        <button type="button" id="btn-submissions-open" class="btn-submissions-pill" title="View my saved submissions & garage">
+          <span>📂</span>
+          <span>My Submissions</span>
+          <span class="submissions-count-badge" id="submissions-count-badge">0</span>
+        </button>
+        <div class="user-profile-chip" id="user-profile-chip">
+          <span class="user-avatar-tiny" id="header-avatar">🏎️</span>
+          <span class="user-name-display" id="header-username">@Spotter</span>
+          <span class="user-points-badge" id="header-points-badge">0 PTS</span>
+        </div>
+        <button type="button" id="btn-signout" class="btn-signout-chip" title="Sign Out">Sign Out</button>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -1149,13 +1647,14 @@
   <!-- Sidebar with Project Categories -->
   <aside id="sidebar" class="sidebar">
     <!-- Spotter Profile Card -->
-    <div class="spotter-card">
-      <div class="spotter-avatar">🏎️</div>
+    <div class="spotter-card" id="sidebar-spotter-card">
+      <div class="spotter-avatar" id="sidebar-avatar">🏎️</div>
       <div class="spotter-info">
-        <div class="spotter-rank">PRO SPOTTER</div>
-        <div class="spotter-handle">@CarDexSpotter</div>
+        <div class="spotter-rank" id="sidebar-rank">ROOKIE SPOTTER</div>
+        <div class="spotter-handle" id="sidebar-handle">@Guest</div>
+        <div class="spotter-points-sub" id="sidebar-points-val">0 PTS</div>
       </div>
-      <div class="spotter-badge">LIVE</div>
+      <button type="button" class="spotter-action-btn" id="sidebar-auth-btn" title="Sign In or Register">Sign In</button>
       <button type="button" id="sidebar-close" class="sidebar-close-btn" title="Close sidebar" aria-label="Close sidebar">✕</button>
     </div>
 
@@ -1195,6 +1694,13 @@
         <div class="nav-section-title">
           <span>🏎️</span> Garage & Collection
         </div>
+        <button type="button" class="nav-item action-upload" id="nav-btn-submissions">
+          <span class="nav-icon">📂</span>
+          <div class="nav-text">
+            <span class="nav-label">My Submissions & Photos</span>
+            <span class="nav-desc">All saved spots & points</span>
+          </div>
+        </button>
         <button type="button" class="nav-item" data-prompt="Check my garage collection and spotter score">
           <span class="nav-icon">🚗</span>
           <div class="nav-text">
@@ -1663,12 +2169,21 @@ async function sendMessage(text, imgData = null) {
   `;
 
   try {
-    const payload = { message: text || "" };
+    const payload = {
+      message: text || "",
+      user_id: currentSpotter ? currentSpotter.user_id : "spotter_1",
+      username: currentSpotter ? currentSpotter.username : "Guest",
+    };
     if (imgData) payload.image = imgData;
+
+    const headers = { "Content-Type": "application/json" };
+    if (currentToken) {
+      headers["Authorization"] = `Bearer ${currentToken}`;
+    }
 
     const res = await fetch("/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload)
     });
     const raw = await res.text();
@@ -1676,6 +2191,11 @@ async function sendMessage(text, imgData = null) {
     try { data = JSON.parse(raw); }
     catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). ${raw.slice(0, 300)}`); }
     renderReply(b, data.parts || []);
+
+    // If server returned updated user profile stats from Firestore, sync UI
+    if (data.user && currentSpotter && data.user.user_id === currentSpotter.user_id) {
+      updateSpotterState(data.user, currentToken);
+    }
   } catch (e) {
     b.textContent = "Error: " + e.message;
   }
@@ -1816,6 +2336,513 @@ document.querySelectorAll(".nav-item, .rarity-chip").forEach(item => {
     }
   });
 });
+
+// --- User Authentication & Submissions State Management ---
+let currentSpotter = null;
+let currentToken = null;
+const AUTH_STORAGE_KEY = "cardex_spotter_auth";
+
+// DOM Elements
+const authModalBackdrop = document.getElementById("auth-modal-backdrop");
+const authModalClose = document.getElementById("auth-modal-close");
+const btnAuthOpen = document.getElementById("btn-auth-open");
+const sidebarAuthBtn = document.getElementById("sidebar-auth-btn");
+const tabBtnSignin = document.getElementById("tab-btn-signin");
+const tabBtnSignup = document.getElementById("tab-btn-signup");
+const formSignin = document.getElementById("form-signin");
+const formSignup = document.getElementById("form-signup");
+const signinAlert = document.getElementById("signin-alert");
+const signupAlert = document.getElementById("signup-alert");
+const btnDemoSignin = document.getElementById("btn-demo-signin");
+
+const userPillContainer = document.getElementById("user-pill-container");
+const headerUsername = document.getElementById("header-username");
+const headerPointsBadge = document.getElementById("header-points-badge");
+const btnSubmissionsOpen = document.getElementById("btn-submissions-open");
+const submissionsCountBadge = document.getElementById("submissions-count-badge");
+const btnSignout = document.getElementById("btn-signout");
+
+const sidebarRank = document.getElementById("sidebar-rank");
+const sidebarHandle = document.getElementById("sidebar-handle");
+const sidebarPointsVal = document.getElementById("sidebar-points-val");
+const navBtnSubmissions = document.getElementById("nav-btn-submissions");
+
+const submissionsModalBackdrop = document.getElementById("submissions-modal-backdrop");
+const submissionsModalClose = document.getElementById("submissions-modal-close");
+const submissionsModalSubtitle = document.getElementById("submissions-modal-subtitle");
+const modalStatPoints = document.getElementById("modal-stat-points");
+const modalStatSpots = document.getElementById("modal-stat-spots");
+const modalStatRank = document.getElementById("modal-stat-rank");
+const submissionsList = document.getElementById("submissions-list");
+
+function showAuthAlert(alertEl, msg, isError = true) {
+  alertEl.textContent = msg;
+  alertEl.className = "auth-alert " + (isError ? "error" : "success");
+}
+function clearAuthAlerts() {
+  if (signinAlert) {
+    signinAlert.className = "auth-alert";
+    signinAlert.textContent = "";
+  }
+  if (signupAlert) {
+    signupAlert.className = "auth-alert";
+    signupAlert.textContent = "";
+  }
+}
+
+function openAuthModal(tab = "signin") {
+  clearAuthAlerts();
+  switchAuthTab(tab);
+  if (authModalBackdrop) authModalBackdrop.classList.add("active");
+  if (tab === "signin") {
+    setTimeout(() => {
+      const el = document.getElementById("signin-username");
+      if (el) el.focus();
+    }, 100);
+  } else {
+    setTimeout(() => {
+      const el = document.getElementById("signup-username");
+      if (el) el.focus();
+    }, 100);
+  }
+}
+
+function closeAuthModal() {
+  if (authModalBackdrop) authModalBackdrop.classList.remove("active");
+  clearAuthAlerts();
+}
+
+function switchAuthTab(tab) {
+  clearAuthAlerts();
+  if (tab === "signin") {
+    if (tabBtnSignin) tabBtnSignin.classList.add("active");
+    if (tabBtnSignup) tabBtnSignup.classList.remove("active");
+    if (formSignin) formSignin.style.display = "flex";
+    if (formSignup) formSignup.style.display = "none";
+  } else {
+    if (tabBtnSignup) tabBtnSignup.classList.add("active");
+    if (tabBtnSignin) tabBtnSignin.classList.remove("active");
+    if (formSignup) formSignup.style.display = "flex";
+    if (formSignin) formSignin.style.display = "none";
+  }
+}
+
+function updateSpotterState(user, token) {
+  currentSpotter = user;
+  currentToken = token;
+
+  if (user && token) {
+    try {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ user, token }));
+    } catch (e) { console.error("Storage error:", e); }
+
+    // Update Header
+    if (btnAuthOpen) btnAuthOpen.style.display = "none";
+    if (userPillContainer) userPillContainer.style.display = "flex";
+    if (headerUsername) headerUsername.textContent = `@${user.username}`;
+    if (headerPointsBadge) headerPointsBadge.textContent = `${(user.points || 0).toLocaleString()} PTS`;
+    if (submissionsCountBadge) submissionsCountBadge.textContent = user.total_spots !== undefined ? user.total_spots : 0;
+
+    // Update Sidebar Spotter Card
+    if (sidebarRank) sidebarRank.textContent = (user.rank || "ROOKIE SPOTTER").toUpperCase();
+    if (sidebarHandle) sidebarHandle.textContent = `@${user.username}`;
+    if (sidebarPointsVal) sidebarPointsVal.textContent = `${(user.points || 0).toLocaleString()} PTS`;
+    if (sidebarAuthBtn) {
+      sidebarAuthBtn.textContent = "My Spots";
+      sidebarAuthBtn.onclick = openSubmissionsModal;
+    }
+  } else {
+    // Reset to Guest State
+    try {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    } catch (e) {}
+
+    if (btnAuthOpen) btnAuthOpen.style.display = "flex";
+    if (userPillContainer) userPillContainer.style.display = "none";
+
+    if (sidebarRank) sidebarRank.textContent = "ROOKIE SPOTTER";
+    if (sidebarHandle) sidebarHandle.textContent = "@Guest";
+    if (sidebarPointsVal) sidebarPointsVal.textContent = "0 PTS";
+    if (sidebarAuthBtn) {
+      sidebarAuthBtn.textContent = "Sign In";
+      sidebarAuthBtn.onclick = () => openAuthModal("signin");
+    }
+  }
+}
+
+async function initAuth() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) {
+      updateSpotterState(null, null);
+      return;
+    }
+    const data = JSON.parse(raw);
+    if (!data.token) {
+      updateSpotterState(null, null);
+      return;
+    }
+
+    // Validate token with backend
+    const res = await fetch("/api/auth/me", {
+      headers: { "Authorization": `Bearer ${data.token}` }
+    });
+    if (res.ok) {
+      const refreshed = await res.json();
+      updateSpotterState(refreshed.user, data.token);
+    } else {
+      updateSpotterState(null, null);
+    }
+  } catch (err) {
+    console.warn("Auth initialization error:", err);
+    updateSpotterState(null, null);
+  }
+}
+
+// Sign In Handler
+if (formSignin) {
+  formSignin.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("signin-username").value.trim();
+    const password = document.getElementById("signin-password").value;
+    const submitBtn = document.getElementById("btn-submit-signin");
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Authenticating…";
+    clearAuthAlerts();
+
+    try {
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showAuthAlert(signinAlert, data.detail || "Sign in failed.", true);
+        return;
+      }
+      updateSpotterState(data.user, data.token);
+      showAuthAlert(signinAlert, `Welcome back, ${data.user.username}! Loading spots…`, false);
+      setTimeout(() => {
+        closeAuthModal();
+        document.getElementById("signin-password").value = "";
+      }, 700);
+    } catch (err) {
+      showAuthAlert(signinAlert, "Network error: " + err.message, true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "🏁 Sign In to CarDex";
+    }
+  });
+}
+
+// Sign Up Handler
+if (formSignup) {
+  formSignup.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const username = document.getElementById("signup-username").value.trim();
+    const email = document.getElementById("signup-email").value.trim();
+    const password = document.getElementById("signup-password").value;
+    const confirm = document.getElementById("signup-password-confirm").value;
+    const submitBtn = document.getElementById("btn-submit-signup");
+
+    if (password !== confirm) {
+      showAuthAlert(signupAlert, "Passwords do not match.", true);
+      return;
+    }
+    if (password.length < 4) {
+      showAuthAlert(signupAlert, "Password must be at least 4 characters.", true);
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Creating Account…";
+    clearAuthAlerts();
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showAuthAlert(signupAlert, data.detail || "Registration failed.", true);
+        return;
+      }
+      updateSpotterState(data.user, data.token);
+      showAuthAlert(signupAlert, `Account created! Welcome to CarDex, ${data.user.username}.`, false);
+      setTimeout(() => {
+        closeAuthModal();
+        formSignup.reset();
+      }, 800);
+    } catch (err) {
+      showAuthAlert(signupAlert, "Network error: " + err.message, true);
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "✨ Create Spotter Account";
+    }
+  });
+}
+
+// Demo Login Button
+if (btnDemoSignin) {
+  btnDemoSignin.addEventListener("click", async () => {
+    document.getElementById("signin-username").value = "dan_the_spotter";
+    document.getElementById("signin-password").value = "password123";
+    formSignin.dispatchEvent(new Event("submit"));
+  });
+}
+
+// Sign Out Handler
+if (btnSignout) {
+  btnSignout.addEventListener("click", async () => {
+    if (currentToken) {
+      try {
+        await fetch("/api/auth/signout", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${currentToken}` }
+        });
+      } catch (e) {}
+    }
+    updateSpotterState(null, null);
+  });
+}
+
+// Submissions Modal Handlers
+async function openSubmissionsModal() {
+  if (!currentSpotter) {
+    openAuthModal("signin");
+    return;
+  }
+
+  if (submissionsModalSubtitle) submissionsModalSubtitle.textContent = `All spotted vehicles saved for @${currentSpotter.username}`;
+  if (modalStatPoints) modalStatPoints.textContent = `${(currentSpotter.points || 0).toLocaleString()} PTS`;
+  if (modalStatSpots) modalStatSpots.textContent = currentSpotter.total_spots || 0;
+  if (modalStatRank) modalStatRank.textContent = (currentSpotter.rank || "ROOKIE").toUpperCase();
+
+  if (submissionsList) submissionsList.innerHTML = `<div class="submissions-empty"><span>Loading your garage spots from Firestore…</span></div>`;
+  if (submissionsModalBackdrop) submissionsModalBackdrop.classList.add("active");
+
+  try {
+    const headers = {};
+    if (currentToken) headers["Authorization"] = `Bearer ${currentToken}`;
+    const res = await fetch(`/api/user/submissions?user_id=${encodeURIComponent(currentSpotter.user_id)}`, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    
+    // Update stats pills
+    if (modalStatPoints) modalStatPoints.textContent = `${(data.points || 0).toLocaleString()} PTS`;
+    if (modalStatSpots) modalStatSpots.textContent = data.total_spots || 0;
+    if (submissionsCountBadge) submissionsCountBadge.textContent = data.total_spots || 0;
+    if (headerPointsBadge) headerPointsBadge.textContent = `${(data.points || 0).toLocaleString()} PTS`;
+    if (sidebarPointsVal) sidebarPointsVal.textContent = `${(data.points || 0).toLocaleString()} PTS`;
+
+    const spots = data.submissions || [];
+    if (!submissionsList) return;
+
+    if (spots.length === 0) {
+      submissionsList.innerHTML = `
+        <div class="submissions-empty">
+          <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🏁</div>
+          <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">No sightings logged yet!</div>
+          <div>Upload a photo or tell the CarDex agent about an exotic car you spotted to earn points.</div>
+        </div>
+      `;
+      return;
+    }
+
+    submissionsList.innerHTML = "";
+    spots.forEach(spot => {
+      const card = document.createElement("div");
+      card.className = "submission-card";
+
+      const carName = spot.car_name || `${spot.year ? spot.year + " " : ""}${spot.make || ""} ${spot.model || "Unknown Vehicle"}`.trim();
+      const points = spot.points_awarded !== undefined ? spot.points_awarded : (spot.points || 0);
+      const rarity = spot.rarity_tier || "Common";
+      const dateRaw = spot.spotted_at || spot.timestamp;
+      const dateStr = dateRaw ? new Date(dateRaw).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Recently";
+      const locationStr = spot.location ? `📍 ${spot.location}` : "";
+      const colorwayStr = spot.colorway ? `🎨 ${spot.colorway}` : "";
+      const notesStr = spot.notes ? ` · "${spot.notes}"` : "";
+
+      const photoUrl = spot.image_url || spot.photo_url;
+      const imgMarkup = photoUrl 
+        ? `<img src="${photoUrl}" class="submission-img-thumb" alt="${carName}" onerror="this.outerHTML='<div class=\\'submission-img-fallback\\'>🏎️</div>'" />`
+        : `<div class="submission-img-fallback">🏎️</div>`;
+
+      card.innerHTML = `
+        ${imgMarkup}
+        <div class="submission-details">
+          <div class="submission-title">${carName}</div>
+          <div class="submission-meta">
+            <span class="badge badge-${rarity.toLowerCase().replace(/[^a-z]/g, '')}">${rarity}</span>
+            <span>📅 ${dateStr}</span>
+            ${locationStr ? `<span>${locationStr}</span>` : ""}
+            ${colorwayStr ? `<span>${colorwayStr}</span>` : ""}
+            ${notesStr ? `<span style="font-style: italic; color: var(--text-muted);">${notesStr}</span>` : ""}
+          </div>
+        </div>
+        <div class="submission-points-badge">+${points.toLocaleString()} PTS</div>
+      `;
+      submissionsList.appendChild(card);
+    });
+  } catch (err) {
+    if (submissionsList) {
+      submissionsList.innerHTML = `
+        <div class="submissions-empty" style="color: #ff6b6b;">
+          Failed to load submissions: ${err.message}
+        </div>
+      `;
+    }
+  }
+}
+
+function closeSubmissionsModal() {
+  if (submissionsModalBackdrop) submissionsModalBackdrop.classList.remove("active");
+}
+
+// Modal open/close bindings
+if (btnAuthOpen) btnAuthOpen.addEventListener("click", () => openAuthModal("signin"));
+if (sidebarAuthBtn) sidebarAuthBtn.addEventListener("click", () => {
+  if (currentSpotter) openSubmissionsModal();
+  else openAuthModal("signin");
+});
+if (btnSubmissionsOpen) btnSubmissionsOpen.addEventListener("click", openSubmissionsModal);
+if (navBtnSubmissions) navBtnSubmissions.addEventListener("click", () => {
+  closeSidebarMobile();
+  openSubmissionsModal();
+});
+
+if (authModalClose) authModalClose.addEventListener("click", closeAuthModal);
+if (submissionsModalClose) submissionsModalClose.addEventListener("click", closeSubmissionsModal);
+
+if (tabBtnSignin) tabBtnSignin.addEventListener("click", () => switchAuthTab("signin"));
+if (tabBtnSignup) tabBtnSignup.addEventListener("click", () => switchAuthTab("signup"));
+
+// Backdrop close
+[authModalBackdrop, submissionsModalBackdrop].forEach(backdrop => {
+  if (backdrop) {
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) {
+        backdrop.classList.remove("active");
+      }
+    });
+  }
+});
+
+// Escape key closes modals
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeAuthModal();
+    closeSubmissionsModal();
+  }
+});
+
+// Run auth initialization on load
+initAuth();
 </script>
+
+<!-- Auth Modal (Sign In & Sign Up) -->
+<div class="modal-backdrop" id="auth-modal-backdrop">
+  <div class="modal-window" id="auth-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>🏎️</span> CarDex Spotter Account</h3>
+        <p class="modal-subtitle">Save and remember all your submissions, garage spots, and points.</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="auth-modal-close" aria-label="Close modal">✕</button>
+    </div>
+
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab-btn active" id="tab-btn-signin">Sign In</button>
+      <button type="button" class="auth-tab-btn" id="tab-btn-signup">Sign Up</button>
+    </div>
+
+    <!-- Sign In Pane -->
+    <form class="auth-body" id="form-signin">
+      <div class="auth-alert" id="signin-alert"></div>
+      <div class="auth-form-group">
+        <label for="signin-username">Username or Email</label>
+        <input type="text" id="signin-username" class="auth-input" placeholder="e.g. supercar_hunter" required autocomplete="username" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signin-password">Password</label>
+        <input type="password" id="signin-password" class="auth-input" placeholder="••••••••" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="auth-submit-btn" id="btn-submit-signin">🏁 Sign In to CarDex</button>
+      
+      <div class="auth-demo-divider">Or quick test</div>
+      <button type="button" class="auth-demo-btn" id="btn-demo-signin">
+        <span>⚡</span>
+        <span>1-Click Demo Login (@Dan_the_spotter · 108k PTS)</span>
+      </button>
+    </form>
+
+    <!-- Sign Up Pane -->
+    <form class="auth-body" id="form-signup" style="display: none;">
+      <div class="auth-alert" id="signup-alert"></div>
+      <div class="auth-form-group">
+        <label for="signup-username">Spotter Handle / Username</label>
+        <input type="text" id="signup-username" class="auth-input" placeholder="e.g. apex_chaser" required autocomplete="username" minlength="3" maxlength="30" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signup-email">Email Address</label>
+        <input type="email" id="signup-email" class="auth-input" placeholder="name@example.com" required autocomplete="email" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signup-password">Password</label>
+        <input type="password" id="signup-password" class="auth-input" placeholder="At least 4 characters" required autocomplete="new-password" minlength="4" />
+      </div>
+      <div class="auth-form-group">
+        <label for="signup-password-confirm">Confirm Password</label>
+        <input type="password" id="signup-password-confirm" class="auth-input" placeholder="Confirm your password" required autocomplete="new-password" minlength="4" />
+      </div>
+      <button type="submit" class="auth-submit-btn" id="btn-submit-signup">✨ Create Spotter Account</button>
+    </form>
+  </div>
+</div>
+
+<!-- Submissions & Garage Modal -->
+<div class="modal-backdrop" id="submissions-modal-backdrop">
+  <div class="modal-window submissions-modal-window" id="submissions-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>📂</span> My Spotter Submissions & Garage</h3>
+        <p class="modal-subtitle" id="submissions-modal-subtitle">All your spotted exotics saved in Google Cloud Firestore</p>
+      </div>
+      <button type="button" class="modal-close-btn" id="submissions-modal-close" aria-label="Close modal">✕</button>
+    </div>
+
+    <!-- Summary Stats Bar -->
+    <div class="submissions-summary-bar" id="submissions-summary-bar">
+      <div class="stat-pill">
+        <span class="stat-pill-label">Total Points</span>
+        <span class="stat-pill-val gold" id="modal-stat-points">0 PTS</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Total Spots</span>
+        <span class="stat-pill-val" id="modal-stat-spots">0</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Prestige Rank</span>
+        <span class="stat-pill-val" id="modal-stat-rank">ROOKIE</span>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-pill-label">Saved In DB</span>
+        <span class="stat-pill-val" id="modal-stat-db" style="font-size:0.85rem; color:#4ade80;">Firestore 🟢</span>
+      </div>
+    </div>
+
+    <!-- Submissions List -->
+    <div class="submissions-list" id="submissions-list">
+      <div class="submissions-empty">
+        <span>Loading your garage spots from Firestore…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

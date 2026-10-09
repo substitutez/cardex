@@ -46,6 +46,8 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+import auth_db
+
 try:
     from dotenv import load_dotenv
 
@@ -225,12 +227,132 @@ def _upload_base64_image(b64_str: str) -> str:
     return f"https://storage.googleapis.com/{BUCKET_NAME}/{blob_name}"
 
 
+@app.post("/api/auth/signup")
+async def signup(req: Request):
+    """Registers a new spotter and initializes their garage and points balance."""
+    try:
+        body = await req.json()
+        username = body.get("username", "")
+        email = body.get("email", "")
+        password = body.get("password", "")
+        result = auth_db.register_user(username=username, email=email, password=password)
+        return JSONResponse({"success": True, **result})
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve), "detail": str(ve)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"success": False, "error": f"Registration failed: {str(e)}", "detail": f"Registration failed: {str(e)}"}, status_code=500)
+
+
+@app.post("/api/auth/signin")
+async def signin(req: Request):
+    """Authenticates a spotter with username/email and password."""
+    try:
+        body = await req.json()
+        username_or_email = body.get("username_or_email") or body.get("username") or body.get("email") or ""
+        password = body.get("password", "")
+        if not username_or_email or not password:
+            return JSONResponse({"success": False, "error": "Username/email and password are required.", "detail": "Username/email and password are required."}, status_code=400)
+        result = auth_db.authenticate_user(username_or_email=username_or_email, password=password)
+        return JSONResponse({"success": True, **result})
+    except ValueError as ve:
+        return JSONResponse({"success": False, "error": str(ve), "detail": str(ve)}, status_code=401)
+    except Exception as e:
+        return JSONResponse({"success": False, "error": f"Authentication failed: {str(e)}", "detail": f"Authentication failed: {str(e)}"}, status_code=500)
+
+
+@app.get("/api/auth/me")
+async def get_current_user(req: Request):
+    """Returns profile and points for the currently signed-in spotter."""
+    auth_header = req.headers.get("Authorization", "")
+    token = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        token = req.query_params.get("token")
+    user_id = auth_db.validate_session(token) if token else None
+    if not user_id:
+        # Check query param fallback
+        param_user = req.query_params.get("user_id")
+        if param_user:
+            profile = auth_db.get_user_profile(param_user)
+            return JSONResponse({"authenticated": False, "user": profile})
+        return JSONResponse({"authenticated": False, "user": None})
+
+    profile = auth_db.get_user_profile(user_id)
+    return JSONResponse({"authenticated": True, "user": profile})
+
+
+@app.post("/api/auth/signout")
+async def signout(req: Request):
+    """Revokes the current session token."""
+    auth_header = req.headers.get("Authorization", "")
+    token = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+    if token:
+        auth_db.revoke_session(token)
+    return JSONResponse({"success": True})
+
+
+@app.get("/api/user/submissions")
+async def user_submissions(req: Request):
+    """Retrieves all vehicle sightings and submissions logged by the user."""
+    user_id = req.query_params.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    if not user_id:
+        return JSONResponse({"error": "Authentication or user_id required"}, status_code=401)
+
+    submissions = auth_db.get_user_submissions(user_id)
+    profile = auth_db.get_user_profile(user_id)
+    return JSONResponse({
+        "user_id": user_id,
+        "username": profile.get("username", user_id),
+        "total_points": profile.get("total_points", 0),
+        "points": profile.get("total_points", 0),
+        "rank": profile.get("rank", "Rookie Spotter"),
+        "submissions": submissions,
+        "count": len(submissions),
+        "total_spots": len(submissions),
+    })
+
+
+@app.get("/api/user/stats")
+async def user_stats(req: Request):
+    """Retrieves spot stats, rarity breakdown, and total points."""
+    user_id = req.query_params.get("user_id")
+    if not user_id:
+        auth_header = req.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+            user_id = auth_db.validate_session(token)
+    if not user_id:
+        return JSONResponse({"error": "Authentication or user_id required"}, status_code=401)
+
+    stats = auth_db.get_user_stats(user_id)
+    return JSONResponse(stats)
+
+
 @app.post("/chat")
 async def chat(req: Request):
     body = await req.json()
     message = body.get("message", "")
     image_input = body.get("image")
-    user_id = body.get("user_id") or "web-user"
+
+    # Resolve authenticated spotter identity
+    auth_header = req.headers.get("Authorization", "")
+    token = None
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+    session_user_id = auth_db.validate_session(token) if token else None
+
+    user_id = session_user_id or body.get("user_id") or "spotter_1"
+    user_profile = auth_db.get_user_profile(user_id)
+    username = user_profile.get("username") or body.get("username") or user_id
+
     parts: list[dict] = []
 
     uploaded_image_url = None
@@ -243,18 +365,24 @@ async def chat(req: Request):
             except Exception as e:
                 print("Failed to upload image to GCS:", e)
 
-    # Build agent prompt
+    # Build agent prompt with explicit spotter identity context
+    spotter_tag = f"[Spotter Context: user_id='{user_id}', username='{username}']"
     if uploaded_image_url:
         if message.strip():
             agent_text = (
-                f"I spotted this car and took this photo: {uploaded_image_url}. {message.strip()}"
+                f"{spotter_tag} I spotted this car and took this photo: {uploaded_image_url}. {message.strip()} "
+                f"Please identify the car, award rarity points, and record the spot in my garage (user_id='{user_id}')."
             )
         else:
             agent_text = (
-                f"Please identify the car in this photo I spotted and record the spot: {uploaded_image_url}"
+                f"{spotter_tag} Please identify the car in this photo I spotted and record the spot in my garage (user_id='{user_id}'): {uploaded_image_url}"
             )
     else:
-        agent_text = message
+        lower_msg = message.lower()
+        if any(term in lower_msg for term in ["garage", "my spot", "collection", "my score", "my points"]):
+            agent_text = f"{spotter_tag} {message.strip()} (Retrieve garage/spots for user_id='{user_id}')"
+        else:
+            agent_text = f"{spotter_tag} {message}"
 
     async with httpx.AsyncClient(headers=_auth_headers(), timeout=120) as client:
         card = await _get_card(client)
@@ -314,7 +442,14 @@ async def chat(req: Request):
 
     if not parts:
         parts = [{"kind": "text", "text": "(The agent didn't return a reply.)"}]
-    return JSONResponse({"parts": parts, "image_url": uploaded_image_url})
+
+    # Refresh user stats from Firestore to return live updated score
+    updated_profile = auth_db.get_user_profile(user_id)
+    return JSONResponse({
+        "parts": parts,
+        "image_url": uploaded_image_url,
+        "user": updated_profile,
+    })
 
 
 # Serve the chat UI (keep this mount last so /chat wins).
