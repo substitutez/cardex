@@ -330,8 +330,25 @@ def build_acoustic_verification_card(
     signature: str,
     rev_limiter: bool,
     bonus_multiplier: float = 1.25,
+    peak_dba: float = 0.0,
+    peak_dbc: float = 0.0,
+    laeq: float = 0.0,
+    tier: str = "Sport Exhaust",
+    badge: str = "SPORT_EXHAUST",
+    bonus_points: int = 0,
+    ear_bleeder: bool = False,
+    cadence_matched: bool = False,
+    dominant_hz: float = 0.0,
+    spectral_flatness: float = 0.0,
+    spectral_signature_sample: list[float] | None = None,
 ) -> dict:
-    """Creates an Acoustic Engine Note Verification A2UI card payload."""
+    """Creates a holographic Acoustic Engine Note Verification & Certification A2UI card payload."""
+    badge_title = f"🔊 +25% ACOUSTIC MATCH // {engine_config.upper()}"
+    if peak_dba >= 120.0:
+        badge_title = f"⚡ EAR BLEEDER // {tier.upper()} ({peak_dba} dBA)"
+    elif peak_dba > 0:
+        badge_title = f"🏁 {tier.upper()} // {peak_dba} dBA (+{bonus_points} PTS)"
+
     return {
         "type": "acoustic_verification",
         "engine_config": engine_config,
@@ -340,8 +357,21 @@ def build_acoustic_verification_card(
         "signature": signature,
         "rev_limiter": rev_limiter,
         "bonus_multiplier": bonus_multiplier,
-        "badge_text": f"🔊 +25% ACOUSTIC MATCH // {engine_config.upper()}",
+        "badge_text": badge_title,
+        "peak_dba": round(peak_dba, 1) if peak_dba > 0 else round(loudness_dbfs + 97.0, 1),
+        "peak_dbc": round(peak_dbc, 1),
+        "laeq": round(laeq, 1),
+        "tier": tier,
+        "badge": badge,
+        "bonus_points": bonus_points,
+        "ear_bleeder": ear_bleeder,
+        "cadence_matched": cadence_matched,
+        "dominant_hz": round(dominant_hz, 1),
+        "spectral_flatness": round(spectral_flatness, 4),
+        "spectral_signature_sample": spectral_signature_sample or [],
+        "holographic": True,
     }
+
 
 
 def build_paywall_card(quota_info: dict) -> dict:

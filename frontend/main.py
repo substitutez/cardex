@@ -59,6 +59,8 @@ try:
     from cache import (
         get_cached_leaderboard,
         set_cached_leaderboard,
+        get_cached_loudest_leaderboard,
+        set_cached_loudest_leaderboard,
         get_cached_user_quota,
         set_cached_user_quota,
         invalidate_user_quota,
@@ -68,6 +70,8 @@ except ImportError:
     from app.cache import (
         get_cached_leaderboard,
         set_cached_leaderboard,
+        get_cached_loudest_leaderboard,
+        set_cached_loudest_leaderboard,
         get_cached_user_quota,
         set_cached_user_quota,
         invalidate_user_quota,
@@ -297,6 +301,53 @@ async def get_leaderboard_endpoint(req: Request):
         content={"leaderboard": rankings, "cached": False, "limit": limit},
         headers={"X-Cache-Status": "MISS", "Cache-Control": "public, max-age=60"},
     )
+
+
+@app.get("/api/leaderboard/loudest")
+async def get_loudest_leaderboard_endpoint(req: Request):
+    """Retrieves top 50 loudest verified exhaust car spots globally (Exhaust Hall of Fame), with 60s Redis caching."""
+    limit_param = req.query_params.get("limit", "50")
+    engine_type = req.query_params.get("engine_type", None)
+    timeframe = req.query_params.get("timeframe", "all")
+
+    try:
+        limit = max(1, min(100, int(limit_param)))
+    except ValueError:
+        limit = 50
+
+    cached = get_cached_loudest_leaderboard(engine_type=engine_type, timeframe=timeframe)
+    if cached is not None:
+        return JSONResponse(
+            content={
+                "leaderboard": cached[:limit],
+                "cached": True,
+                "limit": limit,
+                "engine_type": engine_type or "all",
+                "timeframe": timeframe or "all",
+            },
+            headers={"X-Cache-Status": "HIT", "Cache-Control": "public, max-age=60"},
+        )
+
+    try:
+        rankings = firestore_db.get_loudest_exhaust_leaderboard(
+            limit=limit, engine_type=engine_type, timeframe=timeframe
+        )
+    except Exception as e:
+        logger.warning("Error retrieving loudest leaderboard: %s", e)
+        rankings = []
+
+    set_cached_loudest_leaderboard(rankings, engine_type=engine_type, timeframe=timeframe, ttl=60)
+    return JSONResponse(
+        content={
+            "leaderboard": rankings,
+            "cached": False,
+            "limit": limit,
+            "engine_type": engine_type or "all",
+            "timeframe": timeframe or "all",
+        },
+        headers={"X-Cache-Status": "MISS", "Cache-Control": "public, max-age=60"},
+    )
+
 
 
 @app.post("/api/auth/signup")
@@ -657,11 +708,12 @@ async def chat(req: Request):
 
     # 2. Decode and Anti-Cheat Pre-Check for images
     uploaded_image_url = None
+    decoded_bytes = None
+    acoustic_telemetry = body.get("acoustic_telemetry")
     if image_input:
         # Pre-screen for screen-captures (Moiré) and duplicate hashes
         try:
             raw_data = image_input.strip()
-            decoded_bytes = None
             if raw_data.startswith("data:") and ";base64," in raw_data:
                 _, b64 = raw_data.split(";base64,", 1)
                 decoded_bytes = base64.b64decode(b64)
@@ -694,7 +746,7 @@ async def chat(req: Request):
             except Exception as e:
                 print("Failed to upload image to GCS:", e)
 
-    # 2.5 Acoustic Classification Pre-Check for audio exhaust recording
+    # 2.5 Acoustic Classification & IEC 61672 Telemetry Pre-Check for audio exhaust recording
     audio_analysis = None
     if audio_input:
         try:
@@ -719,8 +771,18 @@ async def chat(req: Request):
                     claimed_model=message or "",
                     mime_type=mime_type,
                 )
+                computed_telemetry = audio_classifier.compute_iec_acoustic_telemetry(
+                    decoded_audio,
+                    claimed_model=message or "",
+                    mime_type=mime_type,
+                )
+                if not acoustic_telemetry:
+                    acoustic_telemetry = computed_telemetry
+                else:
+                    acoustic_telemetry.update(computed_telemetry)
         except Exception as e:
             print("Frontend audio analysis warning:", e)
+
 
     # Build agent prompt with explicit spotter identity, location context, and audio analysis
     req_lat = body.get("latitude") or body.get("lat")
@@ -831,17 +893,40 @@ async def chat(req: Request):
         except Exception:
             pass
 
-    # Inject acoustic verification card if matched
-    if audio_analysis and audio_analysis.get("acoustic_match"):
-        acoustic_card = a2ui_utils.build_acoustic_verification_card(
-            engine_config=audio_analysis.get("engine_config", "Unknown"),
-            confidence=audio_analysis.get("confidence", 0.9),
-            loudness_dbfs=audio_analysis.get("peak_loudness_dbfs", -12.0),
-            signature=audio_analysis.get("acoustic_signature", ""),
-            rev_limiter=audio_analysis.get("rev_limiter_detected", False),
-            bonus_multiplier=1.25,
+    # Inject holographic acoustic certification card if telemetry present or acoustic note matched
+    if acoustic_telemetry or (audio_analysis and audio_analysis.get("acoustic_match")):
+        telem = acoustic_telemetry or {}
+        eng_config = telem.get("engine_config") or (audio_analysis.get("engine_config") if audio_analysis else "Sport V8")
+        conf = float(telem.get("confidence") or (audio_analysis.get("confidence") if audio_analysis else 0.95))
+        loud_dbfs = float(audio_analysis.get("peak_loudness_dbfs") if audio_analysis else (telem.get("peak_dba", 95.0) - 97.0))
+        sig = audio_analysis.get("acoustic_signature") if audio_analysis else f"IEC 61672-1 Calibrated Engine Note ({telem.get('tier', 'Exhaust Dyno')})"
+        rev_lim = bool(audio_analysis.get("rev_limiter_detected") if audio_analysis else False)
+        
+        has_acoustic_card = any(
+            p.get("kind") == "a2ui" and p.get("data", {}).get("type") == "acoustic_verification"
+            for p in parts
         )
-        parts.append({"kind": "a2ui", "data": acoustic_card})
+        if not has_acoustic_card:
+            acoustic_card = a2ui_utils.build_acoustic_verification_card(
+                engine_config=eng_config,
+                confidence=conf,
+                loudness_dbfs=loud_dbfs,
+                signature=sig,
+                rev_limiter=rev_lim,
+                bonus_multiplier=1.25,
+                peak_dba=float(telem.get("peak_dba", 0.0)),
+                peak_dbc=float(telem.get("peak_dbc", 0.0)),
+                laeq=float(telem.get("laeq", 0.0)),
+                tier=telem.get("tier", "Sport Exhaust"),
+                badge=telem.get("badge", "SPORT_EXHAUST"),
+                bonus_points=int(telem.get("bonus_points", 0)),
+                ear_bleeder=bool(telem.get("ear_bleeder", False)),
+                cadence_matched=bool(telem.get("cadence_matched", False)),
+                dominant_hz=float(telem.get("dominant_hz", 0.0)),
+                spectral_flatness=float(telem.get("spectral_flatness", 0.0)),
+                spectral_signature_sample=telem.get("spectral_signature_sample", []),
+            )
+            parts.append({"kind": "a2ui", "data": acoustic_card})
 
     # Inject chassis verification card if markings or VIN detected
     chassis_markings = None
@@ -881,6 +966,7 @@ async def chat(req: Request):
         "parts": parts,
         "image_url": uploaded_image_url,
         "acoustic_analysis": audio_analysis,
+        "acoustic_telemetry": acoustic_telemetry,
         "chassis_markings": chassis_markings,
         "user": updated_profile,
         "quota": latest_quota,

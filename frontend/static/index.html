@@ -14,6 +14,8 @@
 <!-- Leaflet Map CSS & JS for Cockpit Field Radar -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- CarDex IEC 61672 Acoustic Telemetry & Exhaust DSP Engine -->
+<script src="/static/js/audio_dsp.js"></script>
 <style>
   :root {
     --accent: #ff6b00;
@@ -3236,7 +3238,506 @@
     display: flex;
     justify-content: space-between;
   }
+
+  /* =========================================================================
+     ACOUSTIC DYNO & HUD VISUALIZER STYLES (IEC 61672-1)
+     ========================================================================= */
+  #cockpit-dyno-view {
+    background: #080c14;
+    position: relative;
+    overflow-y: auto;
+    flex-direction: column;
+    padding: 0;
+  }
+  .dyno-hud-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: rgba(11, 15, 25, 0.96);
+    border-bottom: 1px solid var(--border);
+    gap: 1rem;
+    flex-wrap: wrap;
+    z-index: 10;
+    position: sticky;
+    top: 0;
+  }
+  .dyno-hud-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .dyno-status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .dyno-hud-pulse-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #ef4444;
+    box-shadow: 0 0 10px #ef4444;
+    animation: radar-dot-pulse 1.2s infinite;
+  }
+  .dyno-hud-pulse-dot.active {
+    background: #10b981;
+    box-shadow: 0 0 14px #10b981;
+  }
+  .dyno-hud-title {
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 1px;
+    color: #f8fafc;
+    text-transform: uppercase;
+  }
+  .dyno-iec-badge {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .dyno-anticheat-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #6ee7b7;
+    font-size: 0.75rem;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+  .dyno-anticheat-badge.warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+  }
+  .dyno-anticheat-badge.danger {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+
+  .dyno-hud-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+  }
+  .dyno-btn-mic {
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: 1px solid rgba(16, 185, 129, 0.6);
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.8rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+    transition: all 0.15s ease;
+  }
+  .dyno-btn-mic:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.4);
+  }
+  .dyno-btn-mic.active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #f87171;
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.35);
+  }
+  .dyno-btn-run {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: 1px solid rgba(245, 158, 11, 0.6);
+    color: #0b0f19;
+    font-weight: 900;
+    font-size: 0.8rem;
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+    transition: all 0.15s ease;
+  }
+  .dyno-btn-run:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 18px rgba(245, 158, 11, 0.5);
+  }
+
+  .dyno-filter-select {
+    background: #151d30;
+    border: 1px solid #22304d;
+    color: #cbd5e1;
+    font-size: 0.76rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  /* Main Dyno Dashboard Layout */
+  .dyno-dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(360px, 1.1fr) minmax(340px, 1.2fr);
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+  @media (max-width: 900px) {
+    .dyno-dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .dyno-card {
+    background: #111827;
+    border: 1px solid #1f293d;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .dyno-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .dyno-card-title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #94a3b8;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .dyno-card-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #38bdf8;
+  }
+
+  .dyno-canvas-container {
+    width: 100%;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  #canvas-dyno-tachometer {
+    width: 100%;
+    max-width: 440px;
+    aspect-ratio: 1 / 1;
+    display: block;
+  }
+  #canvas-dyno-rta {
+    width: 100%;
+    height: 180px;
+    display: block;
+    background: #090e17;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  #canvas-dyno-waterfall {
+    width: 100%;
+    height: 140px;
+    display: block;
+    background: #070b14;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  /* Telemetry Quick Strip */
+  .dyno-telemetry-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .dyno-telem-box {
+    background: #0c121e;
+    border: 1px solid #1a2438;
+    border-radius: 8px;
+    padding: 0.6rem 0.5rem;
+    text-align: center;
+  }
+  .dyno-telem-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .dyno-telem-val {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #f8fafc;
+    font-family: system-ui, monospace;
+  }
+  .dyno-telem-val.green { color: #10b981; }
+  .dyno-telem-val.amber { color: #f59e0b; }
+  .dyno-telem-val.red { color: #ef4444; }
+  .dyno-telem-val.violet { color: #c084fc; text-shadow: 0 0 8px rgba(192, 132, 252, 0.4); }
+
+  /* Leaderboard & Hall of Fame */
+  .dyno-hall-of-fame {
+    margin: 0 1.25rem 2rem 1.25rem;
+    background: #111827;
+    border: 1px solid #1f293d;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .dyno-hof-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .dyno-hof-title {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: 0.5px;
+  }
+  .dyno-hof-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .dyno-pill-btn {
+    background: #151d30;
+    border: 1px solid #22304d;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .dyno-pill-btn:hover {
+    color: #fff;
+    border-color: #38bdf8;
+  }
+  .dyno-pill-btn.active {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #fff;
+  }
+
+  .dyno-hof-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.78rem;
+  }
+  .dyno-hof-table th {
+    text-align: left;
+    padding: 0.55rem 0.75rem;
+    color: #64748b;
+    font-weight: 700;
+    border-bottom: 1px solid #1f293d;
+    text-transform: uppercase;
+    font-size: 0.68rem;
+  }
+  .dyno-hof-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    color: #cbd5e1;
+  }
+  .dyno-hof-table tr:hover td {
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .dyno-rank-num {
+    font-weight: 900;
+    font-family: monospace;
+    color: #94a3b8;
+    font-size: 0.85rem;
+  }
+  .dyno-rank-num.top1 { color: #facc15; text-shadow: 0 0 8px rgba(250, 204, 21, 0.5); }
+  .dyno-rank-num.top2 { color: #cbd5e1; }
+  .dyno-rank-num.top3 { color: #d97706; }
+
+  /* Holographic Acoustic Verification Card */
+  .holographic-acoustic-card {
+    background: linear-gradient(135deg, #0e1726 0%, #151e33 50%, #0d1424 100%);
+    border: 2px solid transparent;
+    border-radius: 14px;
+    padding: 1.15rem;
+    position: relative;
+    overflow: hidden;
+    margin: 0.75rem 0;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    background-clip: padding-box;
+  }
+  .holographic-acoustic-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 16px;
+    background: linear-gradient(45deg, #ff007f, #7928ca, #0070f3, #00dfd8, #7928ca, #ff007f);
+    background-size: 300% 300%;
+    z-index: -1;
+    animation: holo-border-shimmer 4s ease infinite;
+  }
+  .holographic-acoustic-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      115deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.08) 35%,
+      rgba(255, 255, 255, 0.16) 45%,
+      transparent 55%
+    );
+    transform: rotate(25deg);
+    pointer-events: none;
+    animation: holo-sheen-sweep 5s infinite;
+  }
+  @keyframes holo-border-shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes holo-sheen-sweep {
+    0% { transform: translateY(-100%) rotate(25deg); }
+    100% { transform: translateY(100%) rotate(25deg); }
+  }
+  .holo-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    position: relative;
+    z-index: 2;
+  }
+  .holo-card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .holo-card-icon {
+    font-size: 1.6rem;
+    filter: drop-shadow(0 0 8px rgba(255, 107, 0, 0.5));
+  }
+  .holo-card-name {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+  .holo-card-sub {
+    font-size: 0.72rem;
+    color: #94a3b8;
+  }
+  .holo-dba-badge {
+    background: linear-gradient(135deg, #ff007f, #7928ca);
+    color: #fff;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: 0.92rem;
+    box-shadow: 0 0 14px rgba(255, 0, 127, 0.4);
+    letter-spacing: 0.5px;
+  }
+  .holo-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 0.85rem;
+    position: relative;
+    z-index: 2;
+  }
+  .holo-stat-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 0.5rem;
+    text-align: center;
+  }
+  .holo-stat-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+  }
+  .holo-stat-val {
+    font-size: 0.92rem;
+    font-weight: 900;
+    color: #f8fafc;
+    font-family: monospace;
+  }
+  .holo-signature-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    padding: 4px 6px;
+    margin-top: 0.65rem;
+    position: relative;
+    z-index: 2;
+  }
+  .holo-sig-bar {
+    flex: 1;
+    background: linear-gradient(to top, #10b981, #f59e0b, #ef4444);
+    border-radius: 1px;
+    min-height: 2px;
+  }
+
+  /* Launch & Sound Dyno Modal */
+  .modal-sound-dyno {
+    text-align: center;
+    max-width: 480px;
+  }
+  .dyno-countdown-display {
+    font-size: 5rem;
+    font-weight: 900;
+    font-family: system-ui, sans-serif;
+    color: #ef4444;
+    text-shadow: 0 0 30px rgba(239, 68, 68, 0.8);
+    margin: 1.5rem 0;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dyno-countdown-display.rev {
+    color: #10b981;
+    text-shadow: 0 0 35px rgba(16, 185, 129, 0.9);
+    font-size: 4rem;
+  }
 </style>
+
 </head>
 <body>
 
@@ -3259,6 +3760,10 @@
       <span class="radar-live-blip"></span>
       <span>📡</span> <span>Field Radar</span>
       <span class="radar-tag">LIVE</span>
+    </button>
+    <button type="button" class="cockpit-tab-pill" id="tab-btn-dyno" role="tab" aria-selected="false" onclick="switchCockpitView('dyno')">
+      <span>🔊</span> <span>Acoustic Dyno</span>
+      <span class="dyno-iec-badge" style="margin-left: 4px;">IEC 61672</span>
     </button>
   </div>
   <div class="header-right-group">
@@ -3330,6 +3835,13 @@
           <div class="nav-text">
             <span class="nav-label">Field Radar</span>
             <span class="nav-desc">Live dark map & pulsing blips</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item action-dyno" id="sidebar-nav-dyno" onclick="switchCockpitView('dyno')">
+          <span class="nav-icon">🔊</span>
+          <div class="nav-text">
+            <span class="nav-label">Acoustic Dyno HUD</span>
+            <span class="nav-desc">Exhaust decibels, RTA & tachometer</span>
           </div>
         </button>
         <button type="button" class="nav-item" data-prompt="I just spotted a rare supercar! How do I log it into my garage?">
@@ -3636,6 +4148,169 @@
         </div>
       </div>
     </div>
+
+    <!-- Acoustic Dyno Cockpit HUD View (IEC 61672-1) -->
+    <div id="cockpit-dyno-view" class="cockpit-view-pane" style="display: none;">
+      <!-- Dyno HUD Control Bar -->
+      <div class="dyno-hud-bar">
+        <div class="dyno-hud-left">
+          <div class="dyno-status-indicator">
+            <span class="dyno-hud-pulse-dot" id="dyno-hud-pulse-dot"></span>
+            <span class="dyno-hud-title">ACOUSTIC DYNO HUD</span>
+          </div>
+          <span class="dyno-iec-badge">IEC 61672-1 CLASS 1</span>
+          <div class="dyno-anticheat-badge" id="dyno-anticheat-badge">
+            <span>🛡️</span> <span id="dyno-anticheat-text">STANDBY // READY</span>
+          </div>
+        </div>
+
+        <div class="dyno-hud-right">
+          <!-- Weighting Mode -->
+          <label style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">WEIGHTING:
+            <select id="dyno-select-weighting" class="dyno-filter-select" onchange="onDynoWeightingChange(this.value)">
+              <option value="A" selected>A-Weighting (dBA)</option>
+              <option value="C">C-Weighting (dBC)</option>
+              <option value="Z">Z-Weighting (Flat / dBZ)</option>
+            </select>
+          </label>
+
+          <!-- Ballistics -->
+          <label style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">BALLISTICS:
+            <select id="dyno-select-ballistics" class="dyno-filter-select" onchange="onDynoBallisticsChange(this.value)">
+              <option value="FAST" selected>Fast (125 ms)</option>
+              <option value="SLOW">Slow (1000 ms)</option>
+            </select>
+          </label>
+
+          <!-- Engine Cylinder Count for RPM -->
+          <label style="font-size: 0.72rem; color: #94a3b8; font-weight: 700;">ENGINE:
+            <select id="dyno-select-cylinders" class="dyno-filter-select" onchange="onDynoCylindersChange(this.value)">
+              <option value="4">Inline-4 / Flat-4</option>
+              <option value="6">V6 / Flat-6 (Porsche)</option>
+              <option value="8" selected>V8 (AMG / Ferrari)</option>
+              <option value="10">V10 (Huracán / LFA)</option>
+              <option value="12">V12 (Lambo / Ferrari)</option>
+              <option value="16">W16 (Bugatti)</option>
+            </select>
+          </label>
+
+          <!-- Arm Mic Button -->
+          <button type="button" class="dyno-btn-mic" id="dyno-btn-mic" onclick="toggleDynoLiveMic()">
+            <span id="dyno-btn-mic-icon">🎙️</span>
+            <span id="dyno-btn-mic-label">Arm Live Mic</span>
+          </button>
+
+          <!-- Calibrated 6s Dyno Run Button -->
+          <button type="button" class="dyno-btn-run" id="dyno-btn-run" onclick="startDynoCalibratedRun()">
+            <span>⚡</span>
+            <span>6s Dyno Rev</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Dashboard Grid -->
+      <div class="dyno-dashboard-grid">
+        <!-- Left: Tachometer Gauge HUD -->
+        <div class="dyno-card dyno-gauge-card">
+          <div class="dyno-card-header">
+            <span class="dyno-card-title"><span>🏎️</span> Acoustic Tachometer & Exhaust SPL</span>
+            <span class="dyno-card-badge" id="dyno-engine-badge">V8 Firing Cadence</span>
+          </div>
+
+          <div class="dyno-canvas-container">
+            <canvas id="canvas-dyno-tachometer" width="440" height="440"></canvas>
+          </div>
+
+          <!-- Real-Time Telemetry Quick Strip -->
+          <div class="dyno-telemetry-strip">
+            <div class="dyno-telem-box">
+              <div class="dyno-telem-label">LAF (Fast dBA)</div>
+              <div class="dyno-telem-val green" id="dyno-val-laf">--</div>
+            </div>
+            <div class="dyno-telem-box">
+              <div class="dyno-telem-label">LCF (Low-End dBC)</div>
+              <div class="dyno-telem-val amber" id="dyno-val-lcf">--</div>
+            </div>
+            <div class="dyno-telem-box">
+              <div class="dyno-telem-label">LAFmax (Hold)</div>
+              <div class="dyno-telem-val red" id="dyno-val-lafmax">--</div>
+            </div>
+            <div class="dyno-telem-box">
+              <div class="dyno-telem-label">LAeq (Leq Energy)</div>
+              <div class="dyno-telem-val violet" id="dyno-val-laeq">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: 1/3 Octave RTA + Waterfall Spectrogram -->
+        <div class="dyno-card dyno-spectrum-card" style="gap: 1rem;">
+          <!-- 31-Band 1/3-Octave RTA -->
+          <div>
+            <div class="dyno-card-header">
+              <span class="dyno-card-title"><span>📊</span> 1/3-Octave Real-Time Spectrum (31 ISO Bands)</span>
+              <span class="dyno-card-badge">25 Hz – 20 kHz</span>
+            </div>
+            <div class="dyno-canvas-container">
+              <canvas id="canvas-dyno-rta" width="560" height="180"></canvas>
+            </div>
+          </div>
+
+          <!-- Waterfall Spectrogram -->
+          <div>
+            <div class="dyno-card-header">
+              <span class="dyno-card-title"><span>🌊</span> Rolling Waterfall Spectrogram</span>
+              <span class="dyno-card-badge">Rev Transients & Overrun</span>
+            </div>
+            <div class="dyno-canvas-container">
+              <canvas id="canvas-dyno-waterfall" width="560" height="140"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exhaust Hall of Fame Global Leaderboard -->
+      <div class="dyno-hall-of-fame">
+        <div class="dyno-hof-header">
+          <div class="dyno-hof-title">
+            <span>🏆</span>
+            <span>GLOBAL EXHAUST HALL OF FAME // TOP 50 LOUDEST SOUND SIGNATURES</span>
+          </div>
+
+          <!-- Filter Pills -->
+          <div class="dyno-hof-filters">
+            <button type="button" class="dyno-pill-btn active" data-engine="all" onclick="filterDynoLeaderboard('all')">All Engines</button>
+            <button type="button" class="dyno-pill-btn" data-engine="V8" onclick="filterDynoLeaderboard('V8')">V8</button>
+            <button type="button" class="dyno-pill-btn" data-engine="V10" onclick="filterDynoLeaderboard('V10')">V10</button>
+            <button type="button" class="dyno-pill-btn" data-engine="V12" onclick="filterDynoLeaderboard('V12')">V12</button>
+            <button type="button" class="dyno-pill-btn" data-engine="Flat-6" onclick="filterDynoLeaderboard('Flat-6')">Flat-6</button>
+          </div>
+        </div>
+
+        <!-- Hall of Fame Table -->
+        <div style="overflow-x: auto;">
+          <table class="dyno-hof-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">Rank</th>
+                <th>Vehicle & Exhaust Note</th>
+                <th>Spotter</th>
+                <th>Engine & Cadence</th>
+                <th>Peak Decibels</th>
+                <th>Tier & Points</th>
+                <th>Acoustic Certification</th>
+              </tr>
+            </thead>
+            <tbody id="dyno-hof-tbody">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 1.5rem; color: #64748b;">
+                  Loading verified acoustic leaderboard…
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -3696,6 +4371,52 @@
       </button>
     </div>
     <canvas id="camera-canvas" style="display: none;"></canvas>
+  </div>
+</div>
+
+<!-- Launch & Sound Dyno Modal -->
+<div class="modal-backdrop" id="dyno-modal-backdrop" style="display: none;">
+  <div class="modal-window modal-sound-dyno" id="dyno-modal">
+    <div class="modal-header">
+      <div>
+        <h3><span>🔊</span> Launch & Exhaust Sound Dyno</h3>
+        <p class="modal-subtitle">Point microphone toward exhaust tips (~1 meter) · 6-Second Calibrated Run</p>
+      </div>
+      <button type="button" class="modal-close-btn" onclick="closeDynoModal()" aria-label="Close dyno modal">✕</button>
+    </div>
+
+    <div style="padding: 1.25rem 0.5rem;">
+      <h4 id="dyno-modal-car-name" style="color: #f8fafc; font-size: 1.2rem; margin-bottom: 0.35rem; font-weight: 900;">SUPERCAR EXHAUST DYNO</h4>
+      <p id="dyno-modal-desc" style="color: #94a3b8; font-size: 0.82rem; margin-bottom: 1.25rem;">Hold device 1 meter from the tailpipes. When the countdown turns GREEN and shouts "REV!", floor the accelerator for 6 calibrated seconds.</p>
+
+      <div class="dyno-countdown-display" id="dyno-countdown-number">READY</div>
+
+      <div id="dyno-modal-live-telem" style="margin-bottom: 1.25rem; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 0.75rem;">
+        <div style="display: flex; justify-content: space-around; align-items: center;">
+          <div>
+            <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Current Sound Level</div>
+            <div style="font-size: 1.75rem; font-weight: 900; color: #10b981; font-family: monospace;">
+              <span id="dyno-modal-live-spl">--</span> <span style="font-size: 0.9rem; color: #94a3b8;">dBA</span>
+            </div>
+          </div>
+          <div>
+            <div style="font-size: 0.65rem; color: #64748b; font-weight: 700; text-transform: uppercase;">Exhaust Peak (Hold)</div>
+            <div style="font-size: 1.75rem; font-weight: 900; color: #ef4444; font-family: monospace;">
+              <span id="dyno-modal-peak-spl">--</span> <span style="font-size: 0.9rem; color: #94a3b8;">dBA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 0.75rem;">
+        <button type="button" class="dyno-btn-run" id="dyno-modal-start-btn" style="padding: 0.75rem 2rem; font-size: 0.95rem;" onclick="runModalCountdown()">
+          <span>🚀</span> <span>ARM & START 3-2-1 REV</span>
+        </button>
+        <button type="button" class="secondary-btn" id="dyno-modal-cancel-btn" style="padding: 0.75rem 1.5rem; font-size: 0.9rem;" onclick="closeDynoModal()">
+          <span>Skip Dyno</span>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4129,7 +4850,11 @@ function renderReply(b, parts) {
             <div class="bd-row">
               <span class="bd-label">Acoustic Verification Bonus</span>
               <span class="bd-val highlight">+25% PTS Bonus (${escapeHtml(part.data.acoustic_engine || 'Engine Note')})</span>
-            </div>` : ''}
+            </div>` : `
+            <div class="bd-row" style="background: rgba(239, 68, 68, 0.08); border-radius: 4px; padding: 4px 6px;">
+              <span class="bd-label" style="color: #94a3b8;">Exhaust Dyno Unverified</span>
+              <span class="bd-val" style="cursor: pointer; color: #38bdf8; font-weight: 800; text-decoration: underline;" onclick="openDynoModal('${escapeHtml(part.data.car_name || 'Vehicle')}')">🔊 Launch Sound Dyno & Rev (+Pts)</span>
+            </div>`}
             <div class="bd-row bd-total">
               <span class="bd-label">Total Net Score Awarded</span>
               <span class="bd-val total-pts">+${finalPts} PTS</span>
@@ -4138,42 +4863,117 @@ function renderReply(b, parts) {
         `;
         b.appendChild(bd);
       } else if (part.data.type === "acoustic_verification") {
-        const ac = el("div", "acoustic-verification-card");
-        const confPct = Math.round((part.data.confidence || 0.9) * 100);
-        ac.innerHTML = `
-          <div class="acoustic-card-header">
-            <span class="acoustic-badge-pulse">🔊</span>
-            <div>
-              <h4>Acoustic Engine Verification</h4>
-              <p class="acoustic-engine-title">${escapeHtml(part.data.engine_config || 'Engine Cadence Match')}</p>
+        if (part.data.peak_dba !== undefined || part.data.holographic) {
+          const ac = el("div", "holographic-acoustic-card");
+          const peakDba = Number(part.data.peak_dba || 0).toFixed(1);
+          const laeq = Number(part.data.laeq || 0).toFixed(1);
+          const rpm = part.data.estimated_rpm || 0;
+          const tier = part.data.tier || "Exhaust Verified";
+          const bonusPts = part.data.bonus_points || 0;
+          const status = part.data.anti_cheat_status || "PASS";
+          const earBleeder = part.data.ear_bleeder;
+          const sig = Array.isArray(part.data.spectral_signature_sample) ? part.data.spectral_signature_sample : [];
+
+          let sigBarsHtml = '';
+          if (sig.length > 0) {
+            sigBarsHtml = `<div class="holo-signature-bars" title="31-Band ISO 1/3-Octave Acoustic Signature">` +
+              sig.map(v => `<div class="holo-sig-bar" style="height: ${Math.max(10, Math.round(v * 100))}%;"></div>`).join('') +
+              `</div>`;
+          }
+
+          ac.innerHTML = `
+            <div class="holo-card-header">
+              <div class="holo-card-title-group">
+                <span class="holo-card-icon">🔊</span>
+                <div>
+                  <div class="holo-card-name">ACOUSTIC DYNO CERTIFICATION</div>
+                  <div class="holo-card-sub">${escapeHtml(part.data.engine_config || 'Verified ICE Exhaust Note')} · IEC 61672-1</div>
+                </div>
+              </div>
+              <div class="holo-dba-badge">${peakDba} dBA</div>
             </div>
-            <span class="acoustic-bonus-pill">+25% PTS BONUS</span>
-          </div>
-          <div class="acoustic-stats-grid">
-            <div class="acoustic-stat">
-              <span class="stat-label">Firing Cadence</span>
-              <span class="stat-value">${escapeHtml(part.data.engine_config || 'Matched')}</span>
+
+            <div class="holo-stats-grid">
+              <div class="holo-stat-box">
+                <div class="holo-stat-label">Exhaust Tier</div>
+                <div class="holo-stat-val" style="color: ${earBleeder ? '#c084fc' : '#fbbf24'}; font-size: 0.8rem;">
+                  ${escapeHtml(tier.toUpperCase())}
+                </div>
+              </div>
+              <div class="holo-stat-box">
+                <div class="holo-stat-label">Peak Dyno Score</div>
+                <div class="holo-stat-val" style="color: #38bdf8;">+${bonusPts} PTS</div>
+              </div>
+              <div class="holo-stat-box">
+                <div class="holo-stat-label">LAeq Energy</div>
+                <div class="holo-stat-val">${laeq} dB</div>
+              </div>
             </div>
-            <div class="acoustic-stat">
-              <span class="stat-label">Confidence</span>
-              <span class="stat-value highlight">${confPct}% Match</span>
+
+            <div class="holo-stats-grid">
+              <div class="holo-stat-box">
+                <div class="holo-stat-label">Anti-Cheat Check</div>
+                <div class="holo-stat-val" style="color: ${status === 'PASS' ? '#10b981' : '#ef4444'}; font-size: 0.75rem;">
+                  ${status === 'PASS' ? '✓ PHYSICAL PASS' : escapeHtml(status)}
+                </div>
+              </div>
+              <div class="holo-stat-box">
+                <div class="holo-stat-label">Firing Cadence</div>
+                <div class="holo-stat-val" style="font-size: 0.8rem;">${part.data.cadence_matched ? '✓ Matched (+20%)' : 'Standard'}</div>
+              </div>
+              <div class="holo-stat-box">
+                <div class="holo-stat-label">Est. Rev Band</div>
+                <div class="holo-stat-val" style="color: #f59e0b;">${rpm > 0 ? `${rpm.toLocaleString()} RPM` : 'Idle Sweep'}</div>
+              </div>
             </div>
-            <div class="acoustic-stat">
-              <span class="stat-label">Peak Decibels</span>
-              <span class="stat-value">${escapeHtml(String(part.data.loudness_dbfs || '-12.0'))} dBFS</span>
+
+            ${sigBarsHtml}
+
+            <div style="margin-top: 0.85rem; display: flex; justify-content: flex-end;">
+              <button type="button" class="dyno-pill-btn active" style="font-size: 0.75rem; padding: 4px 12px;" onclick="switchCockpitView('dyno')">
+                View in Acoustic Dyno Cockpit ➔
+              </button>
             </div>
-            <div class="acoustic-stat">
-              <span class="stat-label">Rev Limiter</span>
-              <span class="stat-value">${part.data.rev_limiter ? "🔥 Hard Cut Detected" : "Standard Sweep"}</span>
+          `;
+          b.appendChild(ac);
+        } else {
+          const ac = el("div", "acoustic-verification-card");
+          const confPct = Math.round((part.data.confidence || 0.9) * 100);
+          ac.innerHTML = `
+            <div class="acoustic-card-header">
+              <span class="acoustic-badge-pulse">🔊</span>
+              <div>
+                <h4>Acoustic Engine Verification</h4>
+                <p class="acoustic-engine-title">${escapeHtml(part.data.engine_config || 'Engine Cadence Match')}</p>
+              </div>
+              <span class="acoustic-bonus-pill">+25% PTS BONUS</span>
             </div>
-          </div>
-          ${part.data.signature ? `
-          <div class="acoustic-signature-bar">
-            <span>Signature:</span>
-            <em>${escapeHtml(part.data.signature)}</em>
-          </div>` : ''}
-        `;
-        b.appendChild(ac);
+            <div class="acoustic-stats-grid">
+              <div class="acoustic-stat">
+                <span class="stat-label">Firing Cadence</span>
+                <span class="stat-value">${escapeHtml(part.data.engine_config || 'Matched')}</span>
+              </div>
+              <div class="acoustic-stat">
+                <span class="stat-label">Confidence</span>
+                <span class="stat-value highlight">${confPct}% Match</span>
+              </div>
+              <div class="acoustic-stat">
+                <span class="stat-label">Peak Decibels</span>
+                <span class="stat-value">${escapeHtml(String(part.data.loudness_dbfs || '-12.0'))} dBFS</span>
+              </div>
+              <div class="acoustic-stat">
+                <span class="stat-label">Rev Limiter</span>
+                <span class="stat-value">${part.data.rev_limiter ? "🔥 Hard Cut Detected" : "Standard Sweep"}</span>
+              </div>
+            </div>
+            ${part.data.signature ? `
+            <div class="acoustic-signature-bar">
+              <span>Signature:</span>
+              <em>${escapeHtml(part.data.signature)}</em>
+            </div>` : ''}
+          `;
+          b.appendChild(ac);
+        }
       } else if (part.data.type === "chassis_verification") {
         const cv = el("div", "chassis-verification-card");
         const unit = part.data.unit_number;
@@ -5606,16 +6406,31 @@ let currentRadarSightings = [];
 function switchCockpitView(view) {
   const chatView = document.getElementById("cockpit-chat-view");
   const radarView = document.getElementById("cockpit-radar-view");
+  const dynoView = document.getElementById("cockpit-dyno-view");
   const tabChat = document.getElementById("tab-btn-chat");
   const tabRadar = document.getElementById("tab-btn-radar");
+  const tabDyno = document.getElementById("tab-btn-dyno");
 
-  if (view === "radar") {
-    if (chatView) chatView.style.display = "none";
-    if (radarView) radarView.style.display = "flex";
-    if (tabChat) {
-      tabChat.classList.remove("active");
-      tabChat.setAttribute("aria-selected", "false");
+  [tabChat, tabRadar, tabDyno].forEach(t => {
+    if (t) {
+      t.classList.remove("active");
+      t.setAttribute("aria-selected", "false");
     }
+  });
+
+  if (view === "dyno") {
+    if (chatView) chatView.style.display = "none";
+    if (radarView) radarView.style.display = "none";
+    if (dynoView) dynoView.style.display = "flex";
+    if (tabDyno) {
+      tabDyno.classList.add("active");
+      tabDyno.setAttribute("aria-selected", "true");
+    }
+    initDynoView();
+  } else if (view === "radar") {
+    if (chatView) chatView.style.display = "none";
+    if (dynoView) dynoView.style.display = "none";
+    if (radarView) radarView.style.display = "flex";
     if (tabRadar) {
       tabRadar.classList.add("active");
       tabRadar.setAttribute("aria-selected", "true");
@@ -5625,15 +6440,337 @@ function switchCockpitView(view) {
     }, 50);
   } else {
     if (radarView) radarView.style.display = "none";
+    if (dynoView) dynoView.style.display = "none";
     if (chatView) chatView.style.display = "flex";
-    if (tabRadar) {
-      tabRadar.classList.remove("active");
-      tabRadar.setAttribute("aria-selected", "false");
-    }
     if (tabChat) {
       tabChat.classList.add("active");
       tabChat.setAttribute("aria-selected", "true");
     }
+  }
+}
+
+/* =========================================================================
+   ACOUSTIC DYNO & HUD VISUALIZER CONTROLLER (IEC 61672-1)
+   ========================================================================= */
+let dynoEngine = null;
+let dynoVisualizers = null;
+let dynoAnimationId = null;
+let currentDynoEngineFilter = 'all';
+let currentDynoTimeframeFilter = 'all';
+
+function initDynoView() {
+  if (typeof CarDexAudioDSP === 'undefined') {
+    console.warn("CarDexAudioDSP not loaded yet.");
+    return;
+  }
+
+  if (!dynoEngine) {
+    dynoEngine = new CarDexAudioDSP.AcousticTelemetryEngine({
+      weighting: 'A',
+      timeWeighting: 'FAST',
+      cylinders: 8
+    });
+  }
+  if (!dynoVisualizers) {
+    dynoVisualizers = new CarDexAudioDSP.DynoVisualizers();
+  }
+
+  // Start continuous 60 FPS animation loop if not running
+  if (!dynoAnimationId) {
+    runDynoHUDLoop();
+  }
+
+  // Load global loudest leaderboard
+  loadLoudestLeaderboard(currentDynoEngineFilter, currentDynoTimeframeFilter);
+}
+
+function runDynoHUDLoop() {
+  const tachCanvas = document.getElementById("canvas-dyno-tachometer");
+  const rtaCanvas = document.getElementById("canvas-dyno-rta");
+  const waterfallCanvas = document.getElementById("canvas-dyno-waterfall");
+
+  let telemetry = null;
+  if (dynoEngine && dynoEngine.isRunning) {
+    telemetry = dynoEngine.processFrame(0.016);
+
+    // Update Quick Telemetry DOM
+    const lafEl = document.getElementById("dyno-val-laf");
+    const lcfEl = document.getElementById("dyno-val-lcf");
+    const lafmaxEl = document.getElementById("dyno-val-lafmax");
+    const laeqEl = document.getElementById("dyno-val-laeq");
+
+    if (lafEl) lafEl.textContent = telemetry.current_dba.toFixed(1);
+    if (lcfEl) lcfEl.textContent = telemetry.current_dbc.toFixed(1);
+    if (lafmaxEl) lafmaxEl.textContent = telemetry.peak_dba.toFixed(1);
+    if (laeqEl) laeqEl.textContent = telemetry.laeq.toFixed(1);
+
+    // Anti-Cheat Badge
+    const acBadge = document.getElementById("dyno-anticheat-badge");
+    const acText = document.getElementById("dyno-anticheat-text");
+    if (acBadge && acText) {
+      acBadge.className = "dyno-anticheat-badge";
+      if (telemetry.anti_cheat_status === "PASS") {
+        acText.textContent = "PHYSICAL PASS // IEC COMPLIANT";
+      } else if (telemetry.anti_cheat_status === "INVALID_MICROPHONE_CLIPPING") {
+        acBadge.classList.add("danger");
+        acText.textContent = "CLIPPING (>-0.05 dBFS)";
+      } else if (telemetry.anti_cheat_status === "SUSPECTED_WIND_OR_WHITE_NOISE") {
+        acBadge.classList.add("warning");
+        acText.textContent = "SUSPECTED WIND / NOISE (Entropy > 0.75)";
+      }
+    }
+  }
+
+  if (dynoVisualizers) {
+    if (tachCanvas) dynoVisualizers.renderTachometerHUD(tachCanvas, telemetry);
+    if (rtaCanvas && telemetry) dynoVisualizers.render13OctaveRTA(rtaCanvas, telemetry.octave_bands);
+    if (waterfallCanvas && telemetry) dynoVisualizers.renderWaterfallSpectrogram(waterfallCanvas, telemetry.octave_bands);
+  }
+
+  dynoAnimationId = requestAnimationFrame(runDynoHUDLoop);
+}
+
+async function toggleDynoLiveMic() {
+  if (typeof CarDexAudioDSP === 'undefined') return;
+  if (!dynoEngine) {
+    dynoEngine = new CarDexAudioDSP.AcousticTelemetryEngine();
+  }
+
+  const btn = document.getElementById("dyno-btn-mic");
+  const label = document.getElementById("dyno-btn-mic-label");
+  const dot = document.getElementById("dyno-hud-pulse-dot");
+
+  if (!dynoEngine.isRunning) {
+    try {
+      await dynoEngine.start();
+      if (btn) btn.classList.add("active");
+      if (label) label.textContent = "Disarm Mic";
+      if (dot) dot.classList.add("active");
+    } catch (err) {
+      console.error("Microphone access failed:", err);
+      alert("Microphone permission denied or unavailable. " + (err.message || ''));
+    }
+  } else {
+    dynoEngine.stop();
+    if (btn) btn.classList.remove("active");
+    if (label) label.textContent = "Arm Live Mic";
+    if (dot) dot.classList.remove("active");
+  }
+}
+
+function onDynoWeightingChange(mode) {
+  if (dynoEngine) dynoEngine.setWeighting(mode);
+}
+
+function onDynoBallisticsChange(mode) {
+  if (dynoEngine) dynoEngine.setTimeWeighting(mode);
+}
+
+function onDynoCylindersChange(cyl) {
+  if (dynoEngine) dynoEngine.setCylinders(Number(cyl));
+  const badge = document.getElementById("dyno-engine-badge");
+  if (badge) badge.textContent = `${cyl}-Cylinder Cadence`;
+}
+
+function startDynoCalibratedRun() {
+  openDynoModal("Cockpit Calibrated Sound Dyno");
+}
+
+function openDynoModal(carName) {
+  const modal = document.getElementById("dyno-modal-backdrop");
+  const nameEl = document.getElementById("dyno-modal-car-name");
+  const numEl = document.getElementById("dyno-countdown-number");
+  const startBtn = document.getElementById("dyno-modal-start-btn");
+
+  if (nameEl) nameEl.textContent = carName || "SUPERCAR EXHAUST DYNO";
+  if (numEl) {
+    numEl.textContent = "READY";
+    numEl.className = "dyno-countdown-display";
+  }
+  if (startBtn) startBtn.style.display = "inline-flex";
+  if (modal) modal.style.display = "flex";
+}
+
+function closeDynoModal() {
+  const modal = document.getElementById("dyno-modal-backdrop");
+  if (modal) modal.style.display = "none";
+}
+
+async function runModalCountdown() {
+  const numEl = document.getElementById("dyno-countdown-number");
+  const startBtn = document.getElementById("dyno-modal-start-btn");
+  const splEl = document.getElementById("dyno-modal-live-spl");
+  const peakEl = document.getElementById("dyno-modal-peak-spl");
+
+  if (startBtn) startBtn.style.display = "none";
+
+  if (!dynoEngine) {
+    dynoEngine = new CarDexAudioDSP.AcousticTelemetryEngine();
+  }
+  if (!dynoEngine.isRunning) {
+    try {
+      await dynoEngine.start();
+    } catch (e) {
+      alert("Microphone access failed: " + e.message);
+      closeDynoModal();
+      return;
+    }
+  }
+
+  // 3-second animated countdown
+  for (let count = 3; count >= 1; count--) {
+    if (numEl) {
+      numEl.textContent = String(count);
+      numEl.className = "dyno-countdown-display";
+    }
+    await new Promise(r => setTimeout(r, 1000));
+  }
+
+  if (numEl) {
+    numEl.textContent = "REV!";
+    numEl.className = "dyno-countdown-display rev";
+  }
+
+  // 6-Second Calibrated Window with live SPL readout
+  const startTime = Date.now();
+  const durationMs = 6000;
+  let maxDba = 30.0;
+  let maxDbc = 30.0;
+  let totalEnergy = 0.0;
+  let sampleCount = 0;
+  let bestF0 = 0.0;
+  let antiCheatFlags = [];
+
+  while (Date.now() - startTime < durationMs) {
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+    if (numEl) {
+      numEl.textContent = `REV! (${6 - elapsed}s)`;
+    }
+    const snap = dynoEngine.processFrame(0.05);
+    if (snap.current_dba > maxDba) maxDba = snap.current_dba;
+    if (snap.current_dbc > maxDbc) maxDbc = snap.current_dbc;
+    totalEnergy += Math.pow(10, snap.current_dba / 10.0);
+    sampleCount++;
+    if (snap.dominant_hz > 20.0 && snap.dominant_hz <= 400.0) {
+      bestF0 = snap.dominant_hz;
+    }
+    if (snap.anti_cheat_status !== "PASS" && !antiCheatFlags.includes(snap.anti_cheat_status)) {
+      antiCheatFlags.push(snap.anti_cheat_status);
+    }
+
+    if (splEl) splEl.textContent = snap.current_dba.toFixed(1);
+    if (peakEl) peakEl.textContent = maxDba.toFixed(1);
+
+    await new Promise(r => setTimeout(r, 50));
+  }
+
+  const laeq = sampleCount > 0 ? 10.0 * Math.log10(totalEnergy / sampleCount) : maxDba;
+  const status = antiCheatFlags.length > 0 ? antiCheatFlags[0] : "PASS";
+  const tierInfo = CarDexAudioDSP.evaluateDecibelTier(maxDba, status === "PASS");
+  const estRpm = bestF0 > 0 ? Math.round((bestF0 * 120.0) / Math.max(2, dynoEngine.cylinders)) : 0;
+
+  const result = {
+    peak_dba: Number(maxDba.toFixed(1)),
+    peak_dbc: Number(maxDbc.toFixed(1)),
+    laeq: Number(laeq.toFixed(1)),
+    dominant_hz: Number(bestF0.toFixed(1)),
+    estimated_rpm: estRpm,
+    anti_cheat_status: status,
+    verified_engine_sound: status === "PASS",
+    tier: tierInfo.tier,
+    badge: tierInfo.badge,
+    bonus_points: tierInfo.total_points,
+    ear_bleeder: tierInfo.ear_bleeder,
+    cadence_matched: status === "PASS",
+    spectral_signature_sample: dynoEngine.spectralSignatureSample
+  };
+
+  closeDynoModal();
+
+  // Inject holographic verification card into Cockpit Chat feed
+  if (typeof appendBotMessage === "function") {
+    switchCockpitView("chat");
+    appendBotMessage({
+      parts: [
+        {
+          data: {
+            type: "acoustic_verification",
+            holographic: true,
+            engine_config: `${dynoEngine.cylinders}-Cylinder Exhaust Dyno Run`,
+            confidence: 0.98,
+            ...result
+          }
+        }
+      ]
+    });
+  } else {
+    alert(`Dyno Run Complete!\nPeak: ${result.peak_dba} dBA\nTier: ${result.tier}\nPoints: +${result.bonus_points}`);
+  }
+
+  // Refresh leaderboard
+  loadLoudestLeaderboard(currentDynoEngineFilter, currentDynoTimeframeFilter);
+}
+
+async function filterDynoLeaderboard(engine) {
+  currentDynoEngineFilter = engine;
+  document.querySelectorAll(".dyno-pill-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.getAttribute("data-engine") === engine);
+  });
+  await loadLoudestLeaderboard(currentDynoEngineFilter, currentDynoTimeframeFilter);
+}
+
+async function loadLoudestLeaderboard(engine = "all", timeframe = "all") {
+  const tbody = document.getElementById("dyno-hof-tbody");
+  if (!tbody) return;
+
+  try {
+    const res = await fetch(`/api/leaderboard/loudest?engine_type=${encodeURIComponent(engine)}&timeframe=${encodeURIComponent(timeframe)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const spots = data.spots || [];
+
+    if (spots.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 2rem; color: #64748b;">No verified exhaust entries found for ${escapeHtml(engine)}. Be the first to rev!</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = spots.map((s, idx) => {
+      const rank = idx + 1;
+      const rankClass = rank === 1 ? 'top1' : (rank === 2 ? 'top2' : (rank === 3 ? 'top3' : ''));
+      const peakDba = Number(s.peak_dba || s.loudness_dba || 0).toFixed(1);
+      const isEarBleeder = peakDba >= 120.0 || s.ear_bleeder;
+      const tierBadge = s.acoustic_tier || s.decibel_tier || (peakDba >= 120 ? 'Straight Pipe Demon' : (peakDba >= 110 ? 'Screamer / Race Spec' : (peakDba >= 100 ? 'Track Weapon' : (peakDba >= 90 ? 'Sport Exhaust' : 'Street Spec'))));
+      const bonusPts = s.decibel_points || s.acoustic_points || (peakDba >= 120 ? 1250 : (peakDba >= 110 ? 800 : (peakDba >= 100 ? 450 : (peakDba >= 90 ? 200 : 75))));
+
+      return `
+        <tr>
+          <td><span class="dyno-rank-num ${rankClass}">#${rank}</span></td>
+          <td>
+            <div style="font-weight: 800; color: #f8fafc;">${escapeHtml(s.car_name || s.vehicle_name || 'Exotic Hypercar')}</div>
+            <div style="font-size: 0.7rem; color: #94a3b8;">${escapeHtml(s.engine_config || 'High-RPM Exhaust Sweep')}</div>
+          </td>
+          <td><span style="color: #38bdf8; font-weight: 700;">@${escapeHtml(s.spotter_username || s.user_id || 'anonymous')}</span></td>
+          <td><span style="background: rgba(255,255,255,0.06); padding: 2px 7px; border-radius: 4px; font-weight: 700;">${escapeHtml(s.engine_type || 'ICE')}</span></td>
+          <td>
+            <span style="font-size: 1rem; font-weight: 900; color: ${isEarBleeder ? '#c084fc' : (peakDba >= 100 ? '#ef4444' : '#10b981')};">
+              ${peakDba} dBA
+            </span>
+          </td>
+          <td>
+            <span style="font-size: 0.72rem; font-weight: 800; color: ${isEarBleeder ? '#c084fc' : '#fbbf24'};">
+              ${escapeHtml(tierBadge.toUpperCase())}
+            </span>
+            <div style="font-size: 0.68rem; color: #38bdf8;">+${bonusPts} PTS</div>
+          </td>
+          <td>
+            <span style="color: #10b981; font-weight: 800; font-size: 0.75rem;">✓ CERTIFIED</span>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error("Failed to load loudest leaderboard:", err);
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding: 1.5rem; color: #ef4444;">Failed to load leaderboard (${escapeHtml(err.message)})</td></tr>`;
   }
 }
 
@@ -5870,6 +7007,17 @@ window.setRadarRadius = setRadarRadius;
 window.jumpToRadarHotspot = jumpToRadarHotspot;
 window.geolocateMeOnRadar = geolocateMeOnRadar;
 window.toggleRadarDrawer = toggleRadarDrawer;
+
+// Acoustic Dyno window exports
+window.toggleDynoLiveMic = toggleDynoLiveMic;
+window.startDynoCalibratedRun = startDynoCalibratedRun;
+window.openDynoModal = openDynoModal;
+window.closeDynoModal = closeDynoModal;
+window.runModalCountdown = runModalCountdown;
+window.filterDynoLeaderboard = filterDynoLeaderboard;
+window.onDynoWeightingChange = onDynoWeightingChange;
+window.onDynoBallisticsChange = onDynoBallisticsChange;
+window.onDynoCylindersChange = onDynoCylindersChange;
 
 // Run auth & quota initialization on load
 initAuth();

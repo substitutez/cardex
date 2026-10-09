@@ -205,6 +205,7 @@ def record_car_spot_entry(
     paint_badge: str | None = None,
     latitude: float | None = None,
     longitude: float | None = None,
+    acoustic_telemetry: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Record a car spotting event in Firestore.
 
@@ -264,8 +265,20 @@ def record_car_spot_entry(
         "fuzzy_lat": fuzzy_lat,
         "fuzzy_lng": fuzzy_lng,
     }
+    if acoustic_telemetry:
+        spot_data["acoustic_telemetry"] = acoustic_telemetry
+        if "engine_config" in acoustic_telemetry and not spot_data.get("engine_config"):
+            spot_data["engine_config"] = acoustic_telemetry["engine_config"]
+
     _, spot_ref = db.collection("spots").add(spot_data)
     spot_data["spot_id"] = spot_ref.id
+
+    # Persist in user's garage subcollection: users/{userId}/garage/{spotId}
+    try:
+        user_garage_ref = db.collection("users").document(user_id).collection("garage").document(spot_ref.id)
+        user_garage_ref.set(spot_data, merge=True)
+    except Exception as e:
+        logger.warning("Failed to persist spot into users/%s/garage/%s: %s", user_id, spot_ref.id, e)
 
     # Update spotter's leaderboard profile in 'leaderboard' collection
     user_ref = db.collection("leaderboard").document(user_id)
@@ -296,6 +309,82 @@ def record_car_spot_entry(
         })
 
     return spot_data
+
+
+def get_loudest_exhaust_leaderboard(
+    limit: int = 50,
+    engine_type: str | None = None,
+    timeframe: str | None = "all",
+) -> list[dict[str, Any]]:
+    """Retrieves top loudest verified car spots globally (Exhaust Hall of Fame).
+
+    Filters:
+    - engine_type: V8, V10, V12, Flat-6, etc.
+    - timeframe: 'all', 'month' (last 30 days), 'week' (last 7 days).
+    """
+    db = get_db()
+    spots = [d.to_dict() | {"id": d.id} for d in db.collection("spots").stream()]
+
+    now_dt = datetime.datetime.now(datetime.timezone.utc)
+    filtered = []
+
+    for s in spots:
+        telem = s.get("acoustic_telemetry")
+        if not telem or not isinstance(telem, dict):
+            continue
+
+        peak_dba = float(telem.get("peak_dba", 0.0))
+        if peak_dba <= 0:
+            continue
+
+        # Timeframe filter
+        if timeframe in ("month", "week"):
+            ts_str = s.get("spot_timestamp") or s.get("spotted_at")
+            if ts_str:
+                try:
+                    spot_dt = datetime.datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                    age_seconds = (now_dt - spot_dt).total_seconds()
+                    max_age = 7 * 86400 if timeframe == "week" else 30 * 86400
+                    if age_seconds > max_age:
+                        continue
+                except Exception:
+                    pass
+
+        # Engine type filter
+        if engine_type and engine_type.strip() and engine_type.lower() != "all":
+            req_eng = engine_type.strip().lower()
+            detected_eng = str(telem.get("engine_config") or s.get("engine_config") or "").lower()
+            car_label = str(s.get("car_name") or s.get("make_model") or "").lower()
+            if req_eng not in detected_eng and req_eng not in car_label:
+                continue
+
+        filtered.append({
+            "spot_id": s.get("id"),
+            "vehicle_make_model": s.get("make_model") or s.get("car_name") or "Supercar",
+            "spotter_username": s.get("username") or s.get("user_id") or "Anonymous Spotter",
+            "user_id": s.get("user_id", "spotter_1"),
+            "peak_dba": peak_dba,
+            "peak_dbc": float(telem.get("peak_dbc", peak_dba + 3.5)),
+            "laeq": float(telem.get("laeq", peak_dba - 8.0)),
+            "dominant_hz": float(telem.get("dominant_hz", 0.0)),
+            "engine_type": telem.get("engine_config") or s.get("engine_config") or "Exhaust Note",
+            "tier": telem.get("tier") or "Exhaust Dyno",
+            "badge": telem.get("badge") or "VERIFIED",
+            "bonus_points": int(telem.get("bonus_points", 0)),
+            "location_geohash": s.get("geohash"),
+            "fuzzy_lat": s.get("fuzzy_lat"),
+            "fuzzy_lng": s.get("fuzzy_lng"),
+            "spot_timestamp": s.get("spot_timestamp") or s.get("spotted_at"),
+            "image_url": s.get("image_url"),
+            "spectral_signature_sample": telem.get("spectral_signature_sample", []),
+        })
+
+    filtered.sort(key=lambda item: item["peak_dba"], reverse=True)
+    capped = filtered[:limit]
+    for idx, item in enumerate(capped, start=1):
+        item["rank"] = idx
+
+    return capped
 
 
 def get_user_garage_spots(user_id: str = "spotter_1") -> list[dict[str, Any]]:

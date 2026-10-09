@@ -234,3 +234,23 @@ def set_cached_vehicle_specs(
     """Cache vehicle SQLite query results for 24 hours."""
     key = f"vehicle_specs:{query_key}"
     return set_json(key, results, ttl=ttl)
+
+
+def get_cached_loudest_leaderboard(
+    engine_type: str | None = None, timeframe: str | None = None
+) -> list[dict[str, Any]] | None:
+    """Retrieve cached Exhaust Hall of Fame leaderboard with 60s TTL."""
+    key = f"leaderboard:loudest:{engine_type or 'all'}:{timeframe or 'all'}"
+    return get_json(key)
+
+
+def set_cached_loudest_leaderboard(
+    rankings: list[dict[str, Any]],
+    engine_type: str | None = None,
+    timeframe: str | None = None,
+    ttl: int = LEADERBOARD_TTL_SECONDS,
+) -> bool:
+    """Cache Exhaust Hall of Fame leaderboard with 60s TTL."""
+    key = f"leaderboard:loudest:{engine_type or 'all'}:{timeframe or 'all'}"
+    return set_json(key, rankings, ttl=ttl)
+
