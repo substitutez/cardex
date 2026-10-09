@@ -92,6 +92,66 @@ Based on `app/agent.py` and `agents-cli-manifest.yaml`, the following tools and 
 - **Object Storage**: Google Cloud Storage (Bucket for spotter photo uploads).
 - **Communication Protocol**: A2A (Agent-to-Agent) protocol over Agent Engine HTTP passthrough.
 
+9. **IEC 61672-Compliant Acoustic DSP & Exhaust Dyno HUD**:
+   - Real-time client-side Web Audio API microphone capture with A-weighting decibel calibration.
+   - 31-band 1/3-octave Real-Time Analyzer (RTA) and FFT spectral fingerprinting for engine notes (V8, V10, V12, Flat-6, Boxer, Rotary).
+   - Wiener spectral flatness entropy anti-cheat to detect synthesized white noise, ambient wind, or simulated playback.
+   - Live Dyno HUD with rev-limiter detection, peak decibel metering, and Loudest Spotter Leaderboards.
+
+10. **CIEDE2000 OEM Paint Matcher**:
+    - Perceptual colorway identification mapping user photo sample centroids to exact factory OEM paint libraries (Porsche PTS, Ferrari Extra Campionario, McLaren MSO, Lamborghini Ad Personam).
+    - Calculated using the rigorous CIEDE2000 ($\Delta E_{00}$) color difference formula with $\Delta E_{00} \le 2.0$ tolerance matching.
+
+11. **Offline Sync Queue & 9:16 Holographic Card Exporter**:
+    - Browser IndexedDB queue allowing spotters to scan vehicles even without cellular reception; automatically reconciles and syncs when reconnected.
+    - Generates 9:16 high-resolution vertical holographic trading cards with dynamic foil reflections, holographic foil stamps, and cryptographic verification QR codes for social sharing.
+
+12. **In-App Billing & Consumable Refill Packs**:
+    - Multi-tier daily rolling quota (5 free scans/day) with instant refill packs and CarDex Pro pass.
+    - Seamless sandbox / mock fallback mode for developer testing and zero-configuration local runs, backed by Stripe and RevenueCat webhook reconciliation.
+
+13. **Apple App Store Review Guideline 5.1.1(v) Compliance**:
+    - Complete, autonomous account deletion accessible directly inside the app garage view.
+    - Purges user records, garage collections, global spot submissions, leaderboard scores, quota caches, and invalidates active session tokens.
+    - Sliding-window auth route rate limiter enforcing a maximum of 5 attempts per IP per 5-minute rolling window with HTTP 429 backoff.
+
+14. **Native iOS Shell (Capacitor 7)**:
+    - Configured iOS Xcode workspace (`ios/App`) with compliant zero-alpha App Store icons (1024x1024 master + all device sizes).
+    - Hardened `Info.plist` with required Apple camera, microphone, and location privacy usage descriptions.
+
+---
+
+## 🛠️ Architecture & Wired Tools
+
+### Function Tools (`app/car_tools.py`)
+
+| Tool Name | Source / Provider | Description |
+| :--- | :--- | :--- |
+| `identify_and_spot_car` | Gemini Vision + GCS | Analyzes car images, uploads to GCS, determines make/model/trim/rarity, and logs the spot. |
+| `lookup_car_in_cardex` | Firestore | Queries the CarDex vehicle database for specs, rarity tier, base points, and global spot count. |
+| `list_cardex_cars` | Firestore | Lists cars in the catalog filtered by manufacturer or rarity tier. |
+| `record_car_spot` | Firestore | Logs a sighting to the user's garage, increments spotter points, and updates global count. |
+| `view_my_garage` | Firestore | Retrieves the user's collection of spotted vehicles and total score. |
+| `view_leaderboard` | Firestore | Fetches the global spotter rankings ordered by total score. |
+| `submit_car_review` | Firestore | Logs a dispute or correction request for a misclassified or unlisted build. |
+| `decode_vin_specifications` | NHTSA vPIC API | Decodes 17-digit VINs into federal safety and powertrain specifications. |
+| `lookup_nhtsa_models_by_year` | NHTSA vPIC API | Queries federal database for all models registered by a make in a specific model year. |
+| `search_vehicle_specs_database` | SQLite (`vehicles.sqlite`) | Queries technical specs (HP, top speed, 0-100, torque) across 164 makes & 2,649 models. |
+| `fetch_carapi_live_specs` | CarAPI | Fetches live MSRP pricing, trim options, and OEM paint colors with RGB values. |
+| `fetch_car_image_and_provenance` | Wikimedia API | Retrieves verified vehicle photos and historical provenance summaries. |
+| `google_search` | Google Search Tool | Real-time web search grounding for live facts and auction records. |
+| `AgentTool(plan_generator)` | ADK Sub-Agent | Research planner and pipeline for in-depth vehicle investigation. |
+
+### Platform Services & Integrations
+
+- **Agent Framework**: Google ADK (Agent Development Kit) `LlmAgent` with `BuiltInPlanner`.
+- **Memory Service**: `VertexAiMemoryBankService` with `PreloadMemoryTool` and post-turn memory extraction.
+- **Code Execution**: `AgentEngineSandboxCodeExecutor` running on Google Cloud Agent Engine.
+- **Rich Display**: `A2uiSchemaManager` with `BasicCatalog` (version 0.8) attached via `after_model_callback`.
+- **Database**: Google Cloud Firestore (Collections: `cars`, `users`, `spots`, `leaderboard`, `reviews`).
+- **Object Storage**: Google Cloud Storage (Bucket for spotter photo uploads).
+- **Communication Protocol**: A2A (Agent-to-Agent) protocol over Agent Engine HTTP passthrough.
+
 ---
 
 ## 📁 Repository Structure
@@ -105,21 +165,34 @@ cardex/
 │   ├── vehicle_db.py          # SQLite engine for 2,649 vehicle models with GCS auto-fetch
 │   ├── a2ui_utils.py          # A2UI model callback for card rendering
 │   ├── config.py              # Agent model and runtime configuration
-│   ├── fast_api_app.py        # Local FastAPI agent server
 │   └── app_utils/             # A2A adapters, reasoning engine connectors, and services
 ├── frontend/
 │   ├── main.py                # FastAPI proxy translating chat requests to A2A protocol
-│   ├── auth_db.py             # User authentication, PBKDF2 hashing & Firestore spotter persistence
-│   ├── requirements.txt       # Frontend proxy dependencies
-│   ├── Procfile               # Cloud Run deployment entrypoint
+│   ├── auth_db.py             # User authentication, PBKDF2 hashing, Apple 5.1.1(v) deletion
+│   ├── quota_limiter.py       # Rolling 24h scan allowance & refill consumption
+│   ├── billing.py             # Stripe & RevenueCat webhooks with sandbox fallback
+│   ├── anti_cheat.py          # Wiener entropy & acoustic spectral verification
+│   ├── paint_matcher.py       # CIEDE2000 OEM factory paint colorway matching
 │   └── static/
-│       └── index.html         # Cockpit-themed chat UI with auth modal, garage viewer & A2UI
+│       ├── index.html         # Cockpit-themed chat UI, camera HUD & Dyno analyzer
+│       ├── offline_sync.js    # IndexedDB offline spotting queue
+│       └── privacy.html       # Apple App Store compliant privacy policy
+├── ios/
+│   ├── App/                   # Native Xcode project workspace
+│   │   ├── App/Info.plist     # iOS camera, mic, and location usage descriptions
+│   │   └── App/Assets.xcassets# Zero-alpha 1024x1024 master icon & AppIcon sizes
+│   └── capacitor.config.ts    # Capacitor mobile runtime configuration
+├── scripts/
+│   ├── verify_pipeline.py     # 6-stage end-to-end production verification suite
+│   ├── test_auth_pipeline.py  # 7-stage headless auth & Apple 5.1.1(v) verification
+│   └── generate_ios_assets.py # Native iOS master icon and derivatives generator
 ├── tests/
-│   ├── test_auth.py           # User authentication and Firestore persistence tests
-│   └── unit/                  # Unit test suite verifying agent structure, tools, and DBs
-├── agents-cli-manifest.yaml   # Deployment manifest for agents-cli
+│   ├── test_auth.py           # Authentication, PBKDF2, and session tests
+│   ├── test_acoustic_dsp.py   # Acoustic decibel & Wiener entropy tests
+│   ├── test_quota.py          # Daily scan quota & rate limit tests
+│   └── unit/                  # Unit test suite verifying agent structure and DBs
 ├── pyproject.toml             # Python dependencies and build configuration
-└── README.md                  # Project documentation
+└── README.md                  # Comprehensive project documentation
 ```
 
 ---
