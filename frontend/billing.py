@@ -64,6 +64,8 @@ def create_checkout_session(
         not STRIPE_SECRET_KEY
         or STRIPE_SECRET_KEY.startswith("sk_test_placeholder")
         or "Mock" in STRIPE_SECRET_KEY
+        or "..." in STRIPE_SECRET_KEY
+        or STRIPE_SECRET_KEY.startswith("sk_live_...")
     )
 
     if not is_mock:

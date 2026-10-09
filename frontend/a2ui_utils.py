@@ -25,7 +25,15 @@ Robustness notes (why this file is more than a one-liner):
 import json
 import re
 
-from google.genai import types
+try:
+    from google.genai import types
+except ModuleNotFoundError:
+    class _DummyTypes:
+        Part = object
+        Blob = object
+        Content = object
+    types = _DummyTypes()
+
 try:
     from google.adk.agents.callback_context import CallbackContext
     from google.adk.models.llm_response import LlmResponse
